@@ -42,10 +42,8 @@ export default defineConfig({
   transformers: [transformerDirectives()],
   theme,
   shortcuts: {
-    'u-link':
-      'text-accent underline decoration-line-strong underline-offset-4 hover:decoration-accent',
+    // The one shortcut worth naming: every interactive element uses it.
     'u-focus':
       'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus',
-    'u-card': 'bg-paper-raised rounded-md',
   },
 })

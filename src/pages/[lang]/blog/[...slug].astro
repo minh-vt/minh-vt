@@ -1,35 +1,36 @@
 ---
 import { render } from 'astro:content'
-import Post from '../../../layouts/Post.astro'
-import { languages, type Lang } from '../../../i18n/ui'
-import { getPosts, postSlug, readingMinutes } from '../../../lib/content'
+import Post from '@/layouts/Post.astro'
+import { languages, type Lang } from '@/i18n/ui'
+import { entryLang, getPosts, postSlug, readingMinutes } from '@/lib/content'
 
 export async function getStaticPaths() {
-  const langs = Object.keys(languages) as Lang[]
+  const locales = Object.keys(languages) as Lang[]
   const perLocale = await Promise.all(
-    langs.map(async (lang) => {
-      const posts = await getPosts(lang)
-      return posts.map((post) => ({
-        params: { lang, slug: postSlug(post.id) },
+    locales.map(async (lang) =>
+      (await getPosts(lang)).map((post) => ({
+        params: { lang, slug: postSlug(post.entry.id) },
         props: { post },
-      }))
-    }),
+      })),
+    ),
   )
   return perLocale.flat()
 }
 
 const { post } = Astro.props
 const lang = Astro.params.lang as Lang
-const { Content } = await render(post)
+const contentLang = entryLang(post.entry.id)
+const { Content } = await render(post.entry)
 ---
 
 <Post
   lang={lang}
-  title={post.data.title}
-  description={post.data.description}
-  date={post.data.date}
-  minutes={readingMinutes(post.body)}
-  origin={post.data.origin}
+  contentLang={contentLang}
+  title={post.entry.data.title}
+  description={post.entry.data.description}
+  date={post.entry.data.date}
+  minutes={readingMinutes(post.entry.body)}
+  origin={post.entry.data.origin}
 >
   <Content />
 </Post>

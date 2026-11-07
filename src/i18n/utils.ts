@@ -1,8 +1,8 @@
-import { defaultLang, ui, type Lang, type UIKey } from './ui'
+import { defaultLang, ui, type Lang, type UIKey } from '@/i18n/ui'
 
 const locales = Object.keys(ui) as Lang[]
 
-export function isLang(value: string | undefined): value is Lang {
+function isLang(value: string | undefined): value is Lang {
   return value !== undefined && locales.includes(value as Lang)
 }
 

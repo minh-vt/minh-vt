@@ -10,11 +10,9 @@ export const defaultLang: Lang = 'vi'
 export const ui = {
   vi: {
     'site.name': 'Vũ Tùng Minh',
-    'site.tagline': 'Phú Yên, Việt Nam',
     'nav.home': 'Trang chủ',
     'nav.writing': 'Bài viết',
     'nav.timeline': 'Các mốc',
-    'nav.sources': 'Nguồn',
     'nav.contact': 'Liên hệ',
     'nav.skip': 'Tới nội dung',
     'meta.description':
@@ -32,7 +30,7 @@ export const ui = {
     'blog.origin': 'Đăng lần đầu trên',
     'blog.back': 'Tất cả bài viết',
     'blog.reading': 'phút đọc',
-    'blog.published': 'Đăng ngày',
+    'blog.inLanguage': 'Ngôn ngữ:',
     'theme.label': 'Đổi giao diện',
     'theme.light': 'Nền sáng',
     'theme.dark': 'Nền tối',
@@ -44,11 +42,9 @@ export const ui = {
   },
   en: {
     'site.name': 'Vu Tung Minh',
-    'site.tagline': 'Phu Yen, Vietnam',
     'nav.home': 'Home',
     'nav.writing': 'Writing',
     'nav.timeline': 'Timeline',
-    'nav.sources': 'Sources',
     'nav.contact': 'Contact',
     'nav.skip': 'Skip to content',
     'meta.description':
@@ -67,7 +63,7 @@ export const ui = {
     'blog.origin': 'First published on',
     'blog.back': 'All posts',
     'blog.reading': 'min read',
-    'blog.published': 'Published',
+    'blog.inLanguage': 'Language:',
     'theme.label': 'Switch theme',
     'theme.light': 'Light',
     'theme.dark': 'Dark',

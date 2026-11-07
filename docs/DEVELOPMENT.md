@@ -6,7 +6,8 @@ Bun only. Node is not required to build or run this site.
 bun install
 bun run dev      # http://localhost:4321, forwards to /vi/
 bun run build    # static output in dist/
-bun run check    # astro check, types for content collections included
+bun run check    # astro check, then eslint
+bun run lint     # eslint only
 bun run format
 ```
 
@@ -72,6 +73,37 @@ back several facts and no URL is stored twice. Adding something means adding **o
    still declared in `astro.config.mjs` so locale prefixes and `hreflang` stay consistent.
 4. JavaScript is opt in. Anything that renders without interaction is an `.astro` component.
 
+## Conventions enforced by the linter
+
+`bun run check` runs `astro check` and `eslint`. Two rules are errors, so they fail the build
+instead of sitting in review:
+
+| Rule                              | Why                                            | Fix                              |
+| --------------------------------- | ---------------------------------------------- | -------------------------------- |
+| No relative imports (`./`, `../`) | One alias means a file can move without a hunt | `@/lib/content`                  |
+| No colour literals                | Colour has one home                            | A token utility, or `var(--ink)` |
+
+The alias is `@/*` to `src/*`, declared in `tsconfig.json`; Astro resolves it natively
+(https://docs.astro.build/en/guides/typescript/#import-aliases).
+
+`src/theme/browser-chrome.ts` is the single exemption from the colour rule: the `theme-color` meta
+tags are read before any CSS exists, so those two literals cannot be tokens.
+
+Warnings, not errors, cover code that is getting hard to read: `max-depth`, `max-params`,
+`complexity`, `no-console`, and `max-lines` for scripts and components. `.astro` templates are
+exempt from line count, because length there says little about comprehension.
+
+## Untranslated content
+
+Nothing is hidden for lack of a translation, and nothing falls back to a hardcoded language
+constant.
+
+- **Structured content** (`facts`): `local()` returns the requested language, else the first key in
+  the map. Put the source language first in the file and the fallback takes care of itself.
+- **Posts**: the slug is the translation key. `posts/vi/foo.mdx` and `posts/en/foo.mdx` are the
+  same piece; if only one exists, every locale serves it, marked with its language, with `lang`
+  set on the article body and on its title.
+
 ## Adding content
 
 - **A milestone**: one YAML file in `src/content/facts/`. Fill `vi` and `en`, list the reference
@@ -103,8 +135,8 @@ Project settings:
 version used here. Keep `.bun-version` for local tooling and set the variable in the dashboard.
 https://developers.cloudflare.com/pages/configuration/build-image/
 
-Because `astro check` runs inside the build command, a type error fails the deploy instead of
-shipping.
+Because `check` runs inside the build command, a type error or a lint error fails the deploy
+instead of shipping.
 
 ### Custom domain
 

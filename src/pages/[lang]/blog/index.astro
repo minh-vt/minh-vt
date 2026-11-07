@@ -1,8 +1,8 @@
 ---
-import Base from '../../../layouts/Base.astro'
-import { languages, type Lang } from '../../../i18n/ui'
-import { localePath, useTranslations } from '../../../i18n/utils'
-import { getPosts, postSlug } from '../../../lib/content'
+import Base from '@/layouts/Base.astro'
+import { languages, type Lang } from '@/i18n/ui'
+import { localePath, useTranslations } from '@/i18n/utils'
+import { getPosts, postSlug } from '@/lib/content'
 
 export function getStaticPaths() {
   return (Object.keys(languages) as Lang[]).map((lang) => ({ params: { lang } }))
@@ -37,22 +37,27 @@ const dateFormat = new Intl.DateTimeFormat(lang === 'vi' ? 'vi-VN' : 'en-GB', {
           {posts.map((post) => (
             <li class="border-t border-line py-7 last:border-b" data-reveal>
               <div class="grid gap-2 md:grid-cols-[8rem_1fr] md:gap-8">
-                <time class="t-meta pt-1" datetime={post.data.date.toISOString()}>
-                  {dateFormat.format(post.data.date)}
+                <time class="t-meta pt-1" datetime={post.entry.data.date.toISOString()}>
+                  {dateFormat.format(post.entry.data.date)}
                 </time>
                 <div>
                   <h2 class="t-title">
                     <a
-                      href={localePath(lang, `blog/${postSlug(post.id)}`)}
+                      href={localePath(lang, `blog/${postSlug(post.entry.id)}`)}
                       class="u-focus no-underline hover:text-accent"
                     >
-                      {post.data.title}
+                      {post.entry.data.title}
                     </a>
+                    {post.lang !== lang && (
+                      <span class="t-meta"> · {languages[post.lang]}</span>
+                    )}
                   </h2>
-                  <p class="u-measure mt-2">{post.data.description}</p>
-                  {post.data.origin && (
+                  <p class="u-measure mt-2" lang={post.lang}>
+                    {post.entry.data.description}
+                  </p>
+                  {post.entry.data.origin && (
                     <p class="t-meta mt-2">
-                      {t('blog.origin')} {post.data.origin.label}
+                      {t('blog.origin')} {post.entry.data.origin.label}
                     </p>
                   )}
                 </div>

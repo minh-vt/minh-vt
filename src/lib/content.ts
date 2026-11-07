@@ -1,9 +1,23 @@
 import { getCollection, getEntry, type CollectionEntry } from 'astro:content'
-import { defaultLang, type Lang } from '../i18n/ui'
+import { defaultLang, type Lang } from '@/i18n/ui'
 
-/** Pick a language from a localised map, falling back to the default locale. */
+/**
+ * Text in the requested language, falling back to the original.
+ * "Original" is the first key in the map, so a YAML file declares its own
+ * source language by putting it first, and no global default is involved.
+ */
 export function local(value: Record<string, string>, lang: Lang): string {
-  return value[lang] ?? value[defaultLang] ?? ''
+  return value[lang] ?? Object.values(value)[0] ?? ''
+}
+
+/** "vi/foo" becomes "vi". */
+export function entryLang(id: string): Lang {
+  return id.split('/')[0] as Lang
+}
+
+/** "vi/foo" becomes "foo". The locale never repeats in a public URL. */
+export function postSlug(id: string): string {
+  return id.split('/').slice(1).join('/')
 }
 
 export async function getFacts(): Promise<CollectionEntry<'facts'>[]> {
@@ -25,7 +39,7 @@ export async function getReferenceIndex(): Promise<
   return new Map(references.map((ref) => [ref.id, ref]))
 }
 
-/** Resolve fact.refs ids to reference entries, silently dropping dead ids. */
+/** Resolve `refs` ids to entries, silently dropping ids with no file. */
 export function resolveRefs(
   ids: string[],
   index: Map<string, CollectionEntry<'references'>>,
@@ -36,21 +50,40 @@ export function resolveRefs(
   })
 }
 
-/** "vi/foo" becomes "foo". Locale never appears in a public URL segment twice. */
-export function postSlug(id: string): string {
-  return id.split('/').slice(1).join('/')
+export type LocalizedPost = {
+  entry: CollectionEntry<'posts'>
+  /** Language the body is actually written in, which may not be the page's. */
+  lang: Lang
 }
 
-export async function getPosts(lang: Lang): Promise<CollectionEntry<'posts'>[]> {
-  const posts = await getCollection(
-    'posts',
-    ({ id, data }) => id.startsWith(`${lang}/`) && !data.draft,
-  )
-  return posts.sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf())
+/**
+ * One row per piece, in the requested language when a translation exists.
+ * The slug is the translation key: posts/vi/foo.mdx and posts/en/foo.mdx are
+ * the same piece. An untranslated piece is shown in its original language
+ * rather than hidden.
+ */
+export async function getPosts(lang: Lang): Promise<LocalizedPost[]> {
+  const published = await getCollection('posts', ({ data }) => !data.draft)
+  const chosen = new Map<string, CollectionEntry<'posts'>>()
+
+  for (const entry of published) {
+    const slug = postSlug(entry.id)
+    const current = chosen.get(slug)
+    if (!current || (entryLang(current.id) !== lang && entryLang(entry.id) === lang)) {
+      chosen.set(slug, entry)
+    }
+  }
+
+  return [...chosen.values()]
+    .map((entry) => ({ entry, lang: entryLang(entry.id) }))
+    .sort((a, b) => b.entry.data.date.valueOf() - a.entry.data.date.valueOf())
 }
 
+/** About text for a locale, falling back to the original when untranslated. */
 export async function getAbout(lang: Lang) {
-  return getEntry('about', lang)
+  const entry = (await getEntry('about', lang)) ?? (await getEntry('about', defaultLang))
+  if (!entry) throw new Error('No about entry exists in any locale')
+  return { entry, lang: entryLang(entry.id) }
 }
 
 export function readingMinutes(body: string | undefined): number {

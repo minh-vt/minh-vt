@@ -8,7 +8,9 @@
     "dev": "bunx --bun astro dev",
     "build": "bunx --bun astro build",
     "preview": "bunx --bun astro preview",
-    "check": "bunx --bun astro check",
+    "check": "bunx --bun astro check && bunx eslint .",
+    "lint": "bunx eslint .",
+    "lint:fix": "bunx eslint . --fix",
     "format": "bunx prettier --write ."
   },
   "dependencies": {
@@ -17,18 +19,24 @@
     "@astrojs/svelte": "^9.1.2",
     "@fontsource-variable/fraunces": "^5.3.0",
     "@fontsource-variable/source-serif-4": "^5.3.1",
-    "@sveltia/cms": "^0.261.0",
     "astro": "^7.4.7",
     "svelte": "^5.57.3"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.12",
-    "@types/bun": "latest",
+    "@eslint/js": "^10.0.1",
     "@unocss/astro": "66.12.0",
+    "eslint": "^10.14.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-astro": "^3.2.1",
+    "eslint-plugin-svelte": "^3.24.0",
+    "globals": "^17.14.0",
     "prettier": "^3.9.10",
     "prettier-plugin-astro": "^0.14.1",
     "prettier-plugin-svelte": "^4.1.1",
+    "svelte-eslint-parser": "^1.10.1",
     "typescript": "^5.9.3",
+    "typescript-eslint": "^8.72.1",
     "unocss": "66.12.0"
   }
 }
