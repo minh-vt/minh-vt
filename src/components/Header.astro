@@ -1,4 +1,5 @@
 ---
+import NavMenu from '@/components/NavMenu.svelte'
 import ThemeToggle from '@/components/ThemeToggle.svelte'
 import { languages, type Lang } from '@/i18n/ui'
 import { localePath, switchLocalePath, useTranslations } from '@/i18n/utils'
@@ -10,55 +11,62 @@ interface Props {
 const { lang } = Astro.props
 const t = useTranslations(lang)
 const other = lang === 'vi' ? 'en' : 'vi'
-const switchHref = switchLocalePath(Astro.url.pathname, other)
 const home = localePath(lang)
-const writing = localePath(lang, 'blog')
+const links = [
+  { href: localePath(lang, 'blog'), label: t('nav.writing') },
+  { href: `${home}#timeline`, label: t('nav.timeline') },
+  { href: `${home}#sources`, label: t('nav.sources') },
+  { href: `${home}#contact`, label: t('nav.contact') },
+]
+const desktopLinks = links.slice(0, 3)
 ---
 
 <header class="sticky top-0 z-20 border-b border-line bg-paper">
   <div class="u-wrap flex h-14 items-center justify-between gap-4">
     <a
       href={home}
-      class="u-focus t-label shrink-0 text-ink no-underline hover:text-accent"
+      class="u-focus u-press t-label text-ink hover:text-accent"
       aria-current={Astro.url.pathname === home ? 'page' : undefined}
     >
       {t('site.name')}
     </a>
 
-    <nav class="flex items-center gap-4 sm:gap-6" aria-label={t('nav.home')}>
-      <a href={writing} class="u-focus t-label no-underline hover:text-accent">
-        {t('nav.writing')}
-      </a>
+    <div class="flex items-center gap-2 sm:gap-4">
+      <nav class="hidden items-center gap-5 sm:flex" aria-label={t('nav.menu')}>
+        {
+          desktopLinks.map((link) => (
+            <a
+              href={link.href}
+              class="u-focus t-label text-ink-muted hover:text-accent"
+            >
+              {link.label}
+            </a>
+          ))
+        }
+      </nav>
+
+      <div class="relative sm:hidden">
+        <NavMenu client:idle links={links} label={t('nav.menu')} />
+      </div>
+
+      <span class="hidden h-4 w-px bg-line sm:block"></span>
+
       <a
-        href={`${home}#timeline`}
-        class="u-focus t-label hidden no-underline hover:text-accent sm:inline"
+        href={switchLocalePath(Astro.url.pathname, other)}
+        hreflang={other}
+        lang={other}
+        class="u-focus u-press t-label px-2 py-1 text-ink-muted hover:text-accent"
+        aria-label={`${t('lang.label')}: ${languages[other]}`}
       >
-        {t('nav.timeline')}
-      </a>
-      <a
-        href={`${home}#contact`}
-        class="u-focus t-label hidden no-underline hover:text-accent sm:inline"
-      >
-        {t('nav.contact')}
+        {other.toUpperCase()}
       </a>
 
-      <div class="flex items-center gap-2 border-l border-line pl-4 sm:gap-3">
-        <a
-          href={switchHref}
-          hreflang={other}
-          lang={other}
-          class="u-focus t-label no-underline hover:text-accent"
-          aria-label={`${t('lang.label')}: ${languages[other]}`}
-        >
-          {other.toUpperCase()}
-        </a>
-        <ThemeToggle
-          client:idle
-          label={t('theme.label')}
-          lightLabel={t('theme.light')}
-          darkLabel={t('theme.dark')}
-        />
-      </div>
-    </nav>
+      <ThemeToggle
+        client:idle
+        label={t('theme.label')}
+        lightLabel={t('theme.light')}
+        darkLabel={t('theme.dark')}
+      />
+    </div>
   </div>
 </header>

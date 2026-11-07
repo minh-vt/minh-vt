@@ -5,16 +5,18 @@ import { localePath, useTranslations } from '@/i18n/utils'
 
 interface Props {
   lang: Lang
-  /** Language the body is written in; differs from `lang` when untranslated. */
   contentLang: Lang
   title: string
   description: string
   date: Date
+  updated?: Date
   minutes: number
   origin?: { label: string; url: string }
+  jsonLd?: Record<string, unknown>
 }
 
-const { lang, contentLang, title, description, date, minutes, origin } = Astro.props
+const { lang, contentLang, title, description, date, updated, minutes, origin, jsonLd } =
+  Astro.props
 const t = useTranslations(lang)
 const dateFormat = new Intl.DateTimeFormat(lang === 'vi' ? 'vi-VN' : 'en-GB', {
   year: 'numeric',
@@ -23,50 +25,52 @@ const dateFormat = new Intl.DateTimeFormat(lang === 'vi' ? 'vi-VN' : 'en-GB', {
 })
 ---
 
-<Base lang={lang} title={`${title} · ${t('site.name')}`} description={description}>
-  <article class="u-wrap pt-14 pb-20 md:pt-20">
-    <a
-      href={localePath(lang, 'blog')}
-      class="u-focus t-label no-underline hover:text-accent"
-    >
+<Base
+  lang={lang}
+  title={`${title} · ${t('site.name')}`}
+  description={description}
+  jsonLd={jsonLd}
+>
+  <article class="u-wrap pt-10 pb-16 md:pt-14">
+    <a href={localePath(lang, 'blog')} class="u-focus t-label text-ink-muted hover:text-accent">
       ← {t('blog.back')}
     </a>
 
-    <header class="u-measure-wide mt-8">
+    <header class="u-measure-wide mt-6">
       <h1 class="t-post" lang={contentLang}>{title}</h1>
-      <p class="t-lead mt-4" lang={contentLang}>{description}</p>
-      <p class="t-meta mt-6">
-        <time datetime={date.toISOString()}>
-          {dateFormat.format(date)}
-        </time>
+      <p class="t-lead mt-3" lang={contentLang}>{description}</p>
+      <p class="t-meta mt-4">
+        <time datetime={date.toISOString()}>{dateFormat.format(date)}</time>
+        {updated && (
+          <>
+            <span aria-hidden="true"> · </span>
+            {t('blog.updated')} <time datetime={updated.toISOString()}>{dateFormat.format(updated)}</time>
+          </>
+        )}
         <span aria-hidden="true"> · </span>
         {minutes}
         {t('blog.reading')}
-        {
-          contentLang !== lang && (
-            <>
-              <span aria-hidden="true"> · </span>
-              {t('blog.inLanguage')} {languages[contentLang]}
-            </>
-          )
-        }
+        {contentLang !== lang && (
+          <>
+            <span aria-hidden="true"> · </span>
+            {t('blog.inLanguage')} {languages[contentLang]}
+          </>
+        )}
       </p>
-      {
-        origin && (
-          <p class="t-meta mt-2">
-            {t('blog.origin')}{' '}
-            <a
-              href={origin.url}
-              class="u-focus text-ink underline decoration-line-strong underline-offset-4 hover:text-accent"
-            >
-              {origin.label}
-            </a>
-          </p>
-        )
-      }
+      {origin && (
+        <p class="t-meta mt-1">
+          {t('blog.origin')}{' '}
+          <a
+            href={origin.url}
+            class="u-focus text-ink underline decoration-line-strong underline-offset-4 hover:text-accent"
+          >
+            {origin.label}
+          </a>
+        </p>
+      )}
     </header>
 
-    <div class="prose mt-10" lang={contentLang}>
+    <div class="prose mt-8" lang={contentLang}>
       <slot />
     </div>
   </article>

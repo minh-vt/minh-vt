@@ -1,6 +1,6 @@
 ---
-import '@fontsource-variable/fraunces'
-import '@fontsource-variable/source-serif-4'
+import '@fontsource-variable/space-grotesk'
+import '@fontsource-variable/ibm-plex-sans'
 import '@/styles/global.css'
 import Header from '@/components/Header.astro'
 import Footer from '@/components/Footer.astro'
@@ -12,14 +12,14 @@ interface Props {
   lang: Lang
   title: string
   description: string
+  /** Structured data for this page, serialised as JSON-LD. */
+  jsonLd?: Record<string, unknown>
   noindex?: boolean
 }
 
-const { lang, title, description, noindex = false } = Astro.props
+const { lang, title, description, jsonLd, noindex = false } = Astro.props
 const t = useTranslations(lang)
-const canonical = Astro.site
-  ? new URL(Astro.url.pathname, Astro.site).href
-  : Astro.url.pathname
+const canonical = Astro.site ? new URL(Astro.url.pathname, Astro.site).href : Astro.url.pathname
 
 // Same page in the other locale, derived from the path rather than a regex.
 const rest = Astro.url.pathname.split('/').filter(Boolean).slice(1).join('/')
@@ -37,24 +37,17 @@ const alternate = (target: Lang) =>
     <link rel="canonical" href={canonical} />
     {noindex && <meta name="robots" content="noindex" />}
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-    <meta
-      name="theme-color"
-      content={chromeColor.light}
-      media="(prefers-color-scheme: light)"
-    />
-    <meta
-      name="theme-color"
-      content={chromeColor.dark}
-      media="(prefers-color-scheme: dark)"
-    />
-    <meta property="og:type" content="website" />
+    <meta name="theme-color" content={chromeColor.light} media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content={chromeColor.dark} media="(prefers-color-scheme: dark)" />
+    <meta property="og:type" content={jsonLd?.['@type'] === 'BlogPosting' ? 'article' : 'website'} />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonical} />
     <meta property="og:locale" content={lang === 'vi' ? 'vi_VN' : 'en_US'} />
-    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:card" content="summary" />
     <link rel="alternate" hreflang="vi" href={alternate('vi')} />
     <link rel="alternate" hreflang="en" href={alternate('en')} />
+    {jsonLd && <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />}
 
     <script is:inline>
       // Runs before first paint so the stored theme never flashes.
@@ -62,8 +55,7 @@ const alternate = (target: Lang) =>
       try {
         const stored = localStorage.getItem('theme')
         const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
-        document.documentElement.dataset.theme =
-          stored ?? (prefersDark ? 'dark' : 'light')
+        document.documentElement.dataset.theme = stored ?? (prefersDark ? 'dark' : 'light')
       } catch {
         document.documentElement.dataset.theme = 'light'
       }
@@ -83,7 +75,9 @@ const alternate = (target: Lang) =>
     <Footer lang={lang} />
 
     <script>
-      const nodes = document.querySelectorAll('[data-reveal]')
+      // Reveal once, then stop. Stagger is 40ms per item inside a group and is
+      // capped so a long list never takes more than 200ms to arrive.
+      const nodes = Array.from(document.querySelectorAll('[data-reveal]'))
       const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
       if (reduced || !('IntersectionObserver' in window)) {
@@ -97,7 +91,7 @@ const alternate = (target: Lang) =>
               observer.unobserve(entry.target)
             }
           },
-          { rootMargin: '0px 0px -8% 0px', threshold: 0.08 },
+          { rootMargin: '0px 0px -8% 0px', threshold: 0.05 },
         )
         nodes.forEach((node) => observer.observe(node))
       }

@@ -2,7 +2,8 @@
 import { render } from 'astro:content'
 import Base from '@/layouts/Base.astro'
 import Hero from '@/components/Hero.astro'
-import Timeline from '@/components/Timeline.astro'
+import SectionHead from '@/components/SectionHead.astro'
+import FactList from '@/components/FactList.astro'
 import Sources from '@/components/Sources.astro'
 import { languages, type Lang } from '@/i18n/ui'
 import { localePath, useTranslations } from '@/i18n/utils'
@@ -28,8 +29,6 @@ const t = useTranslations(lang)
 const about = await getAbout(lang)
 const { Content } = await render(about.entry)
 
-// Views over the two structured collections. Facts carry the narrative,
-// references carry the links; neither knows about the other's layout.
 const refIndex = await getReferenceIndex()
 const rows = (await getFacts()).map((fact) => ({
   id: fact.id,
@@ -40,59 +39,105 @@ const rows = (await getFacts()).map((fact) => ({
   refs: resolveRefs(fact.data.refs, refIndex),
 }))
 const sources = await getReferences()
-const posts = (await getPosts(lang)).slice(0, 3)
+const posts = (await getPosts(lang)).slice(0, 4)
 
 const dateFormat = new Intl.DateTimeFormat(lang === 'vi' ? 'vi-VN' : 'en-GB', {
   year: 'numeric',
   month: 'short',
 })
+
+const facts = [
+  { label: t('facts.basedIn'), value: site.location[lang] },
+  { label: t('facts.now'), value: lang === 'vi' ? 'Kỹ sư nhúng, Science Lab' : 'Embedded engineer, Science Lab' },
+  { label: t('facts.since'), value: '2018' },
+]
+
+const links = [
+  { href: `mailto:${site.email}`, label: site.email },
+  { href: site.github, label: 'GitHub' },
+  { href: site.linkedin, label: 'LinkedIn' },
+]
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Person',
+  name: 'Vũ Tùng Minh',
+  alternateName: 'Vu Tung Minh',
+  url: Astro.site ? new URL(localePath(lang), Astro.site).href : undefined,
+  email: `mailto:${site.email}`,
+  jobTitle: 'Embedded software engineer',
+  sameAs: [site.github, site.linkedin],
+  knowsAbout: ['embedded systems', 'GStreamer', 'LLM inference', 'robotics'],
+  address: {
+    '@type': 'PostalAddress',
+    addressLocality: 'Ho Chi Minh City',
+    addressCountry: 'VN',
+  },
+}
 ---
 
 <Base
   lang={lang}
-  title={`${t('site.name')} · ${site.location[lang]}`}
+  title={t('site.title')}
   description={t('meta.description')}
+  jsonLd={jsonLd}
 >
-  <Hero lang={lang} lead={about.entry.data.lead} />
+  <Hero
+    lang={lang}
+    name={t('site.name')}
+    location={site.location[lang]}
+    lead={about.entry.data.lead}
+    links={links}
+  />
 
-  <section id="about" class="u-wrap u-section-tight scroll-mt-16">
-    <div class="grid gap-6 md:grid-cols-[10rem_1fr] md:gap-10">
-      <h2 class="t-label pt-2">{t('section.about')}</h2>
+  <section class="u-wrap u-section-tight">
+    <div class="grid gap-8 md:grid-cols-[12rem_1fr] md:gap-12">
+      <dl class="grid grid-cols-2 gap-x-6 gap-y-5 md:grid-cols-1 md:gap-5">
+        {
+          facts.map((fact) => (
+            <div>
+              <dt class="t-label">{fact.label}</dt>
+              <dd class="t-meta mt-1 text-ink">{fact.value}</dd>
+            </div>
+          ))
+        }
+      </dl>
       <div class="prose" lang={about.lang} data-reveal>
         <Content />
       </div>
     </div>
   </section>
 
-  <Timeline lang={lang} rows={rows} />
+  <section id="timeline" class="u-wrap u-section">
+    <SectionHead title={t('section.timeline')} lead={`${rows.length} ${lang === 'vi' ? 'mốc' : 'entries'}`} />
+    <FactList lang={lang} rows={rows} />
+  </section>
 
-  <section id="writing" class="u-section u-wrap u-hairline scroll-mt-16">
-    <div class="flex flex-col gap-2 md:flex-row md:items-baseline md:justify-between">
-      <h2 class="t-section">{t('section.writing')}</h2>
-      <p class="t-meta">{t('section.writing.lead')}</p>
-    </div>
+  <section id="writing" class="u-wrap u-section">
+    <SectionHead title={t('section.writing')} lead={t('section.writing.lead')} />
 
     {
       posts.length === 0 ? (
-        <p class="t-meta mt-8">{t('blog.empty')}</p>
+        <p class="t-meta mt-6">{t('blog.empty')}</p>
       ) : (
-        <ul class="mt-8">
-          {posts.map((post) => (
-            <li class="border-t border-line py-5 last:border-b" data-reveal>
+        <ul class="mt-2">
+          {posts.map((post, index) => (
+            <li
+              class="border-b border-line"
+              data-reveal
+              style={`--reveal-delay:${Math.min(index, 5) * 40}ms`}
+            >
               <a
                 href={localePath(lang, `blog/${postSlug(post.entry.id)}`)}
-                class="u-focus group flex flex-col gap-1 no-underline md:flex-row md:items-baseline md:justify-between md:gap-8"
+                class="u-focus grid grid-cols-[1fr_auto] items-baseline gap-4 py-4"
               >
-                <span class="t-title group-hover:text-accent">
+                <span class="t-title" lang={post.lang}>
                   {post.entry.data.title}
                   {post.lang !== lang && (
                     <span class="t-meta"> · {languages[post.lang]}</span>
                   )}
                 </span>
-                <time
-                  class="t-meta shrink-0"
-                  datetime={post.entry.data.date.toISOString()}
-                >
+                <time class="t-meta" datetime={post.entry.data.date.toISOString()}>
                   {dateFormat.format(post.entry.data.date)}
                 </time>
               </a>
@@ -102,34 +147,33 @@ const dateFormat = new Intl.DateTimeFormat(lang === 'vi' ? 'vi-VN' : 'en-GB', {
       )
     }
 
-    <p class="mt-8">
-      <a
-        href={localePath(lang, 'blog')}
-        class="u-focus t-label no-underline hover:text-accent"
-      >
+    <p class="mt-6">
+      <a href={localePath(lang, 'blog')} class="u-focus t-label text-ink hover:text-accent">
         {t('blog.back')} →
       </a>
     </p>
   </section>
 
-  <Sources lang={lang} items={sources} />
+  <section id="sources" class="u-section">
+    <div class="u-wrap">
+      <SectionHead title={t('section.sources')} lead={t('section.sources.lead')} />
+    </div>
+    <div class="mt-6">
+      <Sources lang={lang} items={sources} />
+    </div>
+  </section>
 
   <section id="contact" class="u-invert scroll-mt-16">
     <div class="u-wrap u-section">
-      <div class="grid gap-6 md:grid-cols-[10rem_1fr] md:gap-10">
-        <h2 class="t-label pt-2">{t('section.contact')}</h2>
-        <div>
-          <p class="t-section" data-reveal>
-            <a
-              href={`mailto:${site.email}`}
-              class="u-focus underline decoration-1 underline-offset-8 hover:opacity-80"
-            >
-              {site.email}
-            </a>
-          </p>
-          <p class="t-meta mt-4">{t('section.contact.lead')}</p>
-        </div>
-      </div>
+      <p class="t-label">{t('section.contact')}</p>
+      <a
+        href={`mailto:${site.email}`}
+        class="u-focus t-email mt-4 block hover:text-accent"
+        data-reveal
+      >
+        {site.email}
+      </a>
+      <p class="t-meta mt-5 max-w-[32rem]">{t('section.contact.lead')}</p>
     </div>
   </section>
 </Base>

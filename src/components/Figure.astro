@@ -1,0 +1,40 @@
+---
+import { Image } from 'astro:assets'
+import type { ImageMetadata } from 'astro'
+
+interface Props {
+  src: ImageMetadata | string
+  alt: string
+  caption?: string
+  widths?: number[]
+  sizes?: string
+  priority?: boolean
+}
+
+/**
+ * One way to place a picture. Local images are optimised at build time by
+ * astro:assets; a plain URL falls back to an <img> with explicit dimensions so
+ * the layout never shifts. Remote URLs are not fetched at build time on purpose.
+ */
+const {
+  src,
+  alt,
+  caption,
+  widths = [480, 900, 1440],
+  sizes = '(min-width: 48em) 40rem, 100vw',
+  priority = false,
+} = Astro.props
+
+const loading = priority ? 'eager' : 'lazy'
+---
+
+<figure class="my-8">
+  {
+    typeof src === 'string' ? (
+      <img src={src} alt={alt} loading={loading} decoding="async" width="1200" height="750" />
+    ) : (
+      <Image src={src} alt={alt} widths={widths} sizes={sizes} loading={loading} />
+    )
+  }
+  {caption && <figcaption class="t-meta mt-2">{caption}</figcaption>}
+</figure>

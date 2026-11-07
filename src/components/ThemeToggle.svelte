@@ -1,7 +1,6 @@
 <script lang="ts">
+  import { Toggle } from 'melt/builders'
   import { onMount } from 'svelte'
-
-  type Theme = 'light' | 'dark'
 
   let {
     label,
@@ -13,46 +12,45 @@
     darkLabel: string
   } = $props()
 
-  let theme = $state<Theme>('light')
+  let isDark = $state(false)
 
-  onMount(() => {
-    theme = document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light'
+  const toggle = new Toggle({
+    value: () => isDark,
+    onValueChange: (next) => {
+      isDark = next
+      document.documentElement.dataset.theme = next ? 'dark' : 'light'
+      try {
+        localStorage.setItem('theme', next ? 'dark' : 'light')
+      } catch {
+        // Private mode: the choice simply does not persist.
+      }
+    },
   })
 
-  function toggle() {
-    theme = theme === 'dark' ? 'light' : 'dark'
-    document.documentElement.dataset.theme = theme
-    try {
-      localStorage.setItem('theme', theme)
-    } catch {
-      // Private mode: the theme simply will not persist.
-    }
-  }
+  onMount(() => {
+    isDark = document.documentElement.dataset.theme === 'dark'
+  })
 </script>
 
 <button
-  type="button"
-  onclick={toggle}
+  {...toggle.trigger}
+  class="u-press u-focus flex size-8 items-center justify-center border border-line text-ink-muted hover:border-line-strong hover:text-ink"
   aria-label={label}
-  aria-pressed={theme === 'dark'}
-  title={theme === 'dark' ? lightLabel : darkLabel}
-  class="u-focus flex size-7 items-center justify-center rounded-pill border border-line text-ink-muted transition-colors duration-200 hover:border-line-strong hover:text-ink"
+  title={isDark ? lightLabel : darkLabel}
 >
   <svg
     class="size-4"
     viewBox="0 0 24 24"
     fill="none"
     stroke="currentColor"
-    stroke-width="1.6"
+    stroke-width="1.7"
     aria-hidden="true"
   >
-    {#if theme === 'dark'}
-      <circle cx="12" cy="12" r="4.2" />
-      <path
-        d="M12 2.6v2.2M12 19.2v2.2M2.6 12h2.2M19.2 12h2.2M5.4 5.4l1.6 1.6M17 17l1.6 1.6M18.6 5.4L17 7M7 17l-1.6 1.6"
-      />
+    {#if isDark}
+      <circle cx="12" cy="12" r="4.1" />
+      <path d="M12 2.8v2.4M12 18.8v2.4M2.8 12h2.4M18.8 12h2.4M5.6 5.6l1.7 1.7M16.7 16.7l1.7 1.7M18.4 5.6l-1.7 1.7M7.3 16.7l-1.7 1.7" />
     {:else}
-      <path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5Z" />
+      <path d="M20.5 14.6A8.6 8.6 0 0 1 9.4 3.5a8.6 8.6 0 1 0 11.1 11.1Z" />
     {/if}
   </svg>
 </button>

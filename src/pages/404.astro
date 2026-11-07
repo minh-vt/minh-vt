@@ -7,18 +7,13 @@ const lang = defaultLang
 const t = useTranslations(lang)
 ---
 
-<Base
-  lang={lang}
-  title={`${t('notfound.title')} · ${t('site.name')}`}
-  description={t('notfound.body')}
-  noindex
->
-  <div class="u-wrap py-28 md:py-40">
-    <p class="t-meta">404</p>
-    <h1 class="t-hero mt-4">{t('notfound.title')}</h1>
-    <p class="t-lead mt-6">{t('notfound.body')}</p>
-    <p class="mt-10">
-      <a href={localePath(lang)} class="u-focus t-label no-underline hover:text-accent">
+<Base lang={lang} title={`${t('notfound.title')} · ${t('site.name')}`} description={t('notfound.body')} noindex>
+  <div class="u-wrap py-24 md:py-32">
+    <p class="t-label">404</p>
+    <h1 class="t-post mt-3">{t('notfound.title')}</h1>
+    <p class="t-lead mt-4">{t('notfound.body')}</p>
+    <p class="mt-8">
+      <a href={localePath(lang)} class="u-focus t-label text-ink hover:text-accent">
         ← {t('notfound.action')}
       </a>
     </p>
