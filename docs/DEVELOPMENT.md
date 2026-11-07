@@ -55,22 +55,44 @@ public/admin/             Sveltia CMS, config in config.yml
   position, `source` puts a link under the entry.
 - **Post**: add one file under `src/content/posts/<lang>/`. The slug comes from the filename.
 - **Press link**: append to `src/data/press.ts`.
+- **Piece published elsewhere**: append to `src/data/writing.ts`. It shows on the writing index
+  under "Written elsewhere"; the canonical copy stays on the outlet's site.
 - Or use the CMS at `/admin`, which commits to this repository through the GitHub API.
 
-## Deploying
+## CI and deployment
 
-`bun run build` writes `dist/`. Any static host works. Two things to set before going live:
+Two workflows, both pinned to the Bun version in `.bun-version`:
 
-1. `site` in `astro.config.mjs` and the `Sitemap:` line in `public/robots.txt`.
+| Workflow                       | Trigger                                           | Does                                                     |
+| ------------------------------ | ------------------------------------------------- | -------------------------------------------------------- |
+| `.github/workflows/ci.yml`     | every pull request, every push that is not `main` | install, `astro check`, build                            |
+| `.github/workflows/deploy.yml` | push to `main`, or manual                         | install, check, build, then `wrangler pages deploy dist` |
+
+Set two repository secrets before the first deploy:
+
+- `CLOUDFLARE_API_TOKEN`: a token with the _Cloudflare Pages: Edit_ permission.
+- `CLOUDFLARE_ACCOUNT_ID`: from the Cloudflare dashboard URL.
+
+The Pages project name is in the `command:` line of the deploy workflow. Rename it there if the
+project is called something else.
+
+Cloudflare Pages can also build this repository itself. If you prefer that, delete
+`deploy.yml`, set the build command to `bun run build`, the output directory to `dist`, and tell
+Pages to use Bun. Running it through Actions keeps the check step in the same pipeline, which is
+why it is wired that way.
+
+## Before going live
+
+1. `site` in `astro.config.mjs`, and the `Sitemap:` line in `public/robots.txt`.
 2. `backend.repo` in `public/admin/config.yml` if the repository name changes.
-
-For GitHub Pages, publish `dist/` with the base path the repository needs. For Cloudflare Pages or
-Netlify, use `bun run build` and `dist` as the output directory.
+3. Hero image, see below.
 
 ## Known placeholders
 
 - Hero image is `picsum.photos`. Replace the `image` prop in `src/components/Hero.astro` with a
-  real portrait under `public/images/`.
+  real portrait under `public/images/`. The press articles linked from `src/data/press.ts` carry
+  photographs of the teams, but those belong to the outlets: ask the outlet or the photographer
+  before reusing one, and do not hotlink the CDN URLs.
 - The only post so far is the Viettel AI Race write up, imported from the author's notes on
   2026-08-05. Adjust the date if it should sit elsewhere in the archive.
 - `/en/blog/` has no posts yet. The list renders an empty state, which is intentional.

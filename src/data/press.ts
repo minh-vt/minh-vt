@@ -14,6 +14,23 @@ export type PressItem = {
 export const press: Record<Lang, PressItem[]> = {
   vi: [
     {
+      outlet: 'Báo Phú Yên',
+      title: 'Gần 400 học sinh tham gia lớp học lưu động "Robot trong vỏ hạt dẻ"',
+      url: 'https://baophuyen.vn/79/325055/gan-400-hoc-sinh-tham-gia-lop-hoc-luu-dong--robot-trong-vo-hat-de-.html',
+    },
+    {
+      outlet: 'Báo Tiền Phong',
+      title: 'FCT Club: câu lạc bộ lập trình với triết lý "ngược chiều"',
+      url: 'https://dantri.com.vn/giao-duc/fct-club-cau-lac-bo-lap-trinh-voi-triet-ly-nguoc-chieu-20250521092910794.htm',
+      date: '2025-05-21',
+    },
+    {
+      outlet: 'Tuổi Trẻ',
+      title: 'Gần 1.500 học sinh THPT dự cuộc thi về robotics',
+      url: 'https://tuoitre.vn/nld/gan-1500-hoc-sinh-thpt-du-cuoc-thi-ve-robotics-196240106145620073.htm',
+      date: '2024-01-06',
+    },
+    {
       outlet: 'Báo Tiền Phong',
       title: 'Cựu học sinh THPT chuyên Lương Văn Chánh giúp teen Đắk Lắk chinh phục AI',
       url: 'https://hoahoctro.tienphong.vn/cuu-hoc-sinh-thpt-chuyen-luong-van-chanh-giup-teen-dak-lak-chinh-phuc-ai-post1870716.tpo',
@@ -63,6 +80,23 @@ export const press: Record<Lang, PressItem[]> = {
     },
   ],
   en: [
+    {
+      outlet: 'Phu Yen News',
+      title: 'Nearly 400 students join the travelling class "A robot in a nutshell"',
+      url: 'https://baophuyen.vn/79/325055/gan-400-hoc-sinh-tham-gia-lop-hoc-luu-dong--robot-trong-vo-hat-de-.html',
+    },
+    {
+      outlet: 'Dan Tri',
+      title: 'FCT Club: a programming club that works backwards',
+      url: 'https://dantri.com.vn/giao-duc/fct-club-cau-lac-bo-lap-trinh-voi-triet-ly-nguoc-chieu-20250521092910794.htm',
+      date: '2025-05-21',
+    },
+    {
+      outlet: 'Tuoi Tre',
+      title: 'Nearly 1,500 high school students enter a robotics contest',
+      url: 'https://tuoitre.vn/nld/gan-1500-hoc-sinh-thpt-du-cuoc-thi-ve-robotics-196240106145620073.htm',
+      date: '2024-01-06',
+    },
     {
       outlet: 'Tien Phong',
       title: 'Former Luong Van Chanh students help Dak Lak teenagers take on AI',
