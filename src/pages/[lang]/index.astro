@@ -1,0 +1,108 @@
+---
+import { render } from 'astro:content'
+import Base from '../../layouts/Base.astro'
+import Hero from '../../components/Hero.astro'
+import Timeline from '../../components/Timeline.astro'
+import Sources from '../../components/Sources.astro'
+import { languages, type Lang } from '../../i18n/ui'
+import { localePath, useTranslations } from '../../i18n/utils'
+import { getAbout, getPosts, getTimeline } from '../../lib/content'
+import { press } from '../../data/press'
+import { site } from '../../lib/site'
+
+export function getStaticPaths() {
+  return (Object.keys(languages) as Lang[]).map((lang) => ({ params: { lang } }))
+}
+
+const lang = Astro.params.lang as Lang
+const t = useTranslations(lang)
+
+const about = await getAbout(lang)
+if (!about) throw new Error(`No about entry for locale "${lang}"`)
+const { Content } = await render(about)
+
+const entries = await getTimeline(lang)
+const posts = (await getPosts(lang)).slice(0, 3)
+const dateFormat = new Intl.DateTimeFormat(lang === 'vi' ? 'vi-VN' : 'en-GB', {
+  year: 'numeric',
+  month: 'short',
+})
+---
+
+<Base
+  lang={lang}
+  title={`${t('site.name')} · ${site.location[lang]}`}
+  description={t('meta.description')}
+>
+  <Hero lang={lang} lead={about.data.lead} />
+
+  <section id="about" class="u-wrap u-section-tight scroll-mt-16">
+    <div class="grid gap-6 md:grid-cols-[10rem_1fr] md:gap-10">
+      <h2 class="t-label pt-2">{t('section.about')}</h2>
+      <div class="prose" data-reveal>
+        <Content />
+      </div>
+    </div>
+  </section>
+
+  <Timeline lang={lang} entries={entries} />
+
+  <section id="writing" class="u-section u-wrap u-hairline scroll-mt-16">
+    <div class="flex flex-col gap-2 md:flex-row md:items-baseline md:justify-between">
+      <h2 class="t-section">{t('section.writing')}</h2>
+      <p class="t-meta">{t('section.writing.lead')}</p>
+    </div>
+
+    {
+      posts.length === 0 ? (
+        <p class="t-meta mt-8">{t('blog.empty')}</p>
+      ) : (
+        <ul class="mt-8">
+          {posts.map((post) => (
+            <li class="border-t border-line py-5 last:border-b" data-reveal>
+              <a
+                href={localePath(lang, `blog/${post.id.split('/').slice(1).join('/')}`)}
+                class="u-focus group flex flex-col gap-1 no-underline md:flex-row md:items-baseline md:justify-between md:gap-8"
+              >
+                <span class="t-title group-hover:text-accent">{post.data.title}</span>
+                <time class="t-meta shrink-0" datetime={post.data.date.toISOString()}>
+                  {dateFormat.format(post.data.date)}
+                </time>
+              </a>
+            </li>
+          ))}
+        </ul>
+      )
+    }
+
+    <p class="mt-8">
+      <a
+        href={localePath(lang, 'blog')}
+        class="u-focus t-label no-underline hover:text-accent"
+      >
+        {t('blog.back')} →
+      </a>
+    </p>
+  </section>
+
+  <Sources lang={lang} items={press[lang]} />
+
+  <section id="contact" class="u-invert scroll-mt-16">
+    <div class="u-wrap u-section">
+      <div class="grid gap-6 md:grid-cols-[10rem_1fr] md:gap-10">
+        <h2 class="t-label pt-2">{t('section.contact')}</h2>
+        <div>
+          <p class="t-section" data-reveal>
+            <a
+              href={`mailto:${site.email}`}
+              class="u-focus underline decoration-1 underline-offset-8 hover:opacity-80"
+            >
+              {site.email}
+            </a>
+          </p>
+          <p class="t-meta mt-4">{t('section.contact.lead')}</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</Base>

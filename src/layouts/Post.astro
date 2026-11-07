@@ -1,0 +1,49 @@
+---
+import Base from './Base.astro'
+import type { Lang } from '../i18n/ui'
+import { localePath, useTranslations } from '../i18n/utils'
+
+interface Props {
+  lang: Lang
+  title: string
+  description: string
+  date: Date
+  minutes: number
+}
+
+const { lang, title, description, date, minutes } = Astro.props
+const t = useTranslations(lang)
+const dateFormat = new Intl.DateTimeFormat(lang === 'vi' ? 'vi-VN' : 'en-GB', {
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric',
+})
+---
+
+<Base lang={lang} title={`${title} · ${t('site.name')}`} description={description}>
+  <article class="u-wrap pt-14 pb-20 md:pt-20">
+    <a
+      href={localePath(lang, 'blog')}
+      class="u-focus t-label no-underline hover:text-accent"
+    >
+      ← {t('blog.back')}
+    </a>
+
+    <header class="u-measure-wide mt-8">
+      <h1 class="t-post">{title}</h1>
+      <p class="t-lead mt-4">{description}</p>
+      <p class="t-meta mt-6">
+        <time datetime={date.toISOString()}>
+          {dateFormat.format(date)}
+        </time>
+        <span aria-hidden="true"> · </span>
+        {minutes}
+        {t('blog.reading')}
+      </p>
+    </header>
+
+    <div class="prose mt-10">
+      <slot />
+    </div>
+  </article>
+</Base>

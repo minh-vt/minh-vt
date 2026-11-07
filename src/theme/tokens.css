@@ -1,0 +1,67 @@
+/*
+ * The only file allowed to declare a colour, font stack, radius, shadow,
+ * measure or motion curve. Everything else references these custom properties.
+ */
+:root {
+  color-scheme: light;
+
+  --paper: oklch(98.4% 0.006 85);
+  --paper-raised: oklch(96.2% 0.009 84);
+  --ink: oklch(22% 0.012 60);
+  --ink-muted: oklch(46% 0.012 62);
+  --line: oklch(88% 0.01 80);
+  --line-strong: oklch(76% 0.014 78);
+  --accent: oklch(45% 0.115 32);
+  --accent-soft: oklch(94% 0.026 40);
+  --on-accent: oklch(98.5% 0.006 40);
+  --focus: oklch(52% 0.15 250);
+
+  --font-display: 'Fraunces Variable', Georgia, 'Times New Roman', serif;
+  --font-body: 'Source Serif 4 Variable', Georgia, 'Times New Roman', serif;
+  --font-ui: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: ui-monospace, 'SFMono-Regular', 'Menlo', monospace;
+
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1.0625rem;
+  --text-lg: 1.25rem;
+  --text-xl: clamp(1.375rem, 1.2rem + 0.7vw, 1.625rem);
+  --text-2xl: clamp(1.625rem, 1.35rem + 1.3vw, 2.25rem);
+  --text-3xl: clamp(2rem, 1.5rem + 2.4vw, 3.25rem);
+  --text-hero: clamp(2.75rem, 1.4rem + 6.4vw, 6rem);
+
+  --leading-tight: 1.04;
+  --leading-snug: 1.22;
+  --leading-body: 1.68;
+
+  --tracking-tight: -0.022em;
+  --tracking-wide: 0.09em;
+
+  --measure: 38rem;
+  --measure-wide: 52rem;
+  --layout-wrap: 68rem;
+  --layout-gutter: clamp(1.25rem, 4vw, 3.5rem);
+
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --radius-pill: 999px;
+
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --duration-fast: 180ms;
+  --duration-slow: 640ms;
+}
+
+[data-theme='dark'] {
+  color-scheme: dark;
+
+  --paper: oklch(19% 0.008 70);
+  --paper-raised: oklch(24% 0.01 70);
+  --ink: oklch(93% 0.008 80);
+  --ink-muted: oklch(71% 0.012 80);
+  --line: oklch(31% 0.012 72);
+  --line-strong: oklch(44% 0.014 74);
+  --accent: oklch(74% 0.125 46);
+  --accent-soft: oklch(28% 0.045 40);
+  --on-accent: oklch(18% 0.02 44);
+  --focus: oklch(78% 0.13 240);
+}

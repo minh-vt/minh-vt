@@ -1,0 +1,171 @@
+---
+title: 'Một tuần ép từng millisecond tối ưu hoá AI inference'
+description: 'Tham gia Viettel AI Race 2026 một mình, đốt bảy ngày vào một bài toán serving LLM trên MiG slice, và học được nhiều hơn từ chỗ thua.'
+date: 2026-08-05
+tags: ['inference', 'vllm', 'triton']
+draft: false
+---
+
+
+Tuần vừa rồi có lẽ là tuần căng não nhất, code nặng đô nhất với mình trong một thời gian dài. Đã rất lâu rồi mình chưa thật sự phải vắt kiệt tư duy đến vậy. Khi mình tham gia cuộc thi AI RACE của Viettel với tư cách cá nhân.
+
+Cái nặng nhất không phải là code, mình code không nhiều, thứ áp lực mình nhất đó là giới hạn số lần thử và tài nguyên, vì BTC chỉ cho phép tối đa 5 lần thử / thành viên / ngày. Với một đội tối đa có 3 thành viên, sẽ có 15 lần thử. Nhưng vì mình tham gia solo nên sẽ thiệt thòi hơn chút, cứ viết xong một hướng, test xong, nó chết. Lại đọc source, lại nghĩ hướng khác, lại chết, và mình phải vắt kiệt suy nghĩ làm sao để kiểm chứng nhiều giả thuyết nhất trong số lần thử tối thiểu. Vòng lặp đó quay suốt 7 ngày với hơn 35 lần nộp bài lên hệ thống chấm tự động của BTC. 
+
+Với background là một sinh viên ngành Bán dẫn, một lập trình viên nhúng, một chút kinh nghiệm với AI và devops và dưới đây là toàn bộ hành trình của mình.
+
+
+TL;DR
+---
+Bài toán
+
+Serving một con LLM 1.2B tham số (`LiquidAI/LFM2.5-1.2B-Instruct`) trên **đúng 18GB VRAM, 3 vCPU, 8GB RAM** — tức là một MiG slice của H200 — để xử lý 420 request, 70 hội thoại đồng thời, mỗi hội thoại 6 turn, arrival Poisson. Chấm điểm bằng ERS (Effective Request Score): 50% trọng số từ TTFT, 50% từ TPOT, công thức bình phương nên càng nhanh càng được điểm cao. Chỉ dùng `vllm`, không framework khác, không can thiệp weight, tokenizer, ... nói chung là trung thực với production thực tế.
+
+```
+ERS = (0.5 * ((400-TTFT)/390)^2 + 0.5 * ((10-TPOT)/9)^2) * 100
+```
+
+Baseline của BTC là **~42 ERS** (TTFT 47ms, TPOT 4ms). Và quả thật, BTC đã cho một không gian tối ưu rất rộng, các đội thi liên tục đuổi bắt nhau và đến ngày cuối cùng. Mình **phải đạt** ít nhất 72 ERS để vào top 8 và giành cơ hội đi tiếp. Trong khi đó top 1 hiện tại đang ở 91 ERS - tức TPOT của họ loanh quanh 1.4ms, một con số gần như bất khả thi với Python thuần. Một nhiệm vụ quá sức với mình....
+
+## Config tuning
+Mình bắt đầu từ những thứ dễ thực hiện nhất - tận dụng những tính năng có sẵn của framework `vllm`. Bật những flag tính năng có sẵn, prefix caching, fp8 online quantization, kv-cache-dtype, tuning tokens cache của `vllm`. Bằng một vài phép thử, mình đẩy baseline lên được **~63 ERS**, tức gần như tăng x2 throughput. Chỉ với config tuning.
+```
+      - --max-model-len=8192
+      - --gpu-memory-utilization=0.95
+      - --tensor-parallel-size=1
+      - --enable-prefix-caching
+      # Online dynamic FP8 (BTC-allowed per Q&A).
+      - --quantization=fp8
+      # FP8 KV cache: giam 50% bo nho → nhieu seqs hon cung luc.
+      - --kv-cache-dtype=fp8
+      # optimization-level 3: ~+2% throughput, verified tu vLLM recipes.
+      - --optimization-level=3
+      - --max-num-seqs=256
+      - --max-num-batched-tokens=8192
+```
+
+Nhưng đây cũng là giới hạn của mình. Tại sao ư?
+
+## Nhận diện nút thắt: GPU không phải vấn đề
+
+Với con mắt của một người thích vọc vạch phần cứng, đầu tiên mình bóc tách ngay thời gian chạy của các thành phần trong toàn bộ stack:
+
+Phân bổ thời gian mỗi decode step trên LFM2.5:
+
+| Thành phần | Time (ms) | % |
+|---|---|---|
+| GPU compute (2.4B FLOPs / 141 TFLOPS) | 0.017 | 0.4% |
+| Weight load từ HBM (0.6GB / 685 GB/s) | 0.88 | 22% |
+| KV cache read + attention | 0.5 | 13% |
+| ShortConv state r/w | 0.3 | 7% |
+| Python scheduler + kernel launch + sync | 1.6 | 40% |
+| Detokenize + HTTP send | 0.7 | 17% |
+
+Kết luận: **GPU thực sự tính toán có 0.017ms một step**. 99.6% thời gian là overhead CPU↔GPU và memory bandwidth. Đây không phải bài toán "tăng FLOPs" — đây là bài toán **giảm round-trip, giảm kernel launch, giảm CPU trễ**.
+
+## Những con đường đã thử...
+
+Khi bắt đầu đi sâu hơn vào tìm hiểu framework và mô hình, cùng ngồi lại phân tích từng layers trong kiến trúc của LFM. Mình mới nhận ra là, mịe nó con mô hình này quá khó chơi. Nó hoàn toàn không phải một mô hình thuần Transformer, nó là thứ lai tạp giữa các lớp ShortConv và Attention, trong 16 layers của nó, có 10 lớp attention xen kẽ với 6 lớp shortconv. Tức là nếu mình mù quáng áp dụng các phương pháp tối ưu như các mô hình truyền thống, khả năng cao là sẽ crash trước cả khi server được chạy.
+
+### Speculative Decoding (Draft Model, n-gram, EAGLE, Medusa)
+
+Mình đoán không sai, mình thử hướng có tác động cao nhất tiếp theo sau config tuning. Là speculative decoding. Tức là chạy một mô hình nhỏ hơn để dự đoán các token tiếp theo để tránh model lớn phải sinh từng token một, mô hình nhỏ sẽ đóng vai trò dự thảo các tokens một cách nhanh chóng còn mô hình chính sẽ chỉ xác nhận lại các token đó thôi, theo lý thuyết, cách này có thể tăng x2-x3 throughput của mô hình chính.
+
+Đây là hướng làm mình có nhiều hi vọng nhất, mình đào sâu vào nó, và nó làm mình đau nhất.
+
+Như mình đã đề cập, LFM2.5 là kiến trúc **hybrid**: xen kẽ Attention layers (có KV cache) và ShortConv layers (stateful 1D convolution, dùng `HasInnerState`). Khi speculative decoding cần rollback state sau khi reject draft tokens, **vLLM chỉ rollback được KV cache, không rollback được ShortConv state**. Hậu quả: state của draft model bị corrupt sau mỗi lần token bị từ chối → acceptance rate tụt về 0%. Và theo mình đọc trên tài liệu, cần ít nhất 90% acceptance rate để spec decode thật sự tăng tốc.
+
+Mình lần mò trên github của `vllm`, may mắn tìm được một issue [#49112](https://github.com/vllm-project/vllm/issues/49112) có đề cập vấn đề này. Và may mắn hơn nữa, đã có một vài người cố gắng giải quyết nó. Mình đọc từng PR một và cảm thấy đây sẽ là một bước đi khả quan, thế là dành hàng giờ liền một giải quyết các xung đột trong mã nguồn, gộp các PR lại và đập tiền thuê hẳn một con H100 trên RunPod để có môi trường test.
+
+Mình đã thử:
+- **N-gram spec decode**: 22/30 A/B match trên H100 → hỏng. Trên H200 MIG còn tệ hơn.
+- **Draft model LFM2.5-230M**: Mạnh dạn submit luôn trên portal chấm điểm, ERS **36** còn tệ hơn cả baseline.
+- **EAGLE head**: LFM2.5 không expose `aux_hidden_state_outputs` → không train được.
+- **Medusa, MTP, DFlash, MLP speculator**: Tất cả đều dead vì kiến trúc hoặc yêu cầu training mà BTC giới hạn.
+
+Hóa ra, `vllm` chưa thật sự tối ưu cho các mô hình hybrid kiểu này. Speculative decoding trên hybrid model + H200 MIG là dead end hoàn toàn.** Có thể nó hoạt động trên attention-only models, nhưng với ShortConv stateful layers thì hạ tầng của vLLM chưa hỗ trợ.
+
+Thế là tốn một đống tiền và thời gian đập vào test một khả năng mình chưa làm được.
+
+### Config tuning mù quáng
+
+Hết cách, mình đành quay lại ngồi tối ưu tiếp các tính năng có sẵn xem có thể nâng thêm được tí điểm nào không. Mình mất tận 21 submission để nhận ra: **hầu hết các flag "tối ưu" của vLLM trên internet đều gây tụt điểm khi chấm điểm thực tế trên MIG**, thậm chí nhiều flag còn làm crash luôn cả máy chấm, làm mình phí cả chục submission oan.
+
+```
+mamba-block-size=64          → TTFT 47→54ms (+7ms regression)
+VLLM_SSM_CONV_STATE_LAYOUT=DS → Regression
+CUDA_MODULE_LOADING=LAZY     → Regression
+v0.26.0 base image           → TTFT baseline +11ms
+watermark=0.1                → -2.21 ERS
+xhash                        → 0% quality
+```
+
+Đau nhất là vụ `v0.26.0`: mình kỳ vọng bản mới có nhiều cải tiến scheduler + attention backend, nhưng thực tế base image của nó chạy chậm hơn `v0.25.1` tới 11ms TTFT — chưa kể các flag mamba mới gây thêm regression. Buộc phải quay về `v0.25.1`.
+
+### Môi trường Dev != môi trường thực tế
+
+Khi đã vấp một cú ngã đau ở spec decode, mình bắt đầu sợ sệt, tiếc tiền và chủ động chơi an toàn hơn.
+
+Một sai lầm lớn: Mình chọn thuê một GPU L4 rẻ hơn môi trường thực tế, benchmark trên L4 (SM89) rồi cứ nghĩ kết quả đúng cho H200 (SM90). Mamba Triton kernels autotune khác nhau giữa 2 kiến trúc. Các flag test OK trên H100 80GB (full GPU) lại regression trên MiG slice. **Không có gì thay thế được việc test trực tiếp trên target hardware.**
+
+## Không gian còn lại để tối ưu?
+
+Đến nước này, mình chỉ còn cách can thiệp sâu hơn vào phần cứng để tối ưu từng ms, cố gắng vớt vát vài ms trên phần cứng. 
+
+### 1. ShortConv Decode Fusion
+
+Lý thuyết là vLLM chưa có custom kernel cho các lớp ShortConv.
+
+Mỗi decode step của LFM2.5 ShortConv layer chạy tuần tự: `B*x → causal_conv1d_update → state update → C*out`. Đó là 4 kernel launch, mỗi launch tốn ~10µs + round-trip GPU↔CPU. Gộp chúng thành **1 kernel Triton duy nhất**: state được giữ on-chip, output ghi thẳng ra HBM → cắt được 3 lần round-trip.
+ 
+### 2. Q/K RMSNorm + RoPE Fusion
+
+Hướng thứ hai, Attention layer LFM2.5: Q và K mỗi cái qua 1 RMSNorm riêng, rồi áp NeoX-style RoPE. Tức 4 kernel launch cho 2 tensor. Fuse thành 1: norm + rotate trong 1 pass → cắt 3 kernel launch.
+
+### 3. SiLU×Mul + FP8 Quant Fusion
+
+MLP layer: SiLU activation → gate × up → cast ra BF16 → rồi quantize lại FP8 cho matmul sau. Mình thấy là: bước BF16 trung gian là round-trip HBM vô nghĩa. Fuse thẳng SiLU + multiply + per-token FP8 quantize trong 1 kernel → cắt 1 lần đọc/ghi HBM.
+
+Mỗi kernel đều có guard conditions: nếu sai dtype, sai mode, hoặc spec-decode đang active thì fallback về path gốc của vLLM. 
+
+### Kiểm chứng
+
+48/48 test cases pass trên L4 (`pytest tests/kernels/test_lfm25_*.py`). Có vài bug "dễ thương" trong quá trình: clone tensor bị reference-sharing làm corrupt nửa sau phép RoPE, rounding FP8 Triton dùng banker's rounding trong khi PyTorch dùng half-up → phải thêm `tl.math.llrint`. SM90 detection tự động chọn `BLOCK_N=512` (tận dụng 64K registers) thay vì 256 cho L4/4090.
+
+Và kết quả chỉ tối ưu được tận **1%** độ trễ 🥰️ . Wao, *** *** nó chứ.
+
+## Docker & Infrastructure
+
+Dockerfile cũng có chuyện để kể. Ban đầu sau khi mình fork vllm, mình thử build với `pip install -e .` với `VLLM_USE_PRECOMPILED=1` — mỗi lần build nó download lại 1GB wheel, rồi install editable, vừa chậm vừa to. 
+
+Thử phương án khác, chuyển sang **direct overwrite**: `COPY vllm /usr/local/lib/python3.12/dist-packages/vllm/` - chỉ copy Python files đã sửa đè lên bản pre-installed trong image base. Kết quả: build time 5 phút → 15 giây, image nhỏ hơn ~400MB.
+
+Thêm `libtcmalloc-minimal4` để giảm glibc memory spinlock (vấn đề kinh điển của Python multiprocessing), `OMP_NUM_THREADS=3` khớp với 3 vCPU, và `--shm-size=256m` thay vì 2GB để tránh OOM.
+
+Bonus: `fastokens` - thư viện tokenizer C++ thay cho HuggingFace tokenizer Python — được BTC xác nhận hợp lệ ngày 28/07, cắt được 0.2-0.3ms mỗi request từ khâu encode/decode streaming. Nhỏ nhưng có võ.
+
+Và thôi chốt hạ bằng submission cuối cùng, vào ngày cuối cùng. Đúng như mong đợi, kết quả tụt xuống luôn **51 ERS**. Và mình vẫn đếch hiểu tại sao.
+
+## Tổng kết
+
+### Những thứ đáng lẽ nên làm sớm hơn
+
+1. **Đọc source vLLM kỹ hơn**: Nhiều flag "tối ưu" thực chất đã là default hoặc bị hardcode disabled cho hybrid models. Ví dụ `MRV2`: source code có hẳn dòng `if is_hybrid: return False`.
+
+2. **Đo đạc trước khi optimize**: Phải đến submission thứ 15 mình mới ngồi phân tích kỹ phân bổ latency. Con số 0.017ms GPU compute vs 4ms tổng decode step nói lên tất cả: optimize compute là vô nghĩa, optimize memory movement mới đúng.
+
+3. **Micro optimize là vô nghĩa**: Khi bottleneck là kernel launch overhead và memory bandwidth, không có flag tuning nào thay thế được việc gộp kernel. Mỗi kernel launch tiết kiệm ~10µs 😇️
+
+Một tuần, 7 ngày, hơn 20 submissions, 3 kernel fusion Triton, 1 Dockerfile tối ưu, cả ngàn dòng test, 20$ tiền thuê GPU. Rốt cuộc là vẫn quá thiếu kinh nghiệm, mình chỉ đạt được **top 77/220**.
+
+Qua đây, mình cũng thật sự xin bày tỏ sự kính trọng với các team top đầu, không hiểu họ làm sao mà điểm cao thế. (Top 1 **~91 ERS**, Top 8 là **~74 ERS**). Nếu bài viết này may mắn được đến tay một anh/chị/thầy/cô/chuyên gia có kinh nghiệm về lĩnh vực này, em rất mong được nhận thêm sự chia sẻ và lời khuyên từ quý anh/chị/thầy/cô ạ.
+
+Toàn bộ code public tại:
+- **Fork vLLM**: [github.com/minh-vt/hybrid-vllm](https://github.com/minh-vt/hybrid-vllm/tree/perf/kernels-optimize).
+- **Kernels + Docker + Configs**: Mình sẽ chia sẻ sau khi cuộc thi kết thúc.
+
+---
+Nếu ai đang làm bài toán tương tự (serve LLM trên MIG slice giới hạn, đặc biệt hybrid model), message rút ra là: **đừng đụng vào speculative decoding (ít nhất là bây giờ), đừng tin benchmark không phải target hardware, fuse kernel là chế tạo lại cái bánh xe, và luôn đo đạc trước khi code.**
+
+Hãy tiếp cận một cách khoa học và có chiến lược hơn.
+
+Cuối cùng, chúc mọi người vui vẻ, sức khỏe, cảm ơn mọi người đã đọc đến đây!

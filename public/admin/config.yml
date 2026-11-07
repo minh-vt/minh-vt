@@ -1,0 +1,81 @@
+# Sveltia CMS configuration. Decap compatible; lives in the repo, no database.
+backend:
+  name: github
+  repo: minh-vt/minh-vt
+  branch: main
+
+media_folder: public/images
+public_folder: /images
+
+locale: vi
+publish_mode: simple
+
+collections:
+  - name: about
+    label: Giới thiệu
+    files:
+      - name: about_vi
+        label: Tiếng Việt
+        file: src/content/about/vi.mdx
+        fields:
+          - { name: title, label: Tiêu đề, widget: string }
+          - { name: lead, label: Một câu giới thiệu, widget: string }
+          - { name: updated, label: Cập nhật, widget: datetime, required: false }
+          - { name: body, label: Nội dung, widget: markdown }
+      - name: about_en
+        label: English
+        file: src/content/about/en.mdx
+        fields:
+          - { name: title, label: Title, widget: string }
+          - { name: lead, label: One line, widget: string }
+          - { name: updated, label: Updated, widget: datetime, required: false }
+          - { name: body, label: Body, widget: markdown }
+
+  - name: timeline
+    label: Các mốc
+    label_singular: Mốc
+    folder: src/content/timeline
+    extension: md
+    format: frontmatter
+    create: true
+    slug: '{{fields.year}}-{{slug}}'
+    summary: '{{fields.year}} · {{fields.title}}'
+    sortable_fields: [order]
+    nested:
+      depth: 2
+    fields:
+      - { name: order, label: Thứ tự, widget: number, value_type: int, default: 999 }
+      - { name: year, label: Năm, widget: string }
+      - { name: title, label: Tiêu đề, widget: string }
+      - { name: summary, label: Mô tả, widget: text }
+      - { name: metric, label: Con số, widget: string, required: false }
+      - name: kind
+        label: Loại
+        widget: select
+        options: [study, work, community, technical]
+      - name: source
+        label: Nguồn
+        widget: object
+        required: false
+        fields:
+          - { name: label, label: Nhãn, widget: string }
+          - { name: url, label: Liên kết, widget: string }
+      - { name: body, label: Ghi chú, widget: markdown, required: false }
+
+  - name: posts
+    label: Bài viết
+    label_singular: Bài
+    folder: src/content/posts
+    extension: mdx
+    format: frontmatter
+    create: true
+    slug: '{{slug}}'
+    summary: '{{title}}'
+    sortable_fields: [date]
+    fields:
+      - { name: title, label: Tiêu đề, widget: string }
+      - { name: description, label: Mô tả, widget: text }
+      - { name: date, label: Ngày, widget: datetime }
+      - { name: tags, label: Thẻ, widget: list, required: false }
+      - { name: draft, label: Bản nháp, widget: boolean, default: false }
+      - { name: body, label: Nội dung, widget: markdown }

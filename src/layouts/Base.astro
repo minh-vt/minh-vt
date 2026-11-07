@@ -1,0 +1,97 @@
+---
+import '@fontsource-variable/fraunces'
+import '@fontsource-variable/source-serif-4'
+import '../styles/global.css'
+import Header from '../components/Header.astro'
+import Footer from '../components/Footer.astro'
+import { useTranslations } from '../i18n/utils'
+import type { Lang } from '../i18n/ui'
+
+interface Props {
+  lang: Lang
+  title: string
+  description: string
+  noindex?: boolean
+}
+
+const { lang, title, description, noindex = false } = Astro.props
+const t = useTranslations(lang)
+const canonical = Astro.site
+  ? new URL(Astro.url.pathname, Astro.site).href
+  : Astro.url.pathname
+
+// Same page in the other locale, derived from the path rather than a regex.
+const rest = Astro.url.pathname.split('/').filter(Boolean).slice(1).join('/')
+const alternate = (target: Lang) =>
+  Astro.site ? new URL(`/${target}/${rest}`, Astro.site).href : `/${target}/${rest}`
+---
+
+<!doctype html>
+<html lang={lang} data-theme="light">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    {noindex && <meta name="robots" content="noindex" />}
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <meta name="theme-color" content="#faf7f1" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#191919" media="(prefers-color-scheme: dark)" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:locale" content={lang === 'vi' ? 'vi_VN' : 'en_US'} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="alternate" hreflang="vi" href={alternate('vi')} />
+    <link rel="alternate" hreflang="en" href={alternate('en')} />
+
+    <script is:inline>
+      // Runs before first paint so the stored theme never flashes.
+      document.documentElement.classList.add('js')
+      try {
+        const stored = localStorage.getItem('theme')
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+        document.documentElement.dataset.theme =
+          stored ?? (prefersDark ? 'dark' : 'light')
+      } catch {
+        document.documentElement.dataset.theme = 'light'
+      }
+    </script>
+  </head>
+  <body>
+    <a
+      href="#main"
+      class="u-focus sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:bg-paper focus:px-4 focus:py-2 focus:text-sm"
+    >
+      {t('nav.skip')}
+    </a>
+    <Header lang={lang} />
+    <main id="main">
+      <slot />
+    </main>
+    <Footer lang={lang} />
+
+    <script>
+      const nodes = document.querySelectorAll('[data-reveal]')
+      const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
+      if (reduced || !('IntersectionObserver' in window)) {
+        nodes.forEach((node) => node.setAttribute('data-revealed', ''))
+      } else {
+        const observer = new IntersectionObserver(
+          (entries) => {
+            for (const entry of entries) {
+              if (!entry.isIntersecting) continue
+              entry.target.setAttribute('data-revealed', '')
+              observer.unobserve(entry.target)
+            }
+          },
+          { rootMargin: '0px 0px -8% 0px', threshold: 0.08 },
+        )
+        nodes.forEach((node) => observer.observe(node))
+      }
+    </script>
+  </body>
+</html>

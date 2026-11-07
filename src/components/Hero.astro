@@ -1,0 +1,72 @@
+---
+import { site } from '../lib/site'
+import { useTranslations } from '../i18n/utils'
+import type { Lang } from '../i18n/ui'
+
+interface Props {
+  lang: Lang
+  lead: string
+  image?: string
+}
+
+const {
+  lang,
+  lead,
+  image = 'https://picsum.photos/seed/minh-vt-portrait/900/1200',
+} = Astro.props
+const t = useTranslations(lang)
+---
+
+<section class="u-wrap pt-10 md:pt-20">
+  <div class="grid gap-8 md:grid-cols-[1.45fr_0.55fr] md:items-end md:gap-12">
+    <div class="md:pb-2" data-reveal>
+      <p class="t-label flex items-center gap-2">
+        <span class="inline-block size-1.5 rounded-pill bg-accent" aria-hidden="true"
+        ></span>
+        {site.location[lang]}
+      </p>
+      <h1 class="t-hero mt-5">{t('site.name')}</h1>
+      <p class="t-lead mt-6">{lead}</p>
+      <ul class="mt-8 flex flex-wrap gap-x-6 gap-y-2">
+        <li>
+          <a
+            href={`mailto:${site.email}`}
+            class="u-focus t-label text-ink no-underline hover:text-accent"
+          >
+            {site.email}
+          </a>
+        </li>
+        <li>
+          <a
+            href={site.github}
+            class="u-focus t-label text-ink no-underline hover:text-accent"
+            rel="me"
+          >
+            GitHub
+          </a>
+        </li>
+        <li>
+          <a
+            href={site.linkedin}
+            class="u-focus t-label text-ink no-underline hover:text-accent"
+            rel="me"
+          >
+            LinkedIn
+          </a>
+        </li>
+      </ul>
+    </div>
+
+    <figure class="order-first m-0 md:order-none" data-reveal>
+      <img
+        src={image}
+        alt=""
+        width="900"
+        height="1200"
+        loading="eager"
+        decoding="async"
+        class="u-portrait rounded-md border border-line"
+      />
+    </figure>
+  </div>
+</section>

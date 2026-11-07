@@ -1,0 +1,51 @@
+---
+import type { PressItem } from '../data/press'
+import { useTranslations } from '../i18n/utils'
+import type { Lang } from '../i18n/ui'
+
+interface Props {
+  lang: Lang
+  items: PressItem[]
+}
+
+const { lang, items } = Astro.props
+const t = useTranslations(lang)
+const dateFormat = new Intl.DateTimeFormat(lang === 'vi' ? 'vi-VN' : 'en-GB', {
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+})
+---
+
+<section id="sources" class="u-section u-wrap u-hairline scroll-mt-16">
+  <div class="flex flex-col gap-2 md:flex-row md:items-baseline md:justify-between">
+    <h2 class="t-section">{t('section.sources')}</h2>
+    <p class="t-meta">{t('section.sources.lead')}</p>
+  </div>
+
+  <ol class="mt-10">
+    {
+      items.map((item, index) => (
+        <li
+          class="grid gap-x-6 gap-y-1 border-t border-line py-5 last:border-b md:grid-cols-[2.5rem_11rem_1fr_auto] md:items-baseline"
+          data-reveal
+        >
+          <span class="t-meta opacity-60">{String(index + 1).padStart(2, '0')}</span>
+          <span class="t-label">{item.outlet}</span>
+          <a
+            href={item.url}
+            class="u-focus underline decoration-line underline-offset-4 transition-colors duration-200 hover:text-accent hover:decoration-accent"
+            rel="noreferrer"
+          >
+            {item.title}
+          </a>
+          {item.date && (
+            <time class="t-meta" datetime={item.date}>
+              {dateFormat.format(new Date(item.date))}
+            </time>
+          )}
+        </li>
+      ))
+    }
+  </ol>
+</section>

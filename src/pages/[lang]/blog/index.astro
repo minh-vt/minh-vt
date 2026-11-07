@@ -1,0 +1,64 @@
+---
+import Base from '../../../layouts/Base.astro'
+import { languages, type Lang } from '../../../i18n/ui'
+import { localePath, useTranslations } from '../../../i18n/utils'
+import { getPosts } from '../../../lib/content'
+
+export function getStaticPaths() {
+  return (Object.keys(languages) as Lang[]).map((lang) => ({ params: { lang } }))
+}
+
+const lang = Astro.params.lang as Lang
+const t = useTranslations(lang)
+const posts = await getPosts(lang)
+const dateFormat = new Intl.DateTimeFormat(lang === 'vi' ? 'vi-VN' : 'en-GB', {
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric',
+})
+---
+
+<Base
+  lang={lang}
+  title={`${t('section.writing')} · ${t('site.name')}`}
+  description={t('section.writing.lead')}
+>
+  <div class="u-wrap pt-14 pb-20 md:pt-20">
+    <header class="flex flex-col gap-2 md:flex-row md:items-baseline md:justify-between">
+      <h1 class="t-section">{t('section.writing')}</h1>
+      <p class="t-meta">{t('section.writing.lead')}</p>
+    </header>
+
+    {
+      posts.length === 0 ? (
+        <p class="t-meta mt-10">{t('blog.empty')}</p>
+      ) : (
+        <ol class="mt-10">
+          {posts.map((post) => (
+            <li class="border-t border-line py-7 last:border-b" data-reveal>
+              <div class="grid gap-2 md:grid-cols-[8rem_1fr] md:gap-8">
+                <time class="t-meta pt-1" datetime={post.data.date.toISOString()}>
+                  {dateFormat.format(post.data.date)}
+                </time>
+                <div>
+                  <h2 class="t-title">
+                    <a
+                      href={localePath(
+                        lang,
+                        `blog/${post.id.split('/').slice(1).join('/')}`,
+                      )}
+                      class="u-focus no-underline hover:text-accent"
+                    >
+                      {post.data.title}
+                    </a>
+                  </h2>
+                  <p class="u-measure mt-2">{post.data.description}</p>
+                </div>
+              </div>
+            </li>
+          ))}
+        </ol>
+      )
+    }
+  </div>
+</Base>
