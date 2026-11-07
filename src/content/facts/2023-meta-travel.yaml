@@ -1,0 +1,12 @@
+order: 40
+year: '2023'
+title:
+  vi: 'Meta Travel'
+  en: 'Meta Travel'
+summary:
+  vi: 'Cùng Ngô Đại Thanh Quang làm dự án du lịch thực tế ảo từ mô hình 3D và dữ liệu địa lý. Giải Nhất khoa học kỹ thuật cấp tỉnh, vào vòng quốc gia.'
+  en: 'A virtual travel project with Ngo Dai Thanh Quang, built from 3D models and geographic data. Provincial first prize, then the national round.'
+metric:
+  vi: 'Quốc gia: Giải Triển vọng và giấy chứng nhận'
+  en: 'National round: Promising award and a certificate'
+refs: [sang-tao-ttn-nd-2023, thpt-lvc-meta-travel]

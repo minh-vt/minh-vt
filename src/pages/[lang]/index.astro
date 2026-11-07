@@ -6,8 +6,16 @@ import Timeline from '../../components/Timeline.astro'
 import Sources from '../../components/Sources.astro'
 import { languages, type Lang } from '../../i18n/ui'
 import { localePath, useTranslations } from '../../i18n/utils'
-import { getAbout, getPosts, getTimeline } from '../../lib/content'
-import { press } from '../../data/press'
+import {
+  getAbout,
+  getFacts,
+  getPosts,
+  getReferenceIndex,
+  getReferences,
+  local,
+  postSlug,
+  resolveRefs,
+} from '../../lib/content'
 import { site } from '../../lib/site'
 
 export function getStaticPaths() {
@@ -21,8 +29,20 @@ const about = await getAbout(lang)
 if (!about) throw new Error(`No about entry for locale "${lang}"`)
 const { Content } = await render(about)
 
-const entries = await getTimeline(lang)
+// Views over the two structured collections. Facts carry the narrative,
+// references carry the links; neither knows about the other's layout.
+const refIndex = await getReferenceIndex()
+const rows = (await getFacts()).map((fact) => ({
+  id: fact.id,
+  year: fact.data.year,
+  title: local(fact.data.title, lang),
+  summary: local(fact.data.summary, lang),
+  metric: fact.data.metric ? local(fact.data.metric, lang) : undefined,
+  refs: resolveRefs(fact.data.refs, refIndex),
+}))
+const sources = await getReferences()
 const posts = (await getPosts(lang)).slice(0, 3)
+
 const dateFormat = new Intl.DateTimeFormat(lang === 'vi' ? 'vi-VN' : 'en-GB', {
   year: 'numeric',
   month: 'short',
@@ -45,7 +65,7 @@ const dateFormat = new Intl.DateTimeFormat(lang === 'vi' ? 'vi-VN' : 'en-GB', {
     </div>
   </section>
 
-  <Timeline lang={lang} entries={entries} />
+  <Timeline lang={lang} rows={rows} />
 
   <section id="writing" class="u-section u-wrap u-hairline scroll-mt-16">
     <div class="flex flex-col gap-2 md:flex-row md:items-baseline md:justify-between">
@@ -61,7 +81,7 @@ const dateFormat = new Intl.DateTimeFormat(lang === 'vi' ? 'vi-VN' : 'en-GB', {
           {posts.map((post) => (
             <li class="border-t border-line py-5 last:border-b" data-reveal>
               <a
-                href={localePath(lang, `blog/${post.id.split('/').slice(1).join('/')}`)}
+                href={localePath(lang, `blog/${postSlug(post.id)}`)}
                 class="u-focus group flex flex-col gap-1 no-underline md:flex-row md:items-baseline md:justify-between md:gap-8"
               >
                 <span class="t-title group-hover:text-accent">{post.data.title}</span>
@@ -85,7 +105,7 @@ const dateFormat = new Intl.DateTimeFormat(lang === 'vi' ? 'vi-VN' : 'en-GB', {
     </p>
   </section>
 
-  <Sources lang={lang} items={press[lang]} />
+  <Sources lang={lang} items={sources} />
 
   <section id="contact" class="u-invert scroll-mt-16">
     <div class="u-wrap u-section">

@@ -9,9 +9,10 @@ interface Props {
   description: string
   date: Date
   minutes: number
+  origin?: { label: string; url: string }
 }
 
-const { lang, title, description, date, minutes } = Astro.props
+const { lang, title, description, date, minutes, origin } = Astro.props
 const t = useTranslations(lang)
 const dateFormat = new Intl.DateTimeFormat(lang === 'vi' ? 'vi-VN' : 'en-GB', {
   year: 'numeric',
@@ -40,6 +41,19 @@ const dateFormat = new Intl.DateTimeFormat(lang === 'vi' ? 'vi-VN' : 'en-GB', {
         {minutes}
         {t('blog.reading')}
       </p>
+      {
+        origin && (
+          <p class="t-meta mt-2">
+            {t('blog.origin')}{' '}
+            <a
+              href={origin.url}
+              class="u-focus text-ink underline decoration-line-strong underline-offset-4 hover:text-accent"
+            >
+              {origin.label}
+            </a>
+          </p>
+        )
+      }
     </header>
 
     <div class="prose mt-10">

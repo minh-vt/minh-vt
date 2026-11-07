@@ -2,7 +2,7 @@
 import { render } from 'astro:content'
 import Post from '../../../layouts/Post.astro'
 import { languages, type Lang } from '../../../i18n/ui'
-import { entrySlug, getPosts, readingMinutes } from '../../../lib/content'
+import { getPosts, postSlug, readingMinutes } from '../../../lib/content'
 
 export async function getStaticPaths() {
   const langs = Object.keys(languages) as Lang[]
@@ -10,7 +10,7 @@ export async function getStaticPaths() {
     langs.map(async (lang) => {
       const posts = await getPosts(lang)
       return posts.map((post) => ({
-        params: { lang, slug: entrySlug(post.id) },
+        params: { lang, slug: postSlug(post.id) },
         props: { post },
       }))
     }),
@@ -29,6 +29,7 @@ const { Content } = await render(post)
   description={post.data.description}
   date={post.data.date}
   minutes={readingMinutes(post.body)}
+  origin={post.data.origin}
 >
   <Content />
 </Post>

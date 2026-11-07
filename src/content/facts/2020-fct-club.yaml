@@ -1,0 +1,12 @@
+order: 10
+year: '2020'
+title:
+  vi: 'Vào FCT Club'
+  en: 'Joining FCT Club'
+summary:
+  vi: 'Trúng tuyển khoá đầu của câu lạc bộ lập trình do FPT Software tổ chức. Theo câu lạc bộ ba năm, tới hết lớp 12.'
+  en: 'Accepted into the first cohort of a programming club run by FPT Software. Stayed for three years, until the end of high school.'
+metric:
+  vi: 'Không máy tính riêng, học ở quán net từ lớp 8'
+  en: 'No computer at home; learned from an internet cafe'
+refs: [fct-to-mo-2023, fct-best-learner-2023]

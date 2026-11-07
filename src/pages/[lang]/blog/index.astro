@@ -2,8 +2,7 @@
 import Base from '../../../layouts/Base.astro'
 import { languages, type Lang } from '../../../i18n/ui'
 import { localePath, useTranslations } from '../../../i18n/utils'
-import { getPosts } from '../../../lib/content'
-import { elsewhere } from '../../../data/writing'
+import { getPosts, postSlug } from '../../../lib/content'
 
 export function getStaticPaths() {
   return (Object.keys(languages) as Lang[]).map((lang) => ({ params: { lang } }))
@@ -12,7 +11,6 @@ export function getStaticPaths() {
 const lang = Astro.params.lang as Lang
 const t = useTranslations(lang)
 const posts = await getPosts(lang)
-const external = elsewhere[lang]
 const dateFormat = new Intl.DateTimeFormat(lang === 'vi' ? 'vi-VN' : 'en-GB', {
   year: 'numeric',
   month: 'long',
@@ -45,16 +43,18 @@ const dateFormat = new Intl.DateTimeFormat(lang === 'vi' ? 'vi-VN' : 'en-GB', {
                 <div>
                   <h2 class="t-title">
                     <a
-                      href={localePath(
-                        lang,
-                        `blog/${post.id.split('/').slice(1).join('/')}`,
-                      )}
+                      href={localePath(lang, `blog/${postSlug(post.id)}`)}
                       class="u-focus no-underline hover:text-accent"
                     >
                       {post.data.title}
                     </a>
                   </h2>
                   <p class="u-measure mt-2">{post.data.description}</p>
+                  {post.data.origin && (
+                    <p class="t-meta mt-2">
+                      {t('blog.origin')} {post.data.origin.label}
+                    </p>
+                  )}
                 </div>
               </div>
             </li>
@@ -62,30 +62,5 @@ const dateFormat = new Intl.DateTimeFormat(lang === 'vi' ? 'vi-VN' : 'en-GB', {
         </ol>
       )
     }
-
-    <section class="mt-16">
-      <h2 class="t-label">{t('blog.elsewhere')}</h2>
-      <ol class="mt-4">
-        {
-          external.map((item) => (
-            <li class="grid gap-x-8 gap-y-1 border-t border-line py-4 last:border-b md:grid-cols-[8rem_1fr]">
-              <time class="t-meta" datetime={item.date}>
-                {dateFormat.format(new Date(item.date))}
-              </time>
-              <div>
-                <a
-                  href={item.url}
-                  class="u-focus underline decoration-line underline-offset-4 transition-colors duration-200 hover:text-accent hover:decoration-accent"
-                  rel="noreferrer"
-                >
-                  {item.title}
-                </a>
-                <p class="t-meta mt-1">{item.outlet}</p>
-              </div>
-            </li>
-          ))
-        }
-      </ol>
-    </section>
   </div>
 </Base>

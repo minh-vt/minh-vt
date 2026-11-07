@@ -1,0 +1,12 @@
+order: 80
+year: '2025'
+title:
+  vi: 'Compass Award'
+  en: 'Compass Award'
+summary:
+  vi: 'FIRST Tech Challenge Vietnam trao cho người huấn luyện có đóng góp cho đội trong suốt mùa giải. Học sinh đề cử bằng video.'
+  en: 'FIRST Tech Challenge Vietnam gives it to a coach who supported a team through the season. Students nominate by video.'
+metric:
+  vi: 'Compass Award 2025, đội 28344'
+  en: 'Compass Award 2025, team 28344'
+refs: [ftcscout-compass-2025]

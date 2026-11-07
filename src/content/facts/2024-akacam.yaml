@@ -1,0 +1,12 @@
+order: 70
+year: '2024'
+title:
+  vi: 'Camera pipeline trên Rockchip'
+  en: 'Camera pipeline on Rockchip'
+summary:
+  vi: 'Chuyển service camera của akaCam từ Python và OpenCV sang C++ và GStreamer, viết plugin tăng tốc RGA, chia sẻ khung hình qua shared memory và ZeroMQ.'
+  en: 'Moved the akaCam camera service from Python and OpenCV to C++ and GStreamer, wrote an RGA acceleration plugin, and shared frames over shared memory and ZeroMQ.'
+metric:
+  vi: '60 FPS ở 24,5% CPU, so với 32 FPS ở 44,6% CPU'
+  en: '60 FPS at 24.5% CPU, against 32 FPS at 44.6% CPU'
+refs: []

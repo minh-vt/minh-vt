@@ -1,0 +1,12 @@
+order: 60
+year: '2024'
+title:
+  vi: 'FIRST Tech Challenge Vietnam'
+  en: 'FIRST Tech Challenge Vietnam'
+summary:
+  vi: 'Mùa giải đầu tiên của FIRST tại Việt Nam. Đội Science Lab thi đấu ở vòng chung kết toàn quốc.'
+  en: 'The first FIRST season in Vietnam. The Science Lab team competed at the national final.'
+metric:
+  vi: 'Nhất khu vực, Promote Award, Top 12 toàn quốc'
+  en: 'Regional winners, Promote Award, national top 12'
+refs: [phuyen-thanh-tuu-2024]

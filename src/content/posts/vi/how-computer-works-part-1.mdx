@@ -1,0 +1,68 @@
+---
+title: 'Máy tính hoạt động như thế nào, phần 1'
+description: 'Từ cổng logic AND và NOT, tới hệ nhị phân: những gì nằm dưới một chiếc máy tính.'
+date: 2023-01-07
+tags: ['máy tính', 'logic', 'nhị phân']
+origin:
+  label: 'FCT Club'
+  url: 'https://fct-club.com/2023/01/07/how-computer-works-part-1/'
+---
+
+Một sáng thức dậy, tôi quyết định sẽ viết cho mình một bài sharing thật "quỷ khốc thần sầu" nhưng hoá ra chỉ có mình tôi phải khóc vì chẳng biết bắt đầu từ đâu. Ngồi loay hoay bên bàn phím, tôi tự hỏi những câu vớ vẩn như "Tại sao gõ vào bàn phím mà chữ lại hiện trên màn hình?", "Tại sao máy tính lại biết tính toán?", "Tại sao lại không thể ngừng yêu em?" …
+
+À thì có lẽ chỉ có câu hỏi cuối là tôi chưa tìm ra được câu trả lời mà thôi. Còn để giải thích cho hai câu hỏi đầu tiên, mình cùng tìm hiểu về "Cách một chiếc máy tính hoạt động" qua bài viết này.
+
+## Máy tính như một toà nhà
+
+Trước hết ta cần biết máy tính hoạt động dựa trên cơ chế xếp tầng và liên kết (tôi tạm gọi là như thế), để dễ hiểu, hãy ví một chiếc máy tính là toà nhà cao tầng:
+
+- Ta cần "xây dựng" lên toà nhà từ phần nền móng, từ từ đi lên từng tầng một và khi xây đến đâu ta sẽ không cần phải quan tâm đến tầng bên dưới nữa (chỉ sử dụng chúng như là nền móng để tiếp tục xây tầng trên).
+- Mỗi bộ phận máy tính sẽ được liên kết với nhau để cùng hoạt động chứ không phải là nguyên một chiếc máy tính ngay từ ban đầu.
+
+Một tòa nhà cũng chỉ để trưng nếu nó không thực hiện được chức năng của nó, ở đây "tòa nhà" của chúng ta được thiết kế để thực hiện vô số chức năng mà không thay đổi cấu trúc. Ta gọi những chức năng đó là Phần mềm – Software, còn cấu trúc của tòa nhà là Phần cứng – Hardware.
+
+## Cổng Logic
+
+Ok, quay lại với một chút vật lý phổ thông. Đây là một mạch điện đơn giản với hai công tắc A và B.
+
+Bóng đèn chỉ có thể sáng khi cùng lúc bật cả hai công tắc. Ngược lại, nếu một trong hai công tắc không được đóng lại thì bóng đèn sẽ không sáng.
+
+Vậy thì, chúng ta đã tạo ra được một cổng Logic hoạt động với các điều kiện sau:
+
+- Đầu vào: Gồm hai đầu vào (A và B), công tắc A được đóng hoặc mở, công tắc B được đóng hoặc mở.
+- Đầu ra: Đèn sáng hoặc Đèn không sáng.
+
+Trong khoa học máy tính, ta xem các trạng thái *có hoặc không* bên trên là một trạng thái boolean, hay nếu ta biểu diễn trạng thái đóng của công tắc là **1**, và trạng thái mở của công tắc là **0**, ta sẽ có bảng chân lý:
+
+- **0**: Có nghĩa là đèn không sáng
+- **1**: Có nghĩa là đèn sáng
+
+Ta gọi bảng này là Bảng Chân lý (Truth table) và dựa theo nguyên tắc hoạt động của mạch trên, ta có thể nói đó là một mạch **AND**.
+
+Tiếp đây là một mạch khác đơn giản hơn. Ta chỉ có một công tắc A đã mở, và bóng đèn hiện đang sáng. Nhưng khi tôi đóng công tắc A lại, đèn sẽ tắt. Đó cơ bản là vì tôi đã tạo ra một con đường ngắn hơn cho các electron điện chạy qua công tắc chứ không đi qua bóng đèn nữa.
+
+Vậy thì tôi đã tạo ra được một cổng **NOT**, đơn giản chỉ là đảo ngược giá trị của đầu vào: nếu công tắc A đóng, đèn tắt; ngược lại nếu công tắc mở, đèn sáng.
+
+Như ta đã thấy, chúng ta có thể dễ dàng điều khiển các mạch trên bằng những công tắc. Nhưng sẽ chẳng ai bật từng công tắc trong một chiếc máy tính cả, ngày nay chúng ta sử dụng một thứ tiên tiến hơn, đó là Bóng bán dẫn (Transistors).
+
+Các bóng bán dẫn chính là cốt lõi của mọi mạch điện tử ngày nay, chúng có thể to bằng ngón tay, hoặc có thể nhỏ đến vài nanomet. Nhưng chúng ta sẽ không nói nhiều về nó, vì tôi dốt Vật lý.
+
+Tiếp tục với chủ đề về cổng logic, ta đã xây dựng được hai mạch cơ bản là AND và NOT, nhờ hai mạch này ta có thể xây dựng lên tất cả mọi thứ. Để trực quan hơn, hãy thử tạo ra một vài cổng logic đơn giản khác, tất nhiên là không phải bằng tay, tôi sử dụng một phần mềm mô phỏng trên máy tính có tên là [Digital Logic Simulator](https://github.com/SebLague/Digital-Logic-Sim).
+
+Vậy là ta đã tạo ra được một số cổng logic cơ bản, tiếp theo chúng ta sẽ đến với một thứ cực kỳ quan trọng đối với máy tính – Hệ đếm cơ sở.
+
+## Hệ nhị phân
+
+Trước tiên hãy nói về hệ thập phân mà chúng ta thường thấy.
+
+Hệ thập phân gồm 10 chữ số từ 0 đến 9, nếu muốn thể hiện giá trị cao hơn thế, chúng ta đặt thêm một chữ số vào bên trái. Cứ thế, chữ số bên trái sẽ gấp 10 lần chữ số liền kề bên phải nó và tiếp tục không giới hạn. Nhưng đối với máy móc thì như thế là quá khó hiểu và không thuận tiện tí nào.
+
+Vậy nên chúng ta sử dụng đến Hệ nhị phân, chỉ tồn tại hai chữ số **1** và **0**, quy luật vẫn tương tự như Hệ thập phân nhưng chữ số bên trái sẽ chỉ gấp hai lần chữ số liền kề bên phải của nó.
+
+Lấy ví dụ cho số **1011** nào, theo quy luật trên thì ta sẽ dễ dàng tính được giá trị của nó là:
+
+(8 × 1) + (4 × 0) + (2 × 1) + (1 × 1) = 8 + 2 + 1 = 11
+
+Đó là cách chúng ta biểu diễn số trong máy tính, trong phần tiếp theo ta sẽ tìm hiểu cách chúng ta thao tác tính toán với chúng.
+
+Phần 1 của Series "How computer works" xin dừng tại đây. Hẹn gặp lại các bạn trong các phần sau.

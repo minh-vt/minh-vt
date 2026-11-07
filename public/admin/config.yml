@@ -1,4 +1,5 @@
 # Sveltia CMS configuration. Decap compatible; lives in the repo, no database.
+# Mirrors src/content.config.ts: prose per locale, structure in one file.
 backend:
   name: github
   repo: minh-vt/minh-vt
@@ -31,37 +32,6 @@ collections:
           - { name: updated, label: Updated, widget: datetime, required: false }
           - { name: body, label: Body, widget: markdown }
 
-  - name: timeline
-    label: Các mốc
-    label_singular: Mốc
-    folder: src/content/timeline
-    extension: md
-    format: frontmatter
-    create: true
-    slug: '{{fields.year}}-{{slug}}'
-    summary: '{{fields.year}} · {{fields.title}}'
-    sortable_fields: [order]
-    nested:
-      depth: 2
-    fields:
-      - { name: order, label: Thứ tự, widget: number, value_type: int, default: 999 }
-      - { name: year, label: Năm, widget: string }
-      - { name: title, label: Tiêu đề, widget: string }
-      - { name: summary, label: Mô tả, widget: text }
-      - { name: metric, label: Con số, widget: string, required: false }
-      - name: kind
-        label: Loại
-        widget: select
-        options: [study, work, community, technical]
-      - name: source
-        label: Nguồn
-        widget: object
-        required: false
-        fields:
-          - { name: label, label: Nhãn, widget: string }
-          - { name: url, label: Liên kết, widget: string }
-      - { name: body, label: Ghi chú, widget: markdown, required: false }
-
   - name: posts
     label: Bài viết
     label_singular: Bài
@@ -78,4 +48,68 @@ collections:
       - { name: date, label: Ngày, widget: datetime }
       - { name: tags, label: Thẻ, widget: list, required: false }
       - { name: draft, label: Bản nháp, widget: boolean, default: false }
+      - name: origin
+        label: Đăng lần đầu
+        widget: object
+        required: false
+        fields:
+          - { name: label, label: Nơi đăng, widget: string }
+          - { name: url, label: Liên kết, widget: string }
       - { name: body, label: Nội dung, widget: markdown }
+
+  - name: facts
+    label: Các mốc
+    label_singular: Mốc
+    folder: src/content/facts
+    extension: yaml
+    format: yaml
+    create: true
+    summary: '{{fields.year}} · {{fields.title.vi}}'
+    sortable_fields: [order]
+    fields:
+      - { name: order, label: Thứ tự, widget: number, value_type: int, default: 999 }
+      - { name: year, label: Năm, widget: string }
+      - name: title
+        label: Tiêu đề
+        widget: object
+        fields:
+          - { name: vi, label: Tiếng Việt, widget: string }
+          - { name: en, label: English, widget: string }
+      - name: summary
+        label: Mô tả
+        widget: object
+        fields:
+          - { name: vi, label: Tiếng Việt, widget: text }
+          - { name: en, label: English, widget: text }
+      - name: metric
+        label: Con số
+        widget: object
+        required: false
+        fields:
+          - { name: vi, label: Tiếng Việt, widget: string, required: false }
+          - { name: en, label: English, widget: string, required: false }
+      - name: refs
+        label: Nguồn (id)
+        widget: list
+        required: false
+        hint: 'Id của file trong src/content/references, ví dụ tuoitre-vorc-2024'
+
+  - name: references
+    label: Nguồn
+    label_singular: Nguồn
+    folder: src/content/references
+    extension: yaml
+    format: yaml
+    create: true
+    summary: '{{fields.outlet}} — {{fields.title}}'
+    sortable_fields: [date]
+    fields:
+      - { name: url, label: Liên kết, widget: string }
+      - { name: outlet, label: Nơi đăng, widget: string }
+      - { name: title, label: Tiêu đề gốc, widget: string, hint: 'Giữ nguyên ngôn ngữ gốc' }
+      - { name: label, label: Nhãn ngắn, widget: string, required: false }
+      - { name: date, label: Ngày, widget: datetime, required: false }
+      - name: kind
+        label: Loại
+        widget: select
+        options: [press, video, award, code, social]
