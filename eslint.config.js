@@ -31,7 +31,15 @@ const COLOUR_IN_TEMPLATE = {
 
 export default [
   {
-    ignores: ['dist/', '.astro/', 'node_modules/', 'public/', 'bun.lock'],
+    ignores: [
+      'dist/',
+      '.astro/',
+      'node_modules/',
+      'public/',
+      'bun.lock',
+      '.agents/',
+      '.taste-skill/',
+    ],
   },
 
   js.configs.recommended,

@@ -1,7 +1,7 @@
 ---
 import { site } from '@/lib/site'
 import { useTranslations } from '@/i18n/utils'
-import type { Lang } from '@/i18n/ui'
+import { type Lang } from '@/i18n/ui'
 
 interface Props {
   lang: Lang
@@ -18,7 +18,9 @@ const links = [
 ---
 
 <footer class="border-t border-line">
-  <div class="u-wrap flex flex-col gap-4 py-8 md:flex-row md:items-baseline md:justify-between">
+  <div
+    class="u-wrap flex flex-col gap-4 py-8 md:flex-row md:items-baseline md:justify-between"
+  >
     <p class="t-meta">{t('site.name')} · {year}</p>
     <ul class="flex flex-wrap gap-x-5 gap-y-2">
       {

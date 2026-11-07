@@ -285,54 +285,16 @@ img {
   border-bottom: 1px solid var(--line);
 }
 
-/* Reveal on scroll. Only active once the head script marks the document. */
-.js [data-reveal] {
-  opacity: 0;
-  transform: translateY(12px);
-  transition:
-    opacity var(--duration-reveal) var(--ease-out),
-    transform var(--duration-reveal) var(--ease-out);
+/* Reveal on scroll. No hidden state in CSS: the base state is visible, and
+   GSAP animates in from offset. If the script never runs, nothing is lost. */
+.js [data-reveal='clip'] {
+  clip-path: inset(0 0 100% 0);
+  transition: clip-path var(--duration-reveal) var(--ease-out);
   transition-delay: var(--reveal-delay, 0ms);
 }
 
-.js [data-reveal][data-revealed] {
-  opacity: 1;
-  transform: none;
-}
-
-
-/* Press feedback, on every pressable thing. 160ms, subtle. */
-.u-press {
-  transition: transform var(--duration-press) var(--ease-out);
-}
-
-.u-press:active {
-  transform: scale(0.97);
-}
-
-/* Native disclosure rows: the timeline must read without JavaScript. */
-.bar-summary {
-  list-style: none;
-  cursor: pointer;
-}
-
-.bar-summary::-webkit-details-marker {
-  display: none;
-}
-
-.bar-marker::after {
-  content: '+';
-}
-
-details[open] > summary .bar-marker::after {
-  content: '\2212';
-}
-
-/* Hover affordances only where a pointer can actually hover. */
-@media (hover: hover) and (pointer: fine) {
-  .u-hover-accent:hover {
-    color: var(--accent);
-  }
+.js [data-reveal='clip'][data-revealed] {
+  clip-path: inset(0 0 0 0);
 }
 
 /* The one continuous motion on the page: a band of names, linear, paused on
@@ -372,6 +334,10 @@ details[open] > summary .bar-marker::after {
     opacity: 1;
     transform: none;
     transition: none;
+  }
+
+  .js [data-reveal='clip'] {
+    clip-path: none;
   }
 
   .marquee__track {

@@ -18,7 +18,14 @@
   class="u-press u-focus flex size-8 items-center justify-center border border-line text-ink-muted hover:border-line-strong hover:text-ink"
   aria-label={label}
 >
-  <svg viewBox="0 0 24 24" class="size-4" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+  <svg
+    viewBox="0 0 24 24"
+    class="size-4"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="1.8"
+    aria-hidden="true"
+  >
     {#if open}
       <path d="M5 5l14 14M19 5L5 19" />
     {:else}
@@ -28,7 +35,10 @@
 </button>
 
 {#if open}
-  <div {...menu.content} class="absolute inset-x-0 top-full border-b border-line bg-paper">
+  <div
+    {...menu.content}
+    class="absolute inset-x-0 top-full border-b border-line bg-paper"
+  >
     <ul class="u-wrap py-3">
       {#each links as link (link.href)}
         <li class="border-t border-line first:border-t-0">

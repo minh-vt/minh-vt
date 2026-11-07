@@ -54,10 +54,50 @@ const facts = defineCollection({
   }),
 })
 
+const work = defineCollection({
+  loader: glob({ pattern: '**/*.yaml', base: './src/content/work' }),
+  schema: z.object({
+    order: z.number(),
+    year: z.string(),
+    title: localized,
+    summary: localized,
+    metric: localized.optional(),
+    tech: z.string(),
+    refs: z.array(z.string()).default([]),
+    cover: z.string().optional(),
+  }),
+})
+
+const credentials = defineCollection({
+  loader: glob({ pattern: '**/*.yaml', base: './src/content/credentials' }),
+  schema: z.object({
+    year: z.string(),
+    title: localized,
+    issuer: localized,
+    // Outlet id when one exists, so the issuer logo comes from one place.
+    issuerId: z.string().optional(),
+    file: z.string(),
+    extra: z.string().optional(),
+    kind: z.enum(['course', 'award', 'role']),
+  }),
+})
+
+const outlets = defineCollection({
+  loader: glob({ pattern: '**/*.yaml', base: './src/content/outlets' }),
+  schema: z.object({
+    name: localized,
+    // 1: national press, organisers, government. 2: official result pages.
+    // 3: local or organisational outlets.
+    tier: z.union([z.literal(1), z.literal(2), z.literal(3)]),
+    logo: z.string().optional(),
+  }),
+})
+
 const references = defineCollection({
   loader: glob({ pattern: '**/*.yaml', base: './src/content/references' }),
   schema: z.object({
     url: z.url(),
+    // Id of an entry in src/content/outlets, validated in src/lib/content.ts.
     outlet: z.string(),
     title: z.string(),
     // Short name used when a link sits under a fact. Falls back to the outlet.
@@ -67,4 +107,4 @@ const references = defineCollection({
   }),
 })
 
-export const collections = { about, posts, facts, references }
+export const collections = { about, posts, facts, work, credentials, outlets, references }

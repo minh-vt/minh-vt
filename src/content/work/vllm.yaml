@@ -1,0 +1,13 @@
+order: 20
+year: '2026'
+title:
+  vi: 'Kernel fusion cho LFM2.5'
+  en: 'Kernel fusion for LFM2.5'
+summary:
+  vi: 'Ba kernel Triton gộp QK norm với RoPE, SiLU với lượng tử hoá FP8, và bước decode của ShortConv. Mặc định tắt, có guard và fallback về đường gốc.'
+  en: 'Three Triton kernels: QK norm fused with RoPE, SiLU with FP8 quantisation, and the ShortConv decode step. Off by default, guarded, falling back to the stock path.'
+metric:
+  vi: '48/48 test trên L4, khoảng 9 ms mỗi request'
+  en: '48 of 48 tests on an L4, around 9 ms per request'
+tech: 'Triton · vLLM · Docker'
+refs: [vllm-50670]

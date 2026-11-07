@@ -38,7 +38,10 @@ src/content/facts/        structured, one file holds every locale
 src/content/references/   structured, one file per link
 src/lib/content.ts        the only place that reads the collections
 src/i18n/                 UI strings and path helpers
-src/pages/[lang]/         one page file serves every locale
+src/views/                page bodies, one file each, taking a lang prop
+src/pages/                thin routes: / is Vietnamese, /en/ is English
+src/content/strings/      UI strings per locale, JSON
+src/content/site.json     email, links, places
 public/admin/             Sveltia CMS, config in config.yml
 ```
 
@@ -56,11 +59,17 @@ Everything else is a view computed in `src/lib/content.ts`:
 | What a page shows | Where it comes from                                    |
 | ----------------- | ------------------------------------------------------ |
 | Timeline          | `facts`, sorted by `order`, with `refs` resolved by id |
-| Sources           | `references`, sorted by date, undated last             |
+| Sources           | `references`, sorted by outlet tier, then newest first |
 | Writing           | `posts` for the current locale                         |
 
 A fact points at references by id (`refs: [a, b]`) instead of embedding them, so one article can
 back several facts and no URL is stored twice. Adding something means adding **one file**.
+
+An outlet is an entry of its own: `name` per locale, `tier`, and an optional `logo` under
+`public/logos/`. A reference points at one by **id**, never by a display string, so "Dan Tri" and
+"Dân Trí" cannot both exist. Ids are validated when collections are read, which turns a typo into a
+build failure that names the known ids. Tiers: 1 national press, organisers, government; 2 official
+result pages; 3 local or organisational outlets.
 
 ### Rules
 
@@ -69,9 +78,40 @@ back several facts and no URL is stored twice. Adding something means adding **o
    (`t-hero`, `t-section`, `t-title`).
 2. Prose collections take their locale from the entry path: `src/content/posts/vi/foo.mdx` has
    the id `vi/foo`, so a file cannot claim a language it is not filed under.
-3. Routing is one `[lang]` dynamic route rather than a folder per locale. Astro's i18n config is
-   still declared in `astro.config.mjs` so locale prefixes and `hreflang` stay consistent.
+3. Vietnamese is served at `/` and English at `/en/`; the root never redirects
+   (`routing.prefixDefaultLocale: false`). Routes in `src/pages` are thin wrappers and the body
+   lives once in `src/views`. `pathFor()` wraps Astro's `getRelativeLocaleUrl`, so no page builds a
+   locale prefix by hand.
 4. JavaScript is opt in. Anything that renders without interaction is an `.astro` component.
+5. No user-facing text in `.ts`. Strings live in `src/content/strings/<locale>.json`; contact
+   details and places in `src/content/site.json`. A `.ts` file holds types and logic only.
+6. Icons are pure CSS, from `@iconify-json/ph` through UnoCSS `presetIcons`. No icon runtime.
+
+## Routes: one file per URL shape, not per language
+
+`src/pages/[...lang]/index.astro` renders `/` and `/en/`. `getStaticPaths()` comes from
+`localeParams()`, which returns `{ lang: undefined }` for the default locale and one entry per other
+locale. Adding a language is a line in `src/i18n/ui.ts` plus `src/content/strings/<locale>.json`; no
+route file and no new folder.
+
+The same optional rest parameter works one level down:
+`src/pages/[...lang]/blog/[...slug].astro` produces `/blog/<slug>/` and `/en/blog/<slug>/`.
+
+`Astro.params.lang` is undefined for the default locale, so every route starts with
+`const lang = (Astro.params.lang ?? defaultLocale) as Lang`.
+
+## Math
+
+Formulas are LaTeX in MDX. `remark-math` and `rehype-katex` are attached once in `astro.config.mjs`
+through `markdown.processor`, so MDX inherits them; KaTeX renders at build time and the page ships
+no maths JavaScript. Inline `$...$`, block `$$...$$`.
+
+## Motion
+
+One implementation, in `src/layouts/Base.astro`: GSAP with ScrollTrigger animates `[data-reveal]`
+elements **from** an offset (`gsap.from`) with `once: true`. Nothing is hidden in CSS, so if the
+script never runs the content is still there. `prefers-reduced-motion` skips the animation
+entirely. Work cards use their own GSAP entrance inside the island.
 
 ## Conventions enforced by the linter
 
@@ -108,12 +148,28 @@ constant.
 
 - **A milestone**: one YAML file in `src/content/facts/`. Fill `vi` and `en`, list the reference
   ids that prove it.
-- **A link someone else published**: one YAML file in `src/content/references/`. The title stays
-  verbatim in its original language; `label` is a short name used when the link appears under a
-  fact where the outlet alone would be ambiguous.
+- **An outlet**: one YAML file in `src/content/outlets/`. The filename is the id references use;
+  give it a `tier` and, when one exists, a `logo`.
+- **A link someone else published**: one YAML file in `src/content/references/`. `outlet` is the
+  outlet id. The title stays verbatim in its original language; `label` is a short name used when
+  the outlet alone would be ambiguous under a fact.
 - **Your own piece**: one MDX file in `src/content/posts/<lang>/`. If it first ran elsewhere, set
   `origin`, and the post page links back to the first publication.
 - Or use the CMS at `/admin`, which commits to this repository through the GitHub API.
+
+## Collections at a glance
+
+| Collection       | Shape            | One file holds                    |
+| ---------------- | ---------------- | --------------------------------- |
+| `about`, `posts` | prose per locale | one language                      |
+| `facts`          | milestones       | every locale, plus `refs`         |
+| `work`           | projects         | every locale, plus `tech`, `refs` |
+| `credentials`    | certificates     | every locale, plus `file`         |
+| `outlets`        | publishers       | every locale, plus `tier`, `logo` |
+| `references`     | outbound links   | one link                          |
+
+`credentials` files live in `public/certs/`. A PNG renders as a preview in the grid; a PDF is
+linked, never embedded, so nothing loads until someone opens it.
 
 ## Deployment: Cloudflare Pages, no API token
 

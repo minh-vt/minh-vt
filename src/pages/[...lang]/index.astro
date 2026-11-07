@@ -1,0 +1,187 @@
+---
+import { render } from 'astro:content'
+import Base from '@/layouts/Base.astro'
+import Hero from '@/components/Hero.astro'
+import SectionHead from '@/components/SectionHead.astro'
+import FactList from '@/components/FactList.svelte'
+import WorkCards from '@/components/WorkCards.svelte'
+import Sources from '@/components/Sources.astro'
+import { defaultLocale, type Lang } from '@/i18n/ui'
+import { pathFor, useTranslations } from '@/i18n/utils'
+import { localeParams } from '@/i18n/routes'
+import {
+  getAbout,
+  getFacts,
+  getPosts,
+  getReferences,
+  getWork,
+  postSlug,
+  toFactRows,
+} from '@/lib/content'
+import { site } from '@/lib/site'
+
+export function getStaticPaths() {
+  return localeParams()
+}
+
+const lang = (Astro.params.lang ?? defaultLocale) as Lang
+const t = useTranslations(lang)
+
+const about = await getAbout(lang)
+const { Content } = await render(about.entry)
+
+const references = await getReferences()
+const rows = toFactRows(await getFacts(), references, lang)
+const work = await getWork(lang)
+const posts = (await getPosts(lang)).slice(0, 4)
+
+const dateFormat = new Intl.DateTimeFormat(lang === 'vi' ? 'vi-VN' : 'en-GB', {
+  year: 'numeric',
+  month: 'short',
+})
+
+const facts = [
+  { label: t('facts.basedIn'), value: site.location[lang], icon: 'i-ph-map-pin' },
+  { label: t('facts.now'), value: t('facts.now.value'), icon: 'i-ph-briefcase' },
+  { label: t('facts.since'), value: '2018', icon: 'i-ph-code' },
+]
+
+const links = [
+  { href: `mailto:${site.email}`, label: site.email },
+  { href: site.github, label: 'GitHub' },
+  { href: site.linkedin, label: 'LinkedIn' },
+  { href: pathFor(lang, 'certs'), label: t('nav.certs') },
+]
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Person',
+  name: t('site.name'),
+  alternateName: 'Vu Tung Minh',
+  url: Astro.site ? new URL(pathFor(lang), Astro.site).href : undefined,
+  email: `mailto:${site.email}`,
+  jobTitle: t('facts.now.value'),
+  sameAs: [site.github, site.linkedin],
+  knowsAbout: ['embedded systems', 'GStreamer', 'LLM inference', 'robotics'],
+  address: {
+    '@type': 'PostalAddress',
+    addressLocality: 'Ho Chi Minh City',
+    addressCountry: 'VN',
+  },
+}
+---
+
+<Base
+  lang={lang}
+  title={t('site.title')}
+  description={t('meta.description')}
+  jsonLd={jsonLd}
+>
+  <Hero
+    lang={lang}
+    name={t('site.name')}
+    location={site.location[lang]}
+    lead={about.entry.data.lead}
+    links={links}
+  />
+
+  <section class="u-wrap u-section-tight">
+    <div class="grid gap-8 md:grid-cols-[12rem_1fr] md:gap-12">
+      <dl class="grid grid-cols-2 gap-x-6 gap-y-5 md:grid-cols-1 md:gap-5">
+        {
+          facts.map((fact) => (
+            <div>
+              <dt class="t-label flex items-center gap-1.5">
+                <span class={`${fact.icon} size-3.5 text-ink-muted`} aria-hidden="true" />
+                {fact.label}
+              </dt>
+              <dd class="t-meta mt-1 text-ink">{fact.value}</dd>
+            </div>
+          ))
+        }
+      </dl>
+      <div class="prose" lang={about.lang} data-reveal>
+        <Content />
+      </div>
+    </div>
+  </section>
+
+  <section id="work" class="u-wrap u-section">
+    <SectionHead title={t('section.work')} lead={t('section.work.lead')} />
+    <WorkCards client:visible cards={work} />
+  </section>
+
+  <section id="timeline" class="u-wrap u-section">
+    <SectionHead
+      title={t('section.timeline')}
+      lead={`${rows.length} ${t('timeline.unit')}`}
+    />
+    <FactList client:visible lang={lang} rows={rows} hint={t('timeline.hint')} />
+  </section>
+
+  <section id="writing" class="u-wrap u-section">
+    <SectionHead title={t('section.writing')} lead={t('section.writing.lead')} />
+
+    {
+      posts.length === 0 ? (
+        <p class="t-meta mt-6">{t('blog.empty')}</p>
+      ) : (
+        <ul class="mt-2">
+          {posts.map((post, index) => (
+            <li
+              class="border-b border-line"
+              data-reveal
+              style={`--reveal-delay:${Math.min(index, 5) * 40}ms`}
+            >
+              <a
+                href={pathFor(lang, `blog/${postSlug(post.entry.id)}`)}
+                class="u-focus grid grid-cols-[1fr_auto] items-baseline gap-4 py-4"
+              >
+                <span class="t-title" lang={post.lang}>
+                  {post.entry.data.title}
+                  {post.lang !== lang && (
+                    <span class="t-meta">
+                      {' '}
+                      · {t('blog.inLanguage')} {post.lang.toUpperCase()}
+                    </span>
+                  )}
+                </span>
+                <time class="t-meta" datetime={post.entry.data.date.toISOString()}>
+                  {dateFormat.format(post.entry.data.date)}
+                </time>
+              </a>
+            </li>
+          ))}
+        </ul>
+      )
+    }
+
+    <p class="mt-6">
+      <a href={pathFor(lang, 'blog')} class="u-focus t-label text-ink hover:text-accent">
+        {t('blog.back')} →
+      </a>
+    </p>
+  </section>
+
+  <section id="sources" class="u-wrap u-section">
+    <SectionHead title={t('section.sources')} lead={t('section.sources.lead')} />
+    <Sources lang={lang} items={references} />
+  </section>
+
+  <section id="contact" class="u-invert scroll-mt-16">
+    <div class="u-wrap u-section">
+      <p class="t-label flex items-center gap-2">
+        <span class="i-ph-envelope-simple size-3.5" aria-hidden="true"></span>
+        {t('section.contact')}
+      </p>
+      <a
+        href={`mailto:${site.email}`}
+        class="u-focus t-email mt-4 block hover:text-accent"
+        data-reveal
+      >
+        {site.email}
+      </a>
+      <p class="t-meta mt-5 max-w-[32rem]">{t('section.contact.lead')}</p>
+    </div>
+  </section>
+</Base>

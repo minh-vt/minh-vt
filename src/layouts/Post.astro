@@ -1,7 +1,7 @@
 ---
 import Base from '@/layouts/Base.astro'
-import { languages, type Lang } from '@/i18n/ui'
-import { localePath, useTranslations } from '@/i18n/utils'
+import { type Lang } from '@/i18n/ui'
+import { languageName, pathFor, useTranslations } from '@/i18n/utils'
 
 interface Props {
   lang: Lang
@@ -32,7 +32,10 @@ const dateFormat = new Intl.DateTimeFormat(lang === 'vi' ? 'vi-VN' : 'en-GB', {
   jsonLd={jsonLd}
 >
   <article class="u-wrap pt-10 pb-16 md:pt-14">
-    <a href={localePath(lang, 'blog')} class="u-focus t-label text-ink-muted hover:text-accent">
+    <a
+      href={pathFor(lang, 'blog')}
+      class="u-focus t-label text-ink-muted hover:text-accent"
+    >
       ← {t('blog.back')}
     </a>
 
@@ -41,33 +44,40 @@ const dateFormat = new Intl.DateTimeFormat(lang === 'vi' ? 'vi-VN' : 'en-GB', {
       <p class="t-lead mt-3" lang={contentLang}>{description}</p>
       <p class="t-meta mt-4">
         <time datetime={date.toISOString()}>{dateFormat.format(date)}</time>
-        {updated && (
-          <>
-            <span aria-hidden="true"> · </span>
-            {t('blog.updated')} <time datetime={updated.toISOString()}>{dateFormat.format(updated)}</time>
-          </>
-        )}
+        {
+          updated && (
+            <>
+              <span aria-hidden="true"> · </span>
+              {t('blog.updated')}{' '}
+              <time datetime={updated.toISOString()}>{dateFormat.format(updated)}</time>
+            </>
+          )
+        }
         <span aria-hidden="true"> · </span>
         {minutes}
         {t('blog.reading')}
-        {contentLang !== lang && (
-          <>
-            <span aria-hidden="true"> · </span>
-            {t('blog.inLanguage')} {languages[contentLang]}
-          </>
-        )}
+        {
+          contentLang !== lang && (
+            <>
+              <span aria-hidden="true"> · </span>
+              {t('blog.inLanguage')} {languageName(contentLang)}
+            </>
+          )
+        }
       </p>
-      {origin && (
-        <p class="t-meta mt-1">
-          {t('blog.origin')}{' '}
-          <a
-            href={origin.url}
-            class="u-focus text-ink underline decoration-line-strong underline-offset-4 hover:text-accent"
-          >
-            {origin.label}
-          </a>
-        </p>
-      )}
+      {
+        origin && (
+          <p class="t-meta mt-1">
+            {t('blog.origin')}{' '}
+            <a
+              href={origin.url}
+              class="u-focus text-ink underline decoration-line-strong underline-offset-4 hover:text-accent"
+            >
+              {origin.label}
+            </a>
+          </p>
+        )
+      }
     </header>
 
     <div class="prose mt-8" lang={contentLang}>

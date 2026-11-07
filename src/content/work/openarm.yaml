@@ -1,0 +1,10 @@
+order: 40
+year: '2026'
+title:
+  vi: 'Tay robot 3 bậc tự do'
+  en: 'A 3-DOF robot arm'
+summary:
+  vi: 'Firmware STM32 chạy FreeRTOS, điều khiển PCA9685 qua I2C, USB CDC để nói chuyện với trình duyệt. Giao diện web có IK solver và mô hình URDF.'
+  en: 'STM32 firmware on FreeRTOS driving a PCA9685 over I2C, with USB CDC to the browser. The web UI carries an IK solver and the URDF model.'
+tech: 'STM32 · FreeRTOS · Svelte · Three.js'
+refs: [github-openarm]

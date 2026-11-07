@@ -1,19 +1,24 @@
 ---
 import Base from '@/layouts/Base.astro'
-import { defaultLang } from '@/i18n/ui'
-import { localePath, useTranslations } from '@/i18n/utils'
+import { defaultLocale } from '@/i18n/ui'
+import { pathFor, useTranslations } from '@/i18n/utils'
 
-const lang = defaultLang
+const lang = defaultLocale
 const t = useTranslations(lang)
 ---
 
-<Base lang={lang} title={`${t('notfound.title')} · ${t('site.name')}`} description={t('notfound.body')} noindex>
+<Base
+  lang={lang}
+  title={`${t('notfound.title')} · ${t('site.name')}`}
+  description={t('notfound.body')}
+  noindex
+>
   <div class="u-wrap py-24 md:py-32">
     <p class="t-label">404</p>
     <h1 class="t-post mt-3">{t('notfound.title')}</h1>
     <p class="t-lead mt-4">{t('notfound.body')}</p>
     <p class="mt-8">
-      <a href={localePath(lang)} class="u-focus t-label text-ink hover:text-accent">
+      <a href={pathFor(lang)} class="u-focus t-label text-ink hover:text-accent">
         ← {t('notfound.action')}
       </a>
     </p>

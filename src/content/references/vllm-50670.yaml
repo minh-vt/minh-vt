@@ -1,5 +1,5 @@
 url: 'https://github.com/vllm-project/vllm/pull/50670'
-outlet: 'GitHub'
+outlet: github
 title: 'vLLM #50670 — fused decode kernels for LFM2.5'
 kind: code
 date: '2026-08-01'

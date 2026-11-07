@@ -20,9 +20,9 @@ Bài toán
 
 Serving một con LLM 1.2B tham số (`LiquidAI/LFM2.5-1.2B-Instruct`) trên **đúng 18GB VRAM, 3 vCPU, 8GB RAM** — tức là một MiG slice của H200 — để xử lý 420 request, 70 hội thoại đồng thời, mỗi hội thoại 6 turn, arrival Poisson. Chấm điểm bằng ERS (Effective Request Score): 50% trọng số từ TTFT, 50% từ TPOT, công thức bình phương nên càng nhanh càng được điểm cao. Chỉ dùng `vllm`, không framework khác, không can thiệp weight, tokenizer, ... nói chung là trung thực với production thực tế.
 
-```
-ERS = (0.5 * ((400-TTFT)/390)^2 + 0.5 * ((10-TPOT)/9)^2) * 100
-```
+$$
+\mathrm{ERS} = \left(0.5\left(\frac{400-\mathrm{TTFT}}{390}\right)^{2} + 0.5\left(\frac{10-\mathrm{TPOT}}{9}\right)^{2}\right) \times 100
+$$
 
 Baseline của BTC là **~42 ERS** (TTFT 47ms, TPOT 4ms). Và quả thật, BTC đã cho một không gian tối ưu rất rộng, các đội thi liên tục đuổi bắt nhau và đến ngày cuối cùng. Mình **phải đạt** ít nhất 72 ERS để vào top 8 và giành cơ hội đi tiếp. Trong khi đó top 1 hiện tại đang ở 91 ERS - tức TPOT của họ loanh quanh 1.4ms, một con số gần như bất khả thi với Python thuần. Một nhiệm vụ quá sức với mình....
 

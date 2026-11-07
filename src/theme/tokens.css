@@ -44,8 +44,8 @@
   --tracking-tight: -0.035em;
   --tracking-wide: 0.14em;
 
-  --measure: 36rem;
-  --measure-wide: 48rem;
+  --measure: 42rem;
+  --measure-wide: 52rem;
   --layout-wrap: 68rem;
   --layout-gutter: clamp(1.25rem, 4vw, 3.5rem);
 

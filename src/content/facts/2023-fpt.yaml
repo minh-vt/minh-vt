@@ -1,0 +1,12 @@
+order: 70
+year: '2023–2025'
+title:
+  vi: 'Vào FPT Software'
+  en: 'Joining FPT Software'
+summary:
+  vi: 'Thực tập rồi lên chính thức ở nhóm OS & Middleware. Việc chính là service camera của akaCam trên chip Rockchip.'
+  en: 'Interned, then joined the OS & Middleware group. The main work was the akaCam camera service on Rockchip chips.'
+metric:
+  vi: 'Camera pipeline: 60 FPS ở 24,5% CPU, so với 32 FPS ở 44,6%'
+  en: 'Camera pipeline: 60 FPS at 24.5% CPU, against 32 FPS at 44.6%'
+refs: []

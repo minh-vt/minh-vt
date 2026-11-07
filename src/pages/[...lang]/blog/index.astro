@@ -1,0 +1,70 @@
+---
+import Base from '@/layouts/Base.astro'
+import { defaultLocale, type Lang } from '@/i18n/ui'
+import { pathFor, useTranslations } from '@/i18n/utils'
+import { localeParams } from '@/i18n/routes'
+import { getPosts, postSlug } from '@/lib/content'
+
+export function getStaticPaths() {
+  return localeParams()
+}
+
+const lang = (Astro.params.lang ?? defaultLocale) as Lang
+const t = useTranslations(lang)
+const posts = await getPosts(lang)
+const dateFormat = new Intl.DateTimeFormat(lang === 'vi' ? 'vi-VN' : 'en-GB', {
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric',
+})
+---
+
+<Base
+  lang={lang}
+  title={`${t('section.writing')} · ${t('site.name')}`}
+  description={t('section.writing.lead')}
+>
+  <div class="u-wrap pt-10 pb-16 md:pt-14">
+    <h1 class="t-post">{t('section.writing')}</h1>
+    <p class="t-meta mt-2">{t('section.writing.lead')}</p>
+
+    {
+      posts.length === 0 ? (
+        <p class="t-meta mt-10">{t('blog.empty')}</p>
+      ) : (
+        <ol class="mt-8">
+          {posts.map((post, index) => (
+            <li
+              class="border-t border-line"
+              data-reveal
+              style={`--reveal-delay:${Math.min(index, 5) * 40}ms`}
+            >
+              <a
+                href={pathFor(lang, `blog/${postSlug(post.entry.id)}`)}
+                class="u-focus grid gap-x-6 gap-y-1 py-5 md:grid-cols-[8rem_1fr]"
+              >
+                <time class="t-meta pt-1" datetime={post.entry.data.date.toISOString()}>
+                  {dateFormat.format(post.entry.data.date)}
+                </time>
+                <span>
+                  <span class="t-title block" lang={post.lang}>
+                    {post.entry.data.title}
+                    {post.lang !== lang && (
+                      <span class="t-meta">
+                        {' '}
+                        · {t('blog.inLanguage')} {post.lang.toUpperCase()}
+                      </span>
+                    )}
+                  </span>
+                  <span class="u-measure mt-1 block text-ink-muted" lang={post.lang}>
+                    {post.entry.data.description}
+                  </span>
+                </span>
+              </a>
+            </li>
+          ))}
+        </ol>
+      )
+    }
+  </div>
+</Base>

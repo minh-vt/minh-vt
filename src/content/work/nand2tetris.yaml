@@ -1,0 +1,10 @@
+order: 30
+year: '2022'
+title:
+  vi: 'Một máy tính từ cổng NAND'
+  en: 'A computer from NAND gates'
+summary:
+  vi: 'Dựng CPU trong HDL, rồi viết assembler, VM translator, compiler và thư viện hệ điều hành cho nó. Khoá Nand2Tetris, phần I và II.'
+  en: 'Built the CPU in HDL, then wrote its assembler, VM translator, compiler and standard library. The Nand2Tetris course, parts I and II.'
+tech: 'HDL · Assembly · Compiler · Python'
+refs: [github-nand2tetris]

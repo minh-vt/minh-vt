@@ -1,0 +1,32 @@
+---
+import Base from '@/layouts/Base.astro'
+import CredentialGrid from '@/components/CredentialGrid.astro'
+import { defaultLocale, type Lang } from '@/i18n/ui'
+import { pathFor, useTranslations } from '@/i18n/utils'
+import { localeParams } from '@/i18n/routes'
+import { getCredentials } from '@/lib/content'
+
+export function getStaticPaths() {
+  return localeParams()
+}
+
+const lang = (Astro.params.lang ?? defaultLocale) as Lang
+const t = useTranslations(lang)
+const items = await getCredentials(lang)
+---
+
+<Base
+  lang={lang}
+  title={`${t('certs.title')} · ${t('site.name')}`}
+  description={t('certs.lead')}
+>
+  <div class="u-wrap pt-10 pb-16 md:pt-14">
+    <a href={pathFor(lang)} class="u-focus t-label text-ink-muted hover:text-accent">
+      ← {t('notfound.action')}
+    </a>
+    <h1 class="t-post mt-6">{t('certs.title')}</h1>
+    <p class="t-meta mt-2">{t('certs.lead')}</p>
+
+    <CredentialGrid lang={lang} items={items} />
+  </div>
+</Base>

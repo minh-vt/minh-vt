@@ -1,11 +1,13 @@
+import raw from '@/content/site.json'
 import type { Lang } from '@/i18n/ui'
 
+/**
+ * Site-wide facts that are content, not code: contact addresses and the name of
+ * the places this person says they are in. Values live in src/content/site.json.
+ */
 export const site = {
-  email: 'vuminh.work@gmail.com',
-  github: 'https://github.com/minh-vt',
-  linkedin: 'https://linkedin.com/in/minh-vt',
-  location: {
-    vi: 'TP. Hồ Chí Minh · Phú Yên',
-    en: 'Ho Chi Minh City · Phu Yen',
-  } satisfies Record<Lang, string>,
+  email: raw.email,
+  github: raw.github,
+  linkedin: raw.linkedin,
+  location: raw.location as Record<Lang, string>,
 } as const

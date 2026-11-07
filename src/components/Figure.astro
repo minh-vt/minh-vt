@@ -31,7 +31,14 @@ const loading = priority ? 'eager' : 'lazy'
 <figure class="my-8">
   {
     typeof src === 'string' ? (
-      <img src={src} alt={alt} loading={loading} decoding="async" width="1200" height="750" />
+      <img
+        src={src}
+        alt={alt}
+        loading={loading}
+        decoding="async"
+        width="1200"
+        height="750"
+      />
     ) : (
       <Image src={src} alt={alt} widths={widths} sizes={sizes} loading={loading} />
     )

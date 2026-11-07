@@ -1,5 +1,6 @@
 import {
   defineConfig,
+  presetIcons,
   presetTypography,
   presetWind4,
   transformerDirectives,
@@ -24,6 +25,8 @@ const theme: Theme = {
     'accent-soft': 'var(--accent-soft)',
     'on-accent': 'var(--on-accent)',
     focus: 'var(--focus)',
+    field: 'var(--field)',
+    'field-ink': 'var(--field-ink)',
   },
   radius: {
     sm: 'var(--radius-sm)',
@@ -38,7 +41,14 @@ const theme: Theme = {
 }
 
 export default defineConfig({
-  presets: [presetTypography(), presetWind4({ preflights: { reset: true } })],
+  presets: [
+    presetTypography(),
+    presetWind4({ preflights: { reset: true } }),
+    presetIcons({
+      scale: 1.15,
+      extraProperties: { display: 'inline-block', 'vertical-align': 'middle' },
+    }),
+  ],
   transformers: [transformerDirectives()],
   theme,
   shortcuts: {

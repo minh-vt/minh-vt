@@ -1,0 +1,43 @@
+---
+import { local, type Outlet } from '@/lib/content'
+import type { Lang } from '@/i18n/ui'
+
+interface Props {
+  outlet: Outlet
+  lang: Lang
+  size?: 'sm' | 'md'
+}
+
+const { outlet, lang, size = 'sm' } = Astro.props
+const name = local(outlet.data.name, lang)
+/** Two letters when there is no favicon: initials of the display name. */
+const monogram = name
+  .split(/\s+/)
+  .filter((word) => word.length > 1)
+  .slice(0, 2)
+  .map((word) => word[0])
+  .join('')
+---
+
+{
+  outlet.data.logo ? (
+    <img
+      src={outlet.data.logo}
+      alt=""
+      width="16"
+      height="16"
+      loading="lazy"
+      decoding="async"
+      class={size === 'md' ? 'size-4 shrink-0' : 'size-3.5 shrink-0'}
+      aria-hidden="true"
+    />
+  ) : (
+    <span
+      class="flex shrink-0 items-center justify-center border border-line-strong text-[0.5625rem] leading-none text-ink-muted"
+      class:list={[size === 'md' ? 'size-4' : 'size-3.5']}
+      aria-hidden="true"
+    >
+      {monogram}
+    </span>
+  )
+}

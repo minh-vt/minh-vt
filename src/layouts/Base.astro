@@ -2,10 +2,11 @@
 import '@fontsource-variable/space-grotesk'
 import '@fontsource-variable/ibm-plex-sans'
 import '@/styles/global.css'
+import 'katex/dist/katex.min.css'
 import Header from '@/components/Header.astro'
 import Footer from '@/components/Footer.astro'
 import { useTranslations } from '@/i18n/utils'
-import type { Lang } from '@/i18n/ui'
+import { type Lang } from '@/i18n/ui'
 import { chromeColor } from '@/theme/browser-chrome'
 
 interface Props {
@@ -19,7 +20,9 @@ interface Props {
 
 const { lang, title, description, jsonLd, noindex = false } = Astro.props
 const t = useTranslations(lang)
-const canonical = Astro.site ? new URL(Astro.url.pathname, Astro.site).href : Astro.url.pathname
+const canonical = Astro.site
+  ? new URL(Astro.url.pathname, Astro.site).href
+  : Astro.url.pathname
 
 // Same page in the other locale, derived from the path rather than a regex.
 const rest = Astro.url.pathname.split('/').filter(Boolean).slice(1).join('/')
@@ -37,9 +40,20 @@ const alternate = (target: Lang) =>
     <link rel="canonical" href={canonical} />
     {noindex && <meta name="robots" content="noindex" />}
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-    <meta name="theme-color" content={chromeColor.light} media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content={chromeColor.dark} media="(prefers-color-scheme: dark)" />
-    <meta property="og:type" content={jsonLd?.['@type'] === 'BlogPosting' ? 'article' : 'website'} />
+    <meta
+      name="theme-color"
+      content={chromeColor.light}
+      media="(prefers-color-scheme: light)"
+    />
+    <meta
+      name="theme-color"
+      content={chromeColor.dark}
+      media="(prefers-color-scheme: dark)"
+    />
+    <meta
+      property="og:type"
+      content={jsonLd?.['@type'] === 'BlogPosting' ? 'article' : 'website'}
+    />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonical} />
@@ -55,7 +69,8 @@ const alternate = (target: Lang) =>
       try {
         const stored = localStorage.getItem('theme')
         const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
-        document.documentElement.dataset.theme = stored ?? (prefersDark ? 'dark' : 'light')
+        document.documentElement.dataset.theme =
+          stored ?? (prefersDark ? 'dark' : 'light')
       } catch {
         document.documentElement.dataset.theme = 'light'
       }
@@ -75,25 +90,42 @@ const alternate = (target: Lang) =>
     <Footer lang={lang} />
 
     <script>
-      // Reveal once, then stop. Stagger is 40ms per item inside a group and is
-      // capped so a long list never takes more than 200ms to arrive.
-      const nodes = Array.from(document.querySelectorAll('[data-reveal]'))
-      const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      // Entrance animation, one implementation for the whole site. GSAP's
+      // ScrollTrigger replaces the hand-written IntersectionObserver: it gives
+      // the same "once" behaviour plus a timeline we can extend later.
+      import gsap from 'gsap'
+      import { ScrollTrigger } from 'gsap/ScrollTrigger'
 
-      if (reduced || !('IntersectionObserver' in window)) {
-        nodes.forEach((node) => node.setAttribute('data-revealed', ''))
-      } else {
-        const observer = new IntersectionObserver(
-          (entries) => {
-            for (const entry of entries) {
-              if (!entry.isIntersecting) continue
-              entry.target.setAttribute('data-revealed', '')
-              observer.unobserve(entry.target)
-            }
-          },
-          { rootMargin: '0px 0px -8% 0px', threshold: 0.05 },
-        )
-        nodes.forEach((node) => observer.observe(node))
+      gsap.registerPlugin(ScrollTrigger)
+
+      const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      const nodes = Array.from(document.querySelectorAll('[data-reveal]'))
+
+      if (!reduced) {
+        gsap.from('.char', {
+          opacity: 0,
+          yPercent: 18,
+          duration: 0.62,
+          ease: 'power3.out',
+          stagger: 0.026,
+        })
+      }
+
+      for (const node of nodes) {
+        if (node instanceof HTMLElement && node.dataset.reveal === 'clip') {
+          node.setAttribute('data-revealed', '')
+          continue
+        }
+
+        if (reduced) continue
+
+        gsap.from(node, {
+          opacity: 0,
+          y: 12,
+          duration: 0.36,
+          ease: 'power3.out',
+          scrollTrigger: { trigger: node, start: 'top 88%', once: true },
+        })
       }
     </script>
   </body>
