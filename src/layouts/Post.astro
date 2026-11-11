@@ -1,5 +1,6 @@
 ---
 import Base from '@/layouts/Base.astro'
+import type { MarkdownHeading } from 'astro'
 import { type Lang } from '@/i18n/ui'
 import { languageName, pathFor, useTranslations } from '@/i18n/utils'
 
@@ -13,10 +14,22 @@ interface Props {
   minutes: number
   origin?: { label: string; url: string }
   jsonLd?: Record<string, unknown>
+  headings: MarkdownHeading[]
 }
 
-const { lang, contentLang, title, description, date, updated, minutes, origin, jsonLd } =
-  Astro.props
+const {
+  lang,
+  contentLang,
+  title,
+  description,
+  date,
+  updated,
+  minutes,
+  origin,
+  jsonLd,
+  headings,
+} = Astro.props
+const outline = headings.filter((heading) => heading.depth === 2 || heading.depth === 3)
 const t = useTranslations(lang)
 const dateFormat = new Intl.DateTimeFormat(lang === 'vi' ? 'vi-VN' : 'en-GB', {
   year: 'numeric',
@@ -32,56 +45,80 @@ const dateFormat = new Intl.DateTimeFormat(lang === 'vi' ? 'vi-VN' : 'en-GB', {
   jsonLd={jsonLd}
 >
   <article class="u-wrap pt-10 pb-16 md:pt-14">
-    <a
-      href={pathFor(lang, 'blog')}
-      class="u-focus t-label text-ink-muted hover:text-accent"
-    >
-      ← {t('blog.back')}
-    </a>
+    <div class="u-measure mx-auto">
+      <a
+        href={pathFor(lang, 'blog')}
+        class="u-focus u-link t-label text-ink-muted hover:text-accent"
+      >
+        ← {t('blog.back')}
+      </a>
 
-    <header class="u-measure-wide mt-6">
-      <h1 class="t-post" lang={contentLang}>{title}</h1>
-      <p class="t-lead mt-3" lang={contentLang}>{description}</p>
-      <p class="t-meta mt-4">
-        <time datetime={date.toISOString()}>{dateFormat.format(date)}</time>
+      <header class="mt-6">
+        <h1 class="t-post" lang={contentLang}>{title}</h1>
+        <p class="t-lead mt-3" lang={contentLang}>{description}</p>
+        <p class="t-meta mt-4">
+          <time datetime={date.toISOString()}>{dateFormat.format(date)}</time>
+          {
+            updated && (
+              <>
+                <span aria-hidden="true"> · </span>
+                {t('blog.updated')}{' '}
+                <time datetime={updated.toISOString()}>{dateFormat.format(updated)}</time>
+              </>
+            )
+          }
+          <span aria-hidden="true"> · </span>
+          {minutes}{' '}{t('blog.reading')}
+          {
+            contentLang !== lang && (
+              <>
+                <span aria-hidden="true"> · </span>
+                {t('blog.inLanguage')} {languageName(contentLang)}
+              </>
+            )
+          }
+        </p>
         {
-          updated && (
-            <>
-              <span aria-hidden="true"> · </span>
-              {t('blog.updated')}{' '}
-              <time datetime={updated.toISOString()}>{dateFormat.format(updated)}</time>
-            </>
+          origin && (
+            <p class="t-meta mt-1">
+              {t('blog.origin')}{' '}
+              <a
+                href={origin.url}
+                class="u-focus text-ink underline decoration-line-strong underline-offset-4 hover:text-accent"
+              >
+                {origin.label}
+              </a>
+            </p>
           )
         }
-        <span aria-hidden="true"> · </span>
-        {minutes}
-        {t('blog.reading')}
-        {
-          contentLang !== lang && (
-            <>
-              <span aria-hidden="true"> · </span>
-              {t('blog.inLanguage')} {languageName(contentLang)}
-            </>
-          )
-        }
-      </p>
+      </header>
+
       {
-        origin && (
-          <p class="t-meta mt-1">
-            {t('blog.origin')}{' '}
-            <a
-              href={origin.url}
-              class="u-focus text-ink underline decoration-line-strong underline-offset-4 hover:text-accent"
-            >
-              {origin.label}
-            </a>
-          </p>
+        outline.length >= 3 && (
+          <details class="mt-8 border-y border-line">
+            <summary class="u-focus cursor-pointer py-3 text-ink-muted hover:text-accent">
+              {t('blog.toc')}
+            </summary>
+            <nav aria-label={t('blog.toc')} class="pb-4">
+              <ol class="flex flex-col gap-1" lang={contentLang}>
+                {outline.map((heading) => (
+                  <li class={heading.depth === 3 ? 'pl-4' : undefined}>
+                    <a
+                      class="u-focus u-link t-meta hover:text-accent"
+                      href={`#${heading.slug}`}
+                    >
+                      {heading.text}
+                    </a>
+                  </li>
+                ))}
+              </ol>
+            </nav>
+          </details>
         )
       }
-    </header>
-
-    <div class="prose mt-8" lang={contentLang}>
-      <slot />
+      <div class="prose mt-8" lang={contentLang}>
+        <slot />
+      </div>
     </div>
   </article>
 </Base>

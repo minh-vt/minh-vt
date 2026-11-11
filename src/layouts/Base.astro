@@ -5,8 +5,8 @@ import '@/styles/global.css'
 import 'katex/dist/katex.min.css'
 import Header from '@/components/Header.astro'
 import Footer from '@/components/Footer.astro'
-import { useTranslations } from '@/i18n/utils'
-import { type Lang } from '@/i18n/ui'
+import { switchLocalePath, useTranslations } from '@/i18n/utils'
+import { locales, type Lang } from '@/i18n/ui'
 import { chromeColor } from '@/theme/browser-chrome'
 
 interface Props {
@@ -25,9 +25,10 @@ const canonical = Astro.site
   : Astro.url.pathname
 
 // Same page in the other locale, derived from the path rather than a regex.
-const rest = Astro.url.pathname.split('/').filter(Boolean).slice(1).join('/')
-const alternate = (target: Lang) =>
-  Astro.site ? new URL(`/${target}/${rest}`, Astro.site).href : `/${target}/${rest}`
+const alternate = (target: Lang) => {
+  const path = switchLocalePath(Astro.url.pathname, target)
+  return Astro.site ? new URL(path, Astro.site).href : path
+}
 ---
 
 <!doctype html>
@@ -59,13 +60,15 @@ const alternate = (target: Lang) =>
     <meta property="og:url" content={canonical} />
     <meta property="og:locale" content={lang === 'vi' ? 'vi_VN' : 'en_US'} />
     <meta name="twitter:card" content="summary" />
-    <link rel="alternate" hreflang="vi" href={alternate('vi')} />
-    <link rel="alternate" hreflang="en" href={alternate('en')} />
+    {
+      locales.map((locale) => (
+        <link rel="alternate" hreflang={locale} href={alternate(locale)} />
+      ))
+    }
     {jsonLd && <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />}
 
     <script is:inline>
       // Runs before first paint so the stored theme never flashes.
-      document.documentElement.classList.add('js')
       try {
         const stored = localStorage.getItem('theme')
         const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
@@ -90,43 +93,32 @@ const alternate = (target: Lang) =>
     <Footer lang={lang} />
 
     <script>
-      // Entrance animation, one implementation for the whole site. GSAP's
-      // ScrollTrigger replaces the hand-written IntersectionObserver: it gives
-      // the same "once" behaviour plus a timeline we can extend later.
-      import gsap from 'gsap'
-      import { ScrollTrigger } from 'gsap/ScrollTrigger'
-
-      gsap.registerPlugin(ScrollTrigger)
-
+      // Only the name gets an entrance. Reading content is never scroll-gated.
       const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-      const nodes = Array.from(document.querySelectorAll('[data-reveal]'))
-
-      if (!reduced) {
+      if (!reduced && document.querySelector('.char')) {
+        const { default: gsap } = await import('gsap')
+        const motion = getComputedStyle(document.documentElement)
         gsap.from('.char', {
           opacity: 0,
-          yPercent: 18,
-          duration: 0.62,
+          yPercent: 12,
+          duration: parseFloat(motion.getPropertyValue('--duration-hero')) / 1000,
           ease: 'power3.out',
-          stagger: 0.026,
+          stagger: parseFloat(motion.getPropertyValue('--stagger')) / 1000,
         })
       }
 
-      for (const node of nodes) {
-        if (node instanceof HTMLElement && node.dataset.reveal === 'clip') {
-          node.setAttribute('data-revealed', '')
-          continue
+      // Long code/formulas keep their own horizontal scroll, including keyboard.
+      const overflow = new ResizeObserver((entries) => {
+        for (const { target } of entries) {
+          if (target.scrollWidth > target.clientWidth)
+            target.setAttribute('tabindex', '0')
+          else target.removeAttribute('tabindex')
         }
-
-        if (reduced) continue
-
-        gsap.from(node, {
-          opacity: 0,
-          y: 12,
-          duration: 0.36,
-          ease: 'power3.out',
-          scrollTrigger: { trigger: node, start: 'top 88%', once: true },
-        })
-      }
+      })
+      await document.fonts.ready
+      document
+        .querySelectorAll('.prose pre, .katex-display')
+        .forEach((el) => overflow.observe(el))
     </script>
   </body>
 </html>

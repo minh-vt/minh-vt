@@ -1,21 +1,9 @@
 <script lang="ts">
   import FactRow from '@/components/FactRow.svelte'
+  import type { FactRow as Row } from '@/lib/content'
+  import type { Lang } from '@/i18n/ui'
 
-  type Ref = {
-    entry: { id: string; data: { url: string; label?: string; date?: Date } }
-    outlet: { id: string; data: { name: Record<string, string>; logo?: string } }
-  }
-
-  type Row = {
-    id: string
-    year: string
-    title: string
-    summary: string
-    metric?: string
-    refs: Ref[]
-  }
-
-  let { rows, lang, hint }: { rows: Row[]; lang: string; hint: string } = $props()
+  let { rows, lang, hint }: { rows: Row[]; lang: Lang; hint: string } = $props()
 </script>
 
 <ol class="mt-2">

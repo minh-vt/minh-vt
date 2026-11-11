@@ -13,37 +13,42 @@ const t = useTranslations(lang)
 const other = lang === 'vi' ? 'en' : 'vi'
 const home = pathFor(lang)
 const links = [
+  { href: `${home}#work`, label: t('nav.work') },
   { href: pathFor(lang, 'blog'), label: t('nav.writing') },
   { href: `${home}#timeline`, label: t('nav.timeline') },
-  { href: `${home}#sources`, label: t('nav.sources') },
+  { href: pathFor(lang, 'certs'), label: t('nav.certs') },
   { href: `${home}#contact`, label: t('nav.contact') },
 ]
-const desktopLinks = links.slice(0, 3)
+const desktopLinks = links.slice(0, 4)
 ---
 
 <header class="sticky top-0 z-20 border-b border-line bg-paper">
   <div class="u-wrap flex h-14 items-center justify-between gap-4">
     <a
       href={home}
-      class="u-focus u-press t-label text-ink hover:text-accent"
+      class="u-focus u-link t-label shrink-0 text-ink hover:text-accent"
       aria-current={Astro.url.pathname === home ? 'page' : undefined}
     >
       {t('site.name')}
     </a>
 
     <div class="flex items-center gap-2 sm:gap-4">
-      <nav class="hidden items-center gap-5 sm:flex" aria-label={t('nav.menu')}>
+      <nav class="hidden items-center gap-5 md:flex" aria-label={t('nav.menu')}>
         {
           desktopLinks.map((link) => (
-            <a href={link.href} class="u-focus t-label text-ink-muted hover:text-accent">
+            <a
+              href={link.href}
+              class="u-focus u-link t-label text-ink-muted hover:text-accent"
+              aria-current={Astro.url.pathname.startsWith(link.href) ? 'page' : undefined}
+            >
               {link.label}
             </a>
           ))
         }
       </nav>
 
-      <div class="relative sm:hidden">
-        <NavMenu client:idle links={links} label={t('nav.menu')} />
+      <div class="md:hidden">
+        <NavMenu client:load links={links} label={t('nav.menu')} />
       </div>
 
       <span class="hidden h-4 w-px bg-line sm:block"></span>
@@ -52,14 +57,14 @@ const desktopLinks = links.slice(0, 3)
         href={switchLocalePath(Astro.url.pathname, other)}
         hreflang={other}
         lang={other}
-        class="u-focus u-press t-label px-2 py-1 text-ink-muted hover:text-accent"
+        class="u-focus u-link t-label justify-center px-2 text-ink-muted hover:text-accent"
         aria-label={`${t('lang.label')}: ${languageName(other)}`}
       >
         {other.toUpperCase()}
       </a>
 
       <ThemeToggle
-        client:idle
+        client:load
         label={t('theme.label')}
         lightLabel={t('theme.light')}
         darkLabel={t('theme.dark')}

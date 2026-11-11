@@ -1,8 +1,12 @@
 import { getRelativeLocaleUrl } from 'astro:i18n'
-import { defaultLocale, locales, strings, type Lang, type UIKey } from '@/i18n/ui'
+import { defaultLocale, strings, type Lang, type UIKey } from '@/i18n/ui'
+import { isLang } from '@/i18n/locales'
 
-export function isLang(value: string | undefined): value is Lang {
-  return value !== undefined && (locales as readonly string[]).includes(value)
+/** Missing translations fall back to the required source locale. */
+export function local(value: Partial<Record<Lang, string>>, lang: Lang): string {
+  const text = value[lang] || value[defaultLocale]
+  if (!text) throw new Error(`Missing source translation: ${defaultLocale}`)
+  return text
 }
 
 export function useTranslations(lang: Lang) {

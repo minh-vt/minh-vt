@@ -6,17 +6,18 @@ import SectionHead from '@/components/SectionHead.astro'
 import FactList from '@/components/FactList.svelte'
 import WorkCards from '@/components/WorkCards.svelte'
 import Sources from '@/components/Sources.astro'
-import { defaultLocale, type Lang } from '@/i18n/ui'
-import { pathFor, useTranslations } from '@/i18n/utils'
+import CredentialCard from '@/components/CredentialCard.svelte'
+import { routeLocale } from '@/i18n/locales'
+import { local, pathFor, useTranslations } from '@/i18n/utils'
 import { localeParams } from '@/i18n/routes'
 import {
   getAbout,
   getFacts,
+  getCredentials,
   getPosts,
   getReferences,
   getWork,
   postSlug,
-  toFactRows,
 } from '@/lib/content'
 import { site } from '@/lib/site'
 
@@ -24,16 +25,21 @@ export function getStaticPaths() {
   return localeParams()
 }
 
-const lang = (Astro.params.lang ?? defaultLocale) as Lang
+const lang = routeLocale(Astro.params.lang)
 const t = useTranslations(lang)
 
 const about = await getAbout(lang)
 const { Content } = await render(about.entry)
 
 const references = await getReferences()
-const rows = toFactRows(await getFacts(), references, lang)
-const work = await getWork(lang)
+const credentials = await getCredentials(lang)
+const rows = await getFacts(lang, references, credentials)
+const work = await getWork(lang, references, credentials)
+const taCredential = credentials.find((item) => item.id === 'steam-ta-2026')
+if (!taCredential) throw new Error('Missing credential: steam-ta-2026')
 const posts = (await getPosts(lang)).slice(0, 4)
+const featuredSources = references.filter((row) => row.data.kind === 'press').slice(0, 4)
+const remainingSources = references.filter((row) => !featuredSources.includes(row))
 
 const dateFormat = new Intl.DateTimeFormat(lang === 'vi' ? 'vi-VN' : 'en-GB', {
   year: 'numeric',
@@ -41,7 +47,7 @@ const dateFormat = new Intl.DateTimeFormat(lang === 'vi' ? 'vi-VN' : 'en-GB', {
 })
 
 const facts = [
-  { label: t('facts.basedIn'), value: site.location[lang], icon: 'i-ph-map-pin' },
+  { label: t('facts.basedIn'), value: local(site.location, lang), icon: 'i-ph-map-pin' },
   { label: t('facts.now'), value: t('facts.now.value'), icon: 'i-ph-briefcase' },
   { label: t('facts.since'), value: '2018', icon: 'i-ph-code' },
 ]
@@ -80,19 +86,25 @@ const jsonLd = {
   <Hero
     lang={lang}
     name={t('site.name')}
-    location={site.location[lang]}
+    location={local(site.location, lang)}
     lead={about.entry.data.lead}
     links={links}
   />
 
-  <section class="u-wrap u-section-tight">
-    <div class="grid gap-8 md:grid-cols-[12rem_1fr] md:gap-12">
-      <dl class="grid grid-cols-2 gap-x-6 gap-y-5 md:grid-cols-1 md:gap-5">
+  <section id="work" class="u-wrap u-section">
+    <SectionHead title={t('section.work')} lead={t('section.work.lead')} />
+    <WorkCards cards={work} {lang} />
+  </section>
+
+  <section id="about" class="u-wrap u-section">
+    <SectionHead title={t('section.about')} />
+    <div class="mt-6 grid items-start gap-8 md:grid-cols-[12rem_1fr] md:gap-12">
+      <dl class="grid grid-cols-2 gap-x-6 gap-y-5 md:grid-cols-1">
         {
           facts.map((fact) => (
             <div>
               <dt class="t-label flex items-center gap-1.5">
-                <span class={`${fact.icon} size-3.5 text-ink-muted`} aria-hidden="true" />
+                <span class={`${fact.icon} size-3.5`} aria-hidden="true" />
                 {fact.label}
               </dt>
               <dd class="t-meta mt-1 text-ink">{fact.value}</dd>
@@ -100,15 +112,13 @@ const jsonLd = {
           ))
         }
       </dl>
-      <div class="prose" lang={about.lang} data-reveal>
-        <Content />
+      <div>
+        <div class="prose" lang={about.lang}><Content /></div>
+        <aside class="not-prose my-6 max-w-xs">
+          <CredentialCard item={taCredential} {lang} />
+        </aside>
       </div>
     </div>
-  </section>
-
-  <section id="work" class="u-wrap u-section">
-    <SectionHead title={t('section.work')} lead={t('section.work.lead')} />
-    <WorkCards client:visible cards={work} />
   </section>
 
   <section id="timeline" class="u-wrap u-section">
@@ -116,7 +126,7 @@ const jsonLd = {
       title={t('section.timeline')}
       lead={`${rows.length} ${t('timeline.unit')}`}
     />
-    <FactList client:visible lang={lang} rows={rows} hint={t('timeline.hint')} />
+    <FactList client:load lang={lang} rows={rows} hint={t('timeline.hint')} />
   </section>
 
   <section id="writing" class="u-wrap u-section">
@@ -127,12 +137,8 @@ const jsonLd = {
         <p class="t-meta mt-6">{t('blog.empty')}</p>
       ) : (
         <ul class="mt-2">
-          {posts.map((post, index) => (
-            <li
-              class="border-b border-line"
-              data-reveal
-              style={`--reveal-delay:${Math.min(index, 5) * 40}ms`}
-            >
+          {posts.map((post) => (
+            <li class="border-b border-line">
               <a
                 href={pathFor(lang, `blog/${postSlug(post.entry.id)}`)}
                 class="u-focus grid grid-cols-[1fr_auto] items-baseline gap-4 py-4"
@@ -157,7 +163,10 @@ const jsonLd = {
     }
 
     <p class="mt-6">
-      <a href={pathFor(lang, 'blog')} class="u-focus t-label text-ink hover:text-accent">
+      <a
+        href={pathFor(lang, 'blog')}
+        class="u-focus u-link text-ink underline decoration-line-strong hover:text-accent"
+      >
         {t('blog.back')} →
       </a>
     </p>
@@ -165,7 +174,21 @@ const jsonLd = {
 
   <section id="sources" class="u-wrap u-section">
     <SectionHead title={t('section.sources')} lead={t('section.sources.lead')} />
-    <Sources lang={lang} items={references} />
+    <Sources lang={lang} items={featuredSources} />
+    {
+      remainingSources.length > 0 && (
+        <details class="mt-4">
+          <summary class="u-focus cursor-pointer py-3 text-ink-muted hover:text-accent">
+            {t('sources.more')} ({references.length})
+          </summary>
+          <Sources
+            lang={lang}
+            items={remainingSources}
+            start={featuredSources.length + 1}
+          />
+        </details>
+      )
+    }
   </section>
 
   <section id="contact" class="u-invert scroll-mt-16">
@@ -177,11 +200,10 @@ const jsonLd = {
       <a
         href={`mailto:${site.email}`}
         class="u-focus t-email mt-4 block hover:text-accent"
-        data-reveal
       >
         {site.email}
       </a>
-      <p class="t-meta mt-5 max-w-[32rem]">{t('section.contact.lead')}</p>
+      <p class="t-meta mt-5 max-w-lg">{t('section.contact.lead')}</p>
     </div>
   </section>
 </Base>

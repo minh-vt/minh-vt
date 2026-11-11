@@ -1,110 +1,118 @@
 import { defineCollection } from 'astro:content'
 import { glob } from 'astro/loaders'
 import { z } from 'astro/zod'
+import { defaultLocale, locales, routeLocale } from '@/i18n/locales'
+import { parsePostId } from '@/i18n/routes'
 
-/**
- * Single source of truth, split by shape rather than by where a thing renders.
- *
- *   about      - prose, one file per locale (an entry is authored in a language)
- *   posts      - prose, one file per locale (long form: essays, articles)
- *   facts      - structured, one file holds every locale (a milestone in time)
- *   references - structured, one file, title kept verbatim (a link that proves
- *                a fact, whatever its language)
- *
- * Nothing below is a "timeline" or a "sources" collection: those are views
- * computed from `facts` and `references` in src/lib/content.ts.
- */
+const text = z.string().trim().min(1)
+// Structured content requires the source locale; other translations may fall back.
+const localized = z
+  .partialRecord(z.enum(locales), z.string().trim())
+  .refine((value) => Boolean(value[defaultLocale]))
+  .meta({ required: [defaultLocale] })
+const date = z.coerce.date().meta({ type: 'string', format: 'date-time' })
+const ids = z.array(text).default([])
 
-// Localised text is a map from language code to string. Adding a language adds
-// a key inside the same map, never a new schema field.
-const localized = z.record(z.string(), z.string())
-
-const about = defineCollection({
-  loader: glob({ pattern: '*.mdx', base: './src/content/about' }),
-  schema: z.object({
-    title: z.string(),
-    lead: z.string(),
-    updated: z.coerce.date().optional(),
-  }),
-})
-
-const posts = defineCollection({
-  loader: glob({ pattern: '**/*.{md,mdx}', base: './src/content/posts' }),
-  schema: z.object({
-    title: z.string(),
-    description: z.string(),
-    date: z.coerce.date(),
+// The CMS endpoint derives its fields from these same schemas.
+export const schemas = {
+  about: z.object({ title: text, lead: text, updated: date.optional() }),
+  posts: z.object({
+    title: text,
+    description: text,
+    date,
     draft: z.boolean().default(false),
-    tags: z.array(z.string()).default([]),
-    // Set when the canonical copy first ran on someone else's site.
-    origin: z.object({ label: z.string(), url: z.url() }).optional(),
+    tags: z.array(text).default([]),
+    origin: z.object({ label: text, url: z.url() }).optional(),
   }),
-})
-
-const facts = defineCollection({
-  loader: glob({ pattern: '**/*.yaml', base: './src/content/facts' }),
-  schema: z.object({
-    order: z.number(),
-    year: z.string(),
+  facts: z.object({
+    order: z.int(),
+    year: text,
     title: localized,
     summary: localized,
     metric: localized.optional(),
-    // Ids of reference entries that corroborate this fact.
-    refs: z.array(z.string()).default([]),
+    refs: ids,
+    credentials: ids,
   }),
-})
-
-const work = defineCollection({
-  loader: glob({ pattern: '**/*.yaml', base: './src/content/work' }),
-  schema: z.object({
-    order: z.number(),
-    year: z.string(),
+  work: z.object({
+    order: z.int(),
+    year: text,
     title: localized,
     summary: localized,
     metric: localized.optional(),
-    tech: z.string(),
-    refs: z.array(z.string()).default([]),
-    cover: z.string().optional(),
+    tech: text,
+    refs: ids,
+    cover: text.optional(),
+    credentials: ids,
   }),
-})
-
-const credentials = defineCollection({
-  loader: glob({ pattern: '**/*.yaml', base: './src/content/credentials' }),
-  schema: z.object({
-    year: z.string(),
+  credentials: z.object({
+    year: text,
     title: localized,
     issuer: localized,
-    // Outlet id when one exists, so the issuer logo comes from one place.
-    issuerId: z.string().optional(),
-    file: z.string(),
-    extra: z.string().optional(),
+    file: text,
+    preview: text,
+    extra: text.optional(),
     kind: z.enum(['course', 'award', 'role']),
   }),
-})
-
-const outlets = defineCollection({
-  loader: glob({ pattern: '**/*.yaml', base: './src/content/outlets' }),
-  schema: z.object({
+  outlets: z.object({
     name: localized,
-    // 1: national press, organisers, government. 2: official result pages.
-    // 3: local or organisational outlets.
-    tier: z.union([z.literal(1), z.literal(2), z.literal(3)]),
-    logo: z.string().optional(),
+    tier: z.int().min(1).max(3),
+    logo: text.optional(),
   }),
-})
-
-const references = defineCollection({
-  loader: glob({ pattern: '**/*.yaml', base: './src/content/references' }),
-  schema: z.object({
+  references: z.object({
     url: z.url(),
-    // Id of an entry in src/content/outlets, validated in src/lib/content.ts.
-    outlet: z.string(),
-    title: z.string(),
-    // Short name used when a link sits under a fact. Falls back to the outlet.
-    label: z.string().optional(),
-    date: z.coerce.date().optional(),
+    outlet: text,
+    title: text,
+    label: text.optional(),
+    date: date.optional(),
     kind: z.enum(['press', 'video', 'award', 'code', 'social']),
   }),
-})
+  site: z.object({
+    email: z.email(),
+    github: z.url(),
+    linkedin: z.url(),
+    location: localized,
+  }),
+}
 
-export const collections = { about, posts, facts, work, credentials, outlets, references }
+export const collections = {
+  about: defineCollection({
+    loader: glob({
+      pattern: '*.mdx',
+      base: './src/content/about',
+      generateId: ({ entry }) => routeLocale(entry.replace(/\.mdx$/, '')),
+    }),
+    schema: schemas.about,
+  }),
+  posts: defineCollection({
+    loader: glob({
+      pattern: '**/*.{md,mdx}',
+      base: './src/content/posts',
+      generateId: ({ entry }) => {
+        const id = entry.replace(/\.(md|mdx)$/, '')
+        parsePostId(id)
+        return id
+      },
+    }),
+    schema: schemas.posts,
+  }),
+  facts: defineCollection({
+    loader: glob({ pattern: '*.yaml', base: './src/content/facts' }),
+    schema: schemas.facts,
+  }),
+  work: defineCollection({
+    loader: glob({ pattern: '*.yaml', base: './src/content/work' }),
+    schema: schemas.work,
+  }),
+  credentials: defineCollection({
+    loader: glob({ pattern: '*.yaml', base: './src/content/credentials' }),
+    schema: schemas.credentials,
+  }),
+  outlets: defineCollection({
+    loader: glob({ pattern: '*.yaml', base: './src/content/outlets' }),
+    schema: schemas.outlets,
+  }),
+  references: defineCollection({
+    loader: glob({ pattern: '*.yaml', base: './src/content/references' }),
+    schema: schemas.references,
+  }),
+}

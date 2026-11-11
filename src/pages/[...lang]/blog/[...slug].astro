@@ -1,7 +1,7 @@
 ---
 import { render } from 'astro:content'
 import Post from '@/layouts/Post.astro'
-import { defaultLocale, type Lang } from '@/i18n/ui'
+import { routeLocale } from '@/i18n/locales'
 import { pathFor } from '@/i18n/utils'
 import { localeParams } from '@/i18n/routes'
 import {
@@ -16,7 +16,7 @@ import { site } from '@/lib/site'
 export async function getStaticPaths() {
   const paths = await Promise.all(
     localeParams().map(async ({ params }) => {
-      const lang = (params.lang ?? defaultLocale) as Lang
+      const lang = routeLocale(params.lang)
       return (await getPosts(lang)).map((post) => ({
         params: { lang: params.lang, slug: postSlug(post.entry.id) },
         props: { post },
@@ -26,10 +26,13 @@ export async function getStaticPaths() {
   return paths.flat()
 }
 
-const { post } = Astro.props as { post: LocalizedPost }
-const lang = (Astro.params.lang ?? defaultLocale) as Lang
+interface Props {
+  post: LocalizedPost
+}
+const { post } = Astro.props
+const lang = routeLocale(Astro.params.lang)
 const contentLang = entryLang(post.entry.id)
-const { Content } = await render(post.entry)
+const { Content, headings } = await render(post.entry)
 
 const path = pathFor(lang, `blog/${postSlug(post.entry.id)}`)
 const jsonLd = {
@@ -53,6 +56,7 @@ const jsonLd = {
   minutes={readingMinutes(post.entry.body)}
   origin={post.entry.data.origin}
   jsonLd={jsonLd}
+  {headings}
 >
   <Content />
 </Post>

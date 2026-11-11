@@ -4,15 +4,15 @@ Bun only. Node is not required to build or run this site.
 
 ```bash
 bun install
-bun run dev      # http://localhost:4321, forwards to /vi/
+bun run dev      # http://localhost:4321, Vietnamese at /
 bun run build    # static output in dist/
-bun run check    # astro check, then eslint
+bun run check    # Astro + Svelte type checks, then ESLint
 bun run lint     # eslint only
 bun run format
 ```
 
-Every script calls `bunx --bun astro ...`, so the Astro CLI runs on the Bun runtime instead of
-falling back to Node through its shebang
+CLI scripts use `bunx --bun`, so they run on the Bun runtime instead of
+falling back to Node through their shebangs
 (https://bun.com/docs/runtime#bun).
 
 ## Stack
@@ -21,7 +21,7 @@ falling back to Node through its shebang
 | ------------------------ | ------------------------- | ----------------------------------------------------------------------- |
 | Runtime, package manager | Bun                       | Official Astro recipe: https://docs.astro.build/en/recipes/bun/         |
 | Framework                | Astro                     | Static by default, zero JavaScript except islands                       |
-| UI islands               | Svelte 5                  | Only the theme toggle needs client state today                          |
+| UI islands               | Svelte 5                  | Theme, mobile navigation and milestone disclosures                      |
 | Content                  | MDX + content collections | Typed frontmatter, validated at build                                   |
 | Styles                   | UnoCSS with `presetWind4` | Tailwind compatible, on demand output: https://unocss.dev/presets/wind4 |
 | Editor                   | Sveltia CMS               | Git backed, no React, first class i18n: https://github.com/sveltia      |
@@ -38,11 +38,13 @@ src/content/facts/        structured, one file holds every locale
 src/content/references/   structured, one file per link
 src/lib/content.ts        the only place that reads the collections
 src/i18n/                 UI strings and path helpers
-src/views/                page bodies, one file each, taking a lang prop
-src/pages/                thin routes: / is Vietnamese, /en/ is English
+src/pages/[...lang]/      one route per page shape: / is Vietnamese, /en/ is English
 src/content/strings/      UI strings per locale, JSON
 src/content/site.json     email, links, places
-public/admin/             Sveltia CMS, config in config.yml
+src/pages/admin/index.astro  Sveltia CMS entry point at /admin/
+src/content.config.ts     Zod contracts shared by Astro and the CMS
+src/content/cms.json      CMS labels, widgets and repository settings
+src/pages/admin/config.json.ts  static CMS config derived during the build
 ```
 
 ## The content model
@@ -79,10 +81,10 @@ result pages; 3 local or organisational outlets.
 2. Prose collections take their locale from the entry path: `src/content/posts/vi/foo.mdx` has
    the id `vi/foo`, so a file cannot claim a language it is not filed under.
 3. Vietnamese is served at `/` and English at `/en/`; the root never redirects
-   (`routing.prefixDefaultLocale: false`). Routes in `src/pages` are thin wrappers and the body
-   lives once in `src/views`. `pathFor()` wraps Astro's `getRelativeLocaleUrl`, so no page builds a
-   locale prefix by hand.
-4. JavaScript is opt in. Anything that renders without interaction is an `.astro` component.
+   (`routing.prefixDefaultLocale: false`). Optional `[...lang]` routes hold each page once.
+   `pathFor()` wraps Astro's `getRelativeLocaleUrl`, so no page builds a locale prefix by hand.
+4. JavaScript is opt in. Astro pages can server-render shared Svelte cards without a `client:` directive.
+   Only interactive components hydrate; their controls stay disabled until handlers are ready.
 5. No user-facing text in `.ts`. Strings live in `src/content/strings/<locale>.json`; contact
    details and places in `src/content/site.json`. A `.ts` file holds types and logic only.
 6. Icons are pure CSS, from `@iconify-json/ph` through UnoCSS `presetIcons`. No icon runtime.
@@ -91,14 +93,19 @@ result pages; 3 local or organisational outlets.
 
 `src/pages/[...lang]/index.astro` renders `/` and `/en/`. `getStaticPaths()` comes from
 `localeParams()`, which returns `{ lang: undefined }` for the default locale and one entry per other
-locale. Adding a language is a line in `src/i18n/ui.ts` plus `src/content/strings/<locale>.json`; no
-route file and no new folder.
+locale. Supported locales and the default live in `src/i18n/locales.ts`, shared with Astro and
+the CMS. Add a locale there, its UI strings in `src/content/strings/<locale>.json` and the import
+in `src/i18n/ui.ts`; no route file is duplicated.
 
 The same optional rest parameter works one level down:
 `src/pages/[...lang]/blog/[...slug].astro` produces `/blog/<slug>/` and `/en/blog/<slug>/`.
 
 `Astro.params.lang` is undefined for the default locale, so every route starts with
-`const lang = (Astro.params.lang ?? defaultLocale) as Lang`.
+`const lang = routeLocale(Astro.params.lang)`. Unknown locales fail rather than being cast.
+The content loaders validate about filenames and post ids before loading them; posts must use
+`<locale>/<slug>`, including drafts. Slug segments use lowercase ASCII letters, digits and hyphens.
+The CMS uses `multiple_folders` i18n, normalizes generated slugs to ASCII and shares the slug
+pattern with the loader.
 
 ## Math
 
@@ -108,14 +115,21 @@ no maths JavaScript. Inline `$...$`, block `$$...$$`.
 
 ## Motion
 
-One implementation, in `src/layouts/Base.astro`: GSAP with ScrollTrigger animates `[data-reveal]`
-elements **from** an offset (`gsap.from`) with `once: true`. Nothing is hidden in CSS, so if the
-script never runs the content is still there. `prefers-reduced-motion` skips the animation
-entirely. Work cards use their own GSAP entrance inside the island.
+Only the hero name has a GSAP entrance, dynamically loaded on pages that contain it. Reading
+content and work cards never wait for a scroll animation. Reduced motion skips the entrance and
+preview hover movement. Press feedback is a short CSS transform, disabled under reduced motion.
+
+Typography belongs to `src/styles/global.css`, not UnoCSS's typography preset. This prevents a
+second `.prose` rule from overriding the theme, font size and measure. Shiki's `css-variables`
+theme reads the `--astro-code-*` aliases in `src/theme/tokens.css`. Long formulas and code scroll
+inside the article, with keyboard focus enabled when they overflow. The post outline comes from
+`render(entry).headings`, without editing the authored Markdown.
 
 ## Conventions enforced by the linter
 
-`bun run check` runs `astro check` and `eslint`. Two rules are errors, so they fail the build
+`bun run check` runs `astro check`, `svelte-check` and `eslint`. Astro's checker skips Svelte
+internals; `svelte-check --tsconfig ./tsconfig.json` checks those components and their props.
+Two lint rules are errors, so they fail the build
 instead of sitting in review:
 
 | Rule                              | Why                                            | Fix                              |
@@ -135,11 +149,11 @@ exempt from line count, because length there says little about comprehension.
 
 ## Untranslated content
 
-Nothing is hidden for lack of a translation, and nothing falls back to a hardcoded language
-constant.
+Nothing is hidden for lack of a translation. The fallback policy is explicit:
 
-- **Structured content** (`facts`): `local()` returns the requested language, else the first key in
-  the map. Put the source language first in the file and the fallback takes care of itself.
+- **Structured content**: the configured default locale is required and must contain nonblank
+  text. Other supported locales may be omitted or left blank; `local()` falls back to the default.
+  Empty maps and unknown locale keys fail validation. YAML key order has no effect.
 - **Posts**: the slug is the translation key. `posts/vi/foo.mdx` and `posts/en/foo.mdx` are the
   same piece; if only one exists, every locale serves it, marked with its language, with `lang`
   set on the article body and on its title.
@@ -168,8 +182,24 @@ constant.
 | `outlets`        | publishers       | every locale, plus `tier`, `logo` |
 | `references`     | outbound links   | one link                          |
 
-`credentials` files live in `public/certs/`. A PNG renders as a preview in the grid; a PDF is
-linked, never embedded, so nothing loads until someone opens it.
+Credential originals live in `public/certs/`. Each entry's `preview` points at a static WebP;
+PDFs are linked, never embedded or prefetched. Thumbnails are committed assets, not a build
+step; upload or prepare a real preview image when adding a credential. Cloudflare needs no PDF
+renderer or thumbnail-generation script.
+
+`CredentialCard.svelte` is shared by the credential index, milestones and work cards. Add `credentials: [nand2tetris-2022]` to a work/fact entry; an unknown id fails the
+build. Work's optional `cover` also renders when a real project image is available.
+
+To embed a credential in MDX without copying its title, issuer or file URL:
+
+```mdx
+import CredentialPreview from '@/components/CredentialPreview.astro'
+
+<CredentialPreview id="nand2tetris-2022" lang="vi" />
+```
+
+The homepage shows four press references and discloses the rest using native `<details>`, so
+all sources remain available without JavaScript.
 
 ## Deployment: Cloudflare Pages, no API token
 
@@ -205,13 +235,22 @@ https://developers.cloudflare.com/pages/configuration/custom-domains/
 ## Before going live
 
 1. `site` in `astro.config.mjs`, and the `Sitemap:` line in `public/robots.txt`.
-2. `backend.repo` in `public/admin/config.yml` if the repository name changes.
-3. Hero image, see below.
+2. `settings.backend.repo` in `src/content/cms.json` if the repository name changes.
+3. Run `bun run check` and `bun run build`, then inspect production output in a browser:
+   both themes/locales, mobile menu, milestone disclosures, previews and article math.
 
-## Known placeholders
+## CMS contract
 
-- Hero image is `picsum.photos`. Replace the `image` prop in `src/components/Hero.astro` with a
-  real portrait under `public/images/`. The press articles linked from `src/content/references/`
-  carry photographs of the teams, but those belong to the outlets: ask the outlet or the
-  photographer before reusing one, and do not hotlink the CDN URLs.
-- `/en/blog/` has no posts yet. The list renders an empty state, which is intentional.
+`src/content.config.ts` owns field names, shapes, requiredness, defaults and enums. The static
+`/admin/config.json` endpoint uses Zod's JSON Schema export to derive CMS fields from those
+contracts; `src/content/cms.json` contains only editor metadata and repository settings. There is
+no checked-in generated config or separate generator command. Unsupported schema shapes fail
+the build. Runtime Zod validation remains authoritative for refinements the editor cannot express.
+
+UI strings keep their existing dotted keys. The CMS uses a root `keyvalue` field for these files,
+because dots and `*` are invalid CMS field names; no string format migration is required.
+
+The homepage loads references and credentials once, then passes them to fact/work accessors.
+Unknown reference, outlet or credential ids fail with the owning entry named. Standalone MDX
+previews load one credential with `getEntry`, not the full credential and outlet collections.
+Display row types are inferred from accessors instead of repeating collection fields.

@@ -1,24 +1,21 @@
-import { defaultLocale, locales } from '@/i18n/ui'
+import { defaultLocale, isLang, locales } from '@/i18n/locales'
 
-export type LocaleParams = { params: { lang?: string } }
+export const slugSegmentPattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
 
-/**
- * Route params for every locale, from one file.
- *
- * The default locale has no prefix, so its `lang` param is undefined and the
- * page lands at "/". Every other locale lands at "/<locale>/". Adding a
- * language is an edit to `locales`, never a new route file.
- */
-export function localeParams(): LocaleParams[] {
-  return [
-    { params: { lang: undefined } },
-    ...locales
-      .filter((locale) => locale !== defaultLocale)
-      .map((locale) => ({ params: { lang: locale as string } })),
-  ]
+export function parsePostId(id: string) {
+  const [lang, ...parts] = id.split('/')
+  if (
+    !isLang(lang) ||
+    parts.length === 0 ||
+    parts.some((part) => !slugSegmentPattern.test(part))
+  ) {
+    throw new Error(`Invalid post id: ${id}. Expected <locale>/<slug>`)
+  }
+  return { lang, slug: parts.join('/') }
 }
 
-/** Non-default locales, for routes that also need a second list of params. */
-export function otherLocales() {
-  return locales.filter((locale) => locale !== defaultLocale)
+export function localeParams() {
+  return locales.map((lang) => ({
+    params: { lang: lang === defaultLocale ? undefined : lang },
+  }))
 }

@@ -8,3 +8,4 @@ summary:
   en: 'Built the CPU in HDL, then wrote its assembler, VM translator, compiler and standard library. The Nand2Tetris course, parts I and II.'
 tech: 'HDL · Assembly · Compiler · Python'
 refs: [github-nand2tetris]
+credentials: [nand2tetris-2022]

@@ -1,41 +1,42 @@
 ---
+import { pathFor, useTranslations } from '@/i18n/utils'
+import type { Lang } from '@/i18n/ui'
+
 interface Props {
-  lang: 'vi' | 'en'
+  lang: Lang
   location: string
   lead: string
   name: string
   links: { href: string; label: string }[]
 }
 
-const { location, lead, name, links } = Astro.props
+const { lang, location, lead, name, links } = Astro.props
+const t = useTranslations(lang)
 
-// One span per character so the name can arrive in sequence. Spaces stay as
-// text nodes, otherwise the words could no longer wrap on a phone.
-const chars = [...name]
+// Animate letters, but keep each word intact when the name wraps on phones.
+const words = name.split(' ')
 ---
 
 <section class="pt-6 md:pt-10">
   <div class="overflow-x-clip">
     <h1 class="t-monument px-[var(--layout-gutter)] text-center uppercase">
       {
-        chars.map((char, index) =>
-          char === ' ' ? (
-            ' '
-          ) : (
-            <span class="char" style={`--i:${index}`} aria-hidden="true">
-              {char}
-            </span>
-          ),
-        )
+        words.map((word) => (
+          <>
+            <span class="inline-block whitespace-nowrap" aria-hidden="true">
+              {[...word].map((char) => (
+                <span class="char">{char}</span>
+              ))}
+            </span>{' '}
+          </>
+        ))
       }
       <span class="sr-only">{name}</span>
     </h1>
   </div>
 
-  <div
-    class="u-wrap mt-8 flex flex-col gap-6 md:mt-10 md:flex-row md:items-end md:justify-between"
-  >
-    <div data-reveal>
+  <div class="u-wrap mt-8 grid gap-6 md:mt-10 md:grid-cols-[1fr_2fr] md:gap-12">
+    <div>
       <p class="t-label flex items-center gap-2">
         <span class="inline-block size-1.5 bg-accent" aria-hidden="true"></span>
         {location}
@@ -46,7 +47,7 @@ const chars = [...name]
             <li>
               <a
                 href={link.href}
-                class="u-focus inline-flex items-center gap-1.5 t-label text-ink hover:text-accent"
+                class="u-focus u-link t-meta text-ink hover:text-accent"
                 rel={link.href.startsWith('http') ? 'me' : undefined}
               >
                 {link.label}
@@ -61,6 +62,23 @@ const chars = [...name]
       </ul>
     </div>
 
-    <p class="t-lead u-measure" data-reveal>{lead}</p>
+    <div>
+      <p class="t-lead u-measure">{lead}</p>
+      <div class="mt-4 flex flex-wrap gap-x-6 gap-y-1">
+        <a
+          href={`${pathFor(lang)}#work`}
+          class="u-focus u-link text-accent underline decoration-line-strong"
+        >
+          {t('hero.work')}
+          <span class="i-ph-arrow-down size-4" aria-hidden="true"></span>
+        </a>
+        <a
+          href={pathFor(lang, 'blog')}
+          class="u-focus u-link text-ink-muted underline decoration-line"
+        >
+          {t('hero.writing')}
+        </a>
+      </div>
+    </div>
   </div>
 </section>

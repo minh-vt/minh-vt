@@ -8,10 +8,10 @@
     "dev": "bunx --bun astro dev",
     "build": "bunx --bun astro build",
     "preview": "bunx --bun astro preview",
-    "check": "bunx --bun astro check && bunx eslint .",
-    "lint": "bunx eslint .",
-    "lint:fix": "bunx eslint . --fix",
-    "format": "bunx prettier --write ."
+    "check": "bunx --bun astro check && bunx --bun svelte-check --tsconfig ./tsconfig.json && bunx --bun eslint .",
+    "lint": "bunx --bun eslint .",
+    "lint:fix": "bunx --bun eslint . --fix",
+    "format": "bunx --bun prettier --write ."
   },
   "dependencies": {
     "@astrojs/markdown-remark": "^7.3.6",
@@ -42,6 +42,7 @@
     "prettier": "^3.9.10",
     "prettier-plugin-astro": "^0.14.1",
     "prettier-plugin-svelte": "^4.1.1",
+    "svelte-check": "^4.7.8",
     "svelte-eslint-parser": "^1.10.1",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.72.1",

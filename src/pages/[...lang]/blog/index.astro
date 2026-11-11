@@ -1,6 +1,6 @@
 ---
 import Base from '@/layouts/Base.astro'
-import { defaultLocale, type Lang } from '@/i18n/ui'
+import { routeLocale } from '@/i18n/locales'
 import { pathFor, useTranslations } from '@/i18n/utils'
 import { localeParams } from '@/i18n/routes'
 import { getPosts, postSlug } from '@/lib/content'
@@ -9,7 +9,7 @@ export function getStaticPaths() {
   return localeParams()
 }
 
-const lang = (Astro.params.lang ?? defaultLocale) as Lang
+const lang = routeLocale(Astro.params.lang)
 const t = useTranslations(lang)
 const posts = await getPosts(lang)
 const dateFormat = new Intl.DateTimeFormat(lang === 'vi' ? 'vi-VN' : 'en-GB', {
@@ -33,12 +33,8 @@ const dateFormat = new Intl.DateTimeFormat(lang === 'vi' ? 'vi-VN' : 'en-GB', {
         <p class="t-meta mt-10">{t('blog.empty')}</p>
       ) : (
         <ol class="mt-8">
-          {posts.map((post, index) => (
-            <li
-              class="border-t border-line"
-              data-reveal
-              style={`--reveal-delay:${Math.min(index, 5) * 40}ms`}
-            >
+          {posts.map((post) => (
+            <li class="border-t border-line">
               <a
                 href={pathFor(lang, `blog/${postSlug(post.entry.id)}`)}
                 class="u-focus grid gap-x-6 gap-y-1 py-5 md:grid-cols-[8rem_1fr]"

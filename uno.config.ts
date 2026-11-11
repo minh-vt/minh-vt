@@ -1,10 +1,4 @@
-import {
-  defineConfig,
-  presetIcons,
-  presetTypography,
-  presetWind4,
-  transformerDirectives,
-} from 'unocss'
+import { defineConfig, presetIcons, presetWind4, transformerDirectives } from 'unocss'
 import type { Theme } from '@unocss/preset-wind4/theme'
 
 /**
@@ -42,7 +36,6 @@ const theme: Theme = {
 
 export default defineConfig({
   presets: [
-    presetTypography(),
     presetWind4({ preflights: { reset: true } }),
     presetIcons({
       scale: 1.15,

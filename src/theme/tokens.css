@@ -14,12 +14,25 @@
   --ink-muted: oklch(46% 0.01 62);
   --line: oklch(88% 0.008 80);
   --line-strong: oklch(72% 0.012 78);
-  --accent: oklch(58% 0.19 38);
+  --accent: oklch(54% 0.18 38);
   --accent-soft: oklch(93% 0.04 45);
   --on-accent: oklch(99% 0.004 45);
   --focus: oklch(52% 0.15 250);
   --field: oklch(24% 0.014 55);
   --field-ink: oklch(97.6% 0.004 90);
+
+  /* Shiki's CSS-variable theme inherits the current page palette. */
+  --astro-code-background: var(--paper-raised);
+  --astro-code-foreground: var(--ink);
+  --astro-code-token-constant: var(--accent);
+  --astro-code-token-string: var(--ink);
+  --astro-code-token-comment: var(--ink-muted);
+  --astro-code-token-keyword: var(--accent);
+  --astro-code-token-parameter: var(--ink);
+  --astro-code-token-function: var(--ink);
+  --astro-code-token-string-expression: var(--ink);
+  --astro-code-token-punctuation: var(--ink-muted);
+  --astro-code-token-link: var(--accent);
 
   /* Space Grotesk for display, labels and numerals; IBM Plex Sans for prose.
      Code falls back to the system mono stack, so no third file is downloaded. */
@@ -27,7 +40,7 @@
   --font-body: 'IBM Plex Sans Variable', ui-sans-serif, system-ui, sans-serif;
   --font-code: ui-monospace, 'SFMono-Regular', 'Menlo', monospace;
 
-  --text-xs: 0.75rem;
+  --text-xs: 0.8125rem;
   --text-sm: 0.875rem;
   --text-base: 1.0625rem;
   --text-lg: 1.25rem;
@@ -42,7 +55,7 @@
   --leading-body: 1.6;
 
   --tracking-tight: -0.035em;
-  --tracking-wide: 0.14em;
+  --tracking-wide: 0.025em;
 
   --measure: 42rem;
   --measure-wide: 52rem;
@@ -52,15 +65,13 @@
   /* One radius for the whole page. Square. */
   --radius: 0px;
 
-  /* Motion: strong curves, short durations. Nothing over 300ms except the
-     deliberate reveal and the marquee. */
+  /* Motion: strong curves, short feedback; only the hero gets an entrance. */
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
   --duration-press: 160ms;
   --duration-ui: 200ms;
-  --duration-reveal: 360ms;
-  --duration-marquee: 40s;
-  --stagger: 40ms;
+  --duration-hero: 500ms;
+  --stagger: 26ms;
 }
 
 [data-theme='dark'] {

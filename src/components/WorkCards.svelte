@@ -1,74 +1,61 @@
 <script lang="ts">
-  import { onMount } from 'svelte'
-  import gsap from 'gsap'
+  import CredentialCard from '@/components/CredentialCard.svelte'
+  import type { WorkRow } from '@/lib/content'
+  import type { Lang } from '@/i18n/ui'
+  import { useTranslations } from '@/i18n/utils'
 
-  type Card = {
-    id: string
-    year: string
-    title: string
-    summary: string
-    metric?: string
-    tech: string
-    refs: {
-      entry: { data: { url: string; title: string } }
-      outlet: { data: { name: Record<string, string> } }
-    }[]
-  }
-
-  let { cards }: { cards: Card[] } = $props()
-
-  let root: HTMLElement
-
-  onMount(() => {
-    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    if (reduced) return
-
-    const ctx = gsap.context(() => {
-      gsap.from('[data-card]', {
-        y: 24,
-        opacity: 0,
-        duration: 0.5,
-        ease: 'power3.out',
-        stagger: 0.06,
-        scrollTrigger: { trigger: root, start: 'top 85%', once: true },
-      })
-    }, root)
-
-    return () => ctx.revert()
-  })
+  let { cards, lang }: { cards: WorkRow[]; lang: Lang } = $props()
+  const t = $derived(useTranslations(lang))
 </script>
 
-<ul class="mt-2 grid gap-x-8 gap-y-0 md:grid-cols-2" bind:this={root}>
+<ul class="mt-4 grid gap-x-8 gap-y-0 md:grid-cols-2">
   {#each cards as card (card.id)}
-    <li data-card class="group border-t border-line py-5">
+    <li class="min-w-0 border-t border-line py-6">
+      {#if card.cover}
+        <img
+          src={card.cover}
+          alt={card.title}
+          width="960"
+          height="540"
+          loading="lazy"
+          decoding="async"
+          class="mb-4 aspect-video w-full border border-line object-contain"
+        />
+      {/if}
       <div class="flex items-baseline justify-between gap-4">
         <h3 class="t-title">{card.title}</h3>
         <span class="t-year shrink-0">{card.year}</span>
       </div>
-
-      <p class="mt-2 text-ink-muted">{card.summary}</p>
-
-      {#if card.metric}
-        <p class="t-metric mt-2">{card.metric}</p>
-      {/if}
-
+      <p class="mt-3 text-ink-muted">{card.summary}</p>
+      {#if card.metric}<p class="t-metric mt-3">{card.metric}</p>{/if}
       <p class="t-meta mt-3">{card.tech}</p>
-
       {#if card.refs.length > 0}
-        <ul class="mt-3 flex flex-wrap gap-x-4 gap-y-2">
-          {#each card.refs as ref (ref.entry.data.url)}
+        <ul class="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+          {#each card.refs as ref (ref.id)}
+            {@const label = t(ref.data.url.includes('/pull/') ? 'work.pr' : 'work.code')}
             <li>
               <a
-                href={ref.entry.data.url}
-                class="u-focus t-meta inline-flex items-center gap-1 underline decoration-line underline-offset-4 hover:text-accent"
+                href={ref.data.url}
+                class="u-focus u-link t-meta underline decoration-line-strong hover:text-accent"
                 rel="noreferrer"
+                aria-label={`${label}: ${card.title}`}
               >
-                Code
+                {label}
                 <span class="i-ph-arrow-up-right size-3" aria-hidden="true"></span>
               </a>
             </li>
           {/each}
         </ul>
+      {/if}
+      {#if card.credentials.length > 0}
+        <details class="mt-2">
+          <summary class="u-focus cursor-pointer py-3 t-meta hover:text-accent"
+            >{t('nav.certs')}</summary
+          >
+          {#each card.credentials as item (item.id)}
+            <div class="mt-3 max-w-xs"><CredentialCard {item} {lang} /></div>
+          {/each}
+        </details>
       {/if}
     </li>
   {/each}

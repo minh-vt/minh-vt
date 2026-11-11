@@ -12,6 +12,7 @@
     darkLabel: string
   } = $props()
 
+  let ready = $state(false)
   let isDark = $state(false)
 
   const toggle = new Toggle({
@@ -29,12 +30,14 @@
 
   onMount(() => {
     isDark = document.documentElement.dataset.theme === 'dark'
+    ready = true
   })
 </script>
 
 <button
   {...toggle.trigger}
-  class="u-press u-focus flex size-8 items-center justify-center border border-line text-ink-muted hover:border-line-strong hover:text-ink"
+  disabled={!ready}
+  class="u-press u-focus flex size-11 items-center justify-center border border-line text-ink-muted hover:border-line-strong hover:text-ink"
   aria-label={label}
   title={isDark ? lightLabel : darkLabel}
 >

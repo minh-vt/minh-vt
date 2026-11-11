@@ -1,5 +1,6 @@
 <script lang="ts">
   import { Collapsible } from 'melt/builders'
+  import { onMount } from 'svelte'
 
   let {
     links,
@@ -9,13 +10,29 @@
     label: string
   } = $props()
 
+  let ready = $state(false)
+  onMount(() => {
+    ready = true
+  })
   let open = $state(false)
+  let trigger: HTMLButtonElement
   const menu = new Collapsible({ open: () => open, onOpenChange: (v) => (open = v) })
+
+  function close(event: KeyboardEvent) {
+    if (event.key !== 'Escape' || !open) return
+    event.preventDefault()
+    open = false
+    trigger.focus()
+  }
 </script>
+
+<svelte:window onkeydown={close} />
 
 <button
   {...menu.trigger}
-  class="u-press u-focus flex size-8 items-center justify-center border border-line text-ink-muted hover:border-line-strong hover:text-ink"
+  disabled={!ready}
+  bind:this={trigger}
+  class="u-press u-focus flex size-11 items-center justify-center border border-line text-ink-muted hover:border-line-strong hover:text-ink"
   aria-label={label}
 >
   <svg
@@ -35,16 +52,17 @@
 </button>
 
 {#if open}
-  <div
+  <nav
     {...menu.content}
-    class="absolute inset-x-0 top-full border-b border-line bg-paper"
+    aria-label={label}
+    class="absolute inset-x-0 top-full max-h-[calc(100dvh-4rem)] overflow-y-auto border-b border-line bg-paper"
   >
     <ul class="u-wrap py-3">
       {#each links as link (link.href)}
         <li class="border-t border-line first:border-t-0">
           <a
             href={link.href}
-            class="u-focus block py-3 t-label text-ink hover:text-accent"
+            class="u-focus block py-3 text-ink hover:text-accent"
             onclick={() => (open = false)}
           >
             {link.label}
@@ -52,5 +70,5 @@
         </li>
       {/each}
     </ul>
-  </div>
+  </nav>
 {/if}
