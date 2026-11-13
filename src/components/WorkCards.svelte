@@ -1,7 +1,7 @@
 <script lang="ts">
   import CredentialCard from '@/components/CredentialCard.svelte'
   import type { WorkRow } from '@/lib/content'
-  import type { Lang } from '@/i18n/ui'
+  import type { Lang } from '@/i18n/locales'
   import { useTranslations } from '@/i18n/utils'
 
   let { cards, lang }: { cards: WorkRow[]; lang: Lang } = $props()

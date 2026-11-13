@@ -1,6 +1,7 @@
 ---
 import Base from '@/layouts/Base.astro'
 import { routeLocale } from '@/i18n/locales'
+import { formatDate } from '@/i18n/format'
 import { pathFor, useTranslations } from '@/i18n/utils'
 import { localeParams } from '@/i18n/routes'
 import { getPosts, postSlug } from '@/lib/content'
@@ -12,11 +13,6 @@ export function getStaticPaths() {
 const lang = routeLocale(Astro.params.lang)
 const t = useTranslations(lang)
 const posts = await getPosts(lang)
-const dateFormat = new Intl.DateTimeFormat(lang === 'vi' ? 'vi-VN' : 'en-GB', {
-  year: 'numeric',
-  month: 'long',
-  day: 'numeric',
-})
 ---
 
 <Base
@@ -40,7 +36,7 @@ const dateFormat = new Intl.DateTimeFormat(lang === 'vi' ? 'vi-VN' : 'en-GB', {
                 class="u-focus grid gap-x-6 gap-y-1 py-5 md:grid-cols-[8rem_1fr]"
               >
                 <time class="t-meta pt-1" datetime={post.entry.data.date.toISOString()}>
-                  {dateFormat.format(post.entry.data.date)}
+                  {formatDate(post.entry.data.date, lang, 'long')}
                 </time>
                 <span>
                   <span class="t-title block" lang={post.lang}>

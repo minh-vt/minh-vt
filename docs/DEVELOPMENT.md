@@ -37,14 +37,17 @@ src/content/posts/        prose, one file per locale
 src/content/facts/        structured, one file holds every locale
 src/content/references/   structured, one file per link
 src/lib/content.ts        the only place that reads the collections
-src/i18n/                 UI strings and path helpers
+src/lib/cms-fields.ts     contract -> editor fields
+src/lib/cms-config.ts     contract -> Sveltia collections
+src/i18n/                 UI strings, paths and date formatting
 src/pages/[...lang]/      one route per page shape: / is Vietnamese, /en/ is English
 src/content/strings/      UI strings per locale, JSON
 src/content/site.json     email, links, places
 src/pages/admin/index.astro  Sveltia CMS entry point at /admin/
-src/content.config.ts     Zod contracts shared by Astro and the CMS
-src/content/cms.json      CMS labels, widgets and repository settings
-src/pages/admin/config.json.ts  static CMS config derived during the build
+src/content/model.ts      the content contract: types, rules, relationships
+src/content.config.ts     loaders and file layout only
+src/content/cms.json      editor labels, hints, messages and CMS settings
+src/pages/admin/config.json.ts  static endpoint, one line over cmsConfig()
 ```
 
 ## The content model
@@ -77,7 +80,7 @@ result pages; 3 local or organisational outlets.
 
 1. No colour, font size, radius or easing value outside `src/theme/tokens.css`. Components use
    token backed utilities (`bg-paper`, `text-ink-muted`, `border-line`) or the type roles
-   (`t-hero`, `t-section`, `t-title`).
+   (`t-monument`, `t-post`, `t-title`).
 2. Prose collections take their locale from the entry path: `src/content/posts/vi/foo.mdx` has
    the id `vi/foo`, so a file cannot claim a language it is not filed under.
 3. Vietnamese is served at `/` and English at `/en/`; the root never redirects
@@ -111,12 +114,23 @@ pattern with the loader.
 
 Formulas are LaTeX in MDX. `remark-math` and `rehype-katex` are attached once in `astro.config.mjs`
 through `markdown.processor`, so MDX inherits them; KaTeX renders at build time and the page ships
-no maths JavaScript. Inline `$...$`, block `$$...$$`.
+no maths JavaScript. Inline `$...$`, block `$$...$$`. `Post.astro` loads KaTeX's stylesheet and
+the overflow handler, so pages without an article do not carry either.
+
+## Dates and assets
+
+Calendar dates are formatted by `src/i18n/format.ts` in UTC. A portfolio date is a day, not an
+instant; formatting in the build machine's timezone shifted some dates by one day.
+
+Every referenced public file — credential `file`/`preview`/`extra`, outlet `logo`, work `cover` —
+is checked for existence while the page renders. That runs on every build, unlike a schema check,
+which a warm content cache can skip. Paths escaping `public/` are refused.
 
 ## Motion
 
-Only the hero name has a GSAP entrance, dynamically loaded on pages that contain it. Reading
-content and work cards never wait for a scroll animation. Reduced motion skips the entrance and
+Only the hero name has a GSAP entrance, and `Hero.astro` owns that script. Reading content and
+work cards never wait for a scroll animation. The timeline is native `<details>`/`<summary>`: it
+opens without JavaScript, needs no hydration, and keeps keyboard behaviour from the browser. Reduced motion skips the entrance and
 preview hover movement. Press feedback is a short CSS transform, disabled under reduced motion.
 
 Typography belongs to `src/styles/global.css`, not UnoCSS's typography preset. This prevents a
@@ -160,8 +174,8 @@ Nothing is hidden for lack of a translation. The fallback policy is explicit:
 
 ## Adding content
 
-- **A milestone**: one YAML file in `src/content/facts/`. Fill `vi` and `en`, list the reference
-  ids that prove it.
+- **A milestone**: one YAML file in `src/content/facts/`. Fill `vi` and `en`, pick the references
+  that prove it.
 - **An outlet**: one YAML file in `src/content/outlets/`. The filename is the id references use;
   give it a `tier` and, when one exists, a `logo`.
 - **A link someone else published**: one YAML file in `src/content/references/`. `outlet` is the
@@ -189,14 +203,6 @@ renderer or thumbnail-generation script.
 
 `CredentialCard.svelte` is shared by the credential index, milestones and work cards. Add `credentials: [nand2tetris-2022]` to a work/fact entry; an unknown id fails the
 build. Work's optional `cover` also renders when a real project image is available.
-
-To embed a credential in MDX without copying its title, issuer or file URL:
-
-```mdx
-import CredentialPreview from '@/components/CredentialPreview.astro'
-
-<CredentialPreview id="nand2tetris-2022" lang="vi" />
-```
 
 The homepage shows four press references and discloses the rest using native `<details>`, so
 all sources remain available without JavaScript.
@@ -241,16 +247,24 @@ https://developers.cloudflare.com/pages/configuration/custom-domains/
 
 ## CMS contract
 
-`src/content.config.ts` owns field names, shapes, requiredness, defaults and enums. The static
-`/admin/config.json` endpoint uses Zod's JSON Schema export to derive CMS fields from those
-contracts; `src/content/cms.json` contains only editor metadata and repository settings. There is
-no checked-in generated config or separate generator command. Unsupported schema shapes fail
-the build. Runtime Zod validation remains authoritative for refinements the editor cannot express.
+`src/content/model.ts` is the single source: field types, requiredness, defaults, enums,
+relationships and asset kinds. Each field carries the label key it uses, so editor text stays in
+`src/content/cms.json` and a missing label is a build error rather than a guessed name.
 
-UI strings keep their existing dotted keys. The CMS uses a root `keyvalue` field for these files,
-because dots and `*` are invalid CMS field names; no string format migration is required.
+`src/lib/cms-fields.ts` reads the JSON Schema exported by Zod plus that metadata and emits editor
+fields; `src/lib/cms-config.ts` wraps them in Sveltia collection shapes. There is no second field
+list and no generated file in the repository. Unsupported shapes throw during the build instead of
+degrading to `any`.
+
+Relationships (`refs`, `credentials`, `outlet`, `credential`) become Sveltia Relation pickers, so
+editors choose an entry instead of typing its id. `output.omit_empty_optional_fields` keeps saved
+files free of empty optional keys, matching the schema.
+
+UI strings keep their dotted keys. The CMS uses a root `keyvalue` field for these files, because
+dots and `*` are invalid CMS field names.
 
 The homepage loads references and credentials once, then passes them to fact/work accessors.
-Unknown reference, outlet or credential ids fail with the owning entry named. Standalone MDX
-previews load one credential with `getEntry`, not the full credential and outlet collections.
-Display row types are inferred from accessors instead of repeating collection fields.
+Unknown reference, outlet or credential ids fail with the owning entry named. The credential shown
+beside the biography is `credential` in `about` frontmatter, not an id in a template. Standalone
+MDX previews load one credential with `getEntry`, not the whole collection. Display row types are
+inferred from accessors instead of repeating collection fields.

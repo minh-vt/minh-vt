@@ -1,6 +1,6 @@
 import { getRelativeLocaleUrl } from 'astro:i18n'
-import { defaultLocale, strings, type Lang, type UIKey } from '@/i18n/ui'
-import { isLang } from '@/i18n/locales'
+import { defaultLocale, isLang, type Lang } from '@/i18n/locales'
+import { strings, type UIKey } from '@/i18n/ui'
 
 /** Missing translations fall back to the required source locale. */
 export function local(value: Partial<Record<Lang, string>>, lang: Lang): string {

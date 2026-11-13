@@ -1,6 +1,6 @@
 <script lang="ts">
   import { local } from '@/i18n/utils'
-  import type { Lang } from '@/i18n/ui'
+  import type { Lang } from '@/i18n/locales'
   import type { Reference } from '@/lib/content'
 
   let {

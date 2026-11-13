@@ -2,7 +2,6 @@
   "site.name": "Vũ Tùng Minh",
   "site.title": "Vũ Tùng Minh, kỹ sư phần mềm nhúng và robotics",
   "meta.description": "Vũ Tùng Minh, kỹ sư phần mềm nhúng ở TP. Hồ Chí Minh. Camera pipeline trên Rockchip, kernel cho vLLM, và huấn luyện robotics ở Phú Yên.",
-  "nav.home": "Trang chủ",
   "nav.work": "Dự án",
   "hero.work": "Xem việc đã làm",
   "hero.writing": "Đọc bài viết",
@@ -14,7 +13,6 @@
   "certs.extra": "Mở phần tiếp theo",
   "nav.writing": "Bài viết",
   "nav.timeline": "Các mốc",
-  "nav.sources": "Nguồn",
   "nav.contact": "Liên hệ",
   "nav.menu": "Mục lục",
   "nav.skip": "Tới nội dung",
@@ -32,7 +30,6 @@
   "blog.back": "Tất cả bài viết",
   "blog.empty": "Chưa có bài viết nào.",
   "blog.reading": "phút đọc",
-  "blog.updated": "Cập nhật",
   "blog.origin": "Đăng lần đầu trên",
   "blog.inLanguage": "Ngôn ngữ:",
   "theme.label": "Đổi giao diện",
@@ -49,6 +46,5 @@
   "section.work": "Việc đã làm",
   "section.work.lead": "Dự án kỹ thuật, tách khỏi các mốc.",
   "certs.title": "Chứng chỉ",
-  "certs.lead": "Bản gốc, mở được từng file.",
-  "certs.open": "Mở"
+  "certs.lead": "Bản gốc, mở được từng file."
 }

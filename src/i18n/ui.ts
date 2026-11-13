@@ -1,7 +1,6 @@
 import vi from '@/content/strings/vi.json'
 import en from '@/content/strings/en.json'
 import type { Lang } from '@/i18n/locales'
-export { locales, defaultLocale, type Lang } from '@/i18n/locales'
 
 /**
  * Locale list and type only. Every user-facing string lives in

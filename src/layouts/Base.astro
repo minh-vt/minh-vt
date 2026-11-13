@@ -2,11 +2,10 @@
 import '@fontsource-variable/space-grotesk'
 import '@fontsource-variable/ibm-plex-sans'
 import '@/styles/global.css'
-import 'katex/dist/katex.min.css'
 import Header from '@/components/Header.astro'
 import Footer from '@/components/Footer.astro'
 import { switchLocalePath, useTranslations } from '@/i18n/utils'
-import { locales, type Lang } from '@/i18n/ui'
+import { locales, type Lang } from '@/i18n/locales'
 import { chromeColor } from '@/theme/browser-chrome'
 
 interface Props {
@@ -29,6 +28,8 @@ const alternate = (target: Lang) => {
   const path = switchLocalePath(Astro.url.pathname, target)
   return Astro.site ? new URL(path, Astro.site).href : path
 }
+// `</script>` inside a string would end the tag early, so escape every `<`.
+const jsonLdHtml = jsonLd && JSON.stringify(jsonLd).replace(/</g, '\\u003c')
 ---
 
 <!doctype html>
@@ -65,7 +66,7 @@ const alternate = (target: Lang) => {
         <link rel="alternate" hreflang={locale} href={alternate(locale)} />
       ))
     }
-    {jsonLd && <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />}
+    {jsonLdHtml && <script type="application/ld+json" set:html={jsonLdHtml} />}
 
     <script is:inline>
       // Runs before first paint so the stored theme never flashes.
@@ -91,34 +92,5 @@ const alternate = (target: Lang) => {
       <slot />
     </main>
     <Footer lang={lang} />
-
-    <script>
-      // Only the name gets an entrance. Reading content is never scroll-gated.
-      const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-      if (!reduced && document.querySelector('.char')) {
-        const { default: gsap } = await import('gsap')
-        const motion = getComputedStyle(document.documentElement)
-        gsap.from('.char', {
-          opacity: 0,
-          yPercent: 12,
-          duration: parseFloat(motion.getPropertyValue('--duration-hero')) / 1000,
-          ease: 'power3.out',
-          stagger: parseFloat(motion.getPropertyValue('--stagger')) / 1000,
-        })
-      }
-
-      // Long code/formulas keep their own horizontal scroll, including keyboard.
-      const overflow = new ResizeObserver((entries) => {
-        for (const { target } of entries) {
-          if (target.scrollWidth > target.clientWidth)
-            target.setAttribute('tabindex', '0')
-          else target.removeAttribute('tabindex')
-        }
-      })
-      await document.fonts.ready
-      document
-        .querySelectorAll('.prose pre, .katex-display')
-        .forEach((el) => overflow.observe(el))
-    </script>
   </body>
 </html>

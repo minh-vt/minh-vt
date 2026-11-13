@@ -1,6 +1,6 @@
 ---
 import { pathFor, useTranslations } from '@/i18n/utils'
-import type { Lang } from '@/i18n/ui'
+import type { Lang } from '@/i18n/locales'
 
 interface Props {
   lang: Lang
@@ -82,3 +82,19 @@ const words = name.split(' ')
     </div>
   </div>
 </section>
+
+<script>
+  // The name is the only entrance animation on the site.
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  if (!reduced) {
+    const { default: gsap } = await import('gsap')
+    const motion = getComputedStyle(document.documentElement)
+    gsap.from('.char', {
+      opacity: 0,
+      yPercent: 12,
+      duration: parseFloat(motion.getPropertyValue('--duration-hero')) / 1000,
+      ease: 'power3.out',
+      stagger: parseFloat(motion.getPropertyValue('--stagger')) / 1000,
+    })
+  }
+</script>

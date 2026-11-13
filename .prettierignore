@@ -3,6 +3,5 @@ dist/
 node_modules/
 bun.lock
 src/content/
-public/admin/config.yml
 .agents/
 .taste-skill/

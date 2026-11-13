@@ -2,7 +2,6 @@
   "site.name": "Vu Tung Minh",
   "site.title": "Vu Tung Minh, embedded software engineer and robotics coach",
   "meta.description": "Vu Tung Minh, embedded software engineer in Ho Chi Minh City. Camera pipelines on Rockchip, kernels for vLLM, and robotics coaching in Phu Yen.",
-  "nav.home": "Home",
   "nav.work": "Work",
   "hero.work": "Explore my work",
   "hero.writing": "Read the blog",
@@ -14,7 +13,6 @@
   "certs.extra": "Open the next part",
   "nav.writing": "Writing",
   "nav.timeline": "Timeline",
-  "nav.sources": "Sources",
   "nav.contact": "Contact",
   "nav.menu": "Menu",
   "nav.skip": "Skip to content",
@@ -32,7 +30,6 @@
   "blog.back": "All posts",
   "blog.empty": "No posts yet.",
   "blog.reading": "min read",
-  "blog.updated": "Updated",
   "blog.origin": "First published on",
   "blog.inLanguage": "Language:",
   "theme.label": "Switch theme",
@@ -49,6 +46,5 @@
   "section.work": "Work",
   "section.work.lead": "Technical projects, kept apart from the milestones.",
   "certs.title": "Credentials",
-  "certs.lead": "Originals, each one opens.",
-  "certs.open": "Open"
+  "certs.lead": "Originals, each one opens."
 }

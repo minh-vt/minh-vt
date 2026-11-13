@@ -2,7 +2,7 @@ import { defineConfig, presetIcons, presetWind4, transformerDirectives } from 'u
 import type { Theme } from '@unocss/preset-wind4/theme'
 
 /**
- * Every colour, radius and breakpoint resolves to a token declared in
+ * Every colour and breakpoint resolves to a token declared in
  * src/theme/tokens.css. No component may use a raw hex, oklch() or px value.
  * The theme is typed explicitly because UnoCSS infers the theme shape from the
  * last preset in the list, which hides wind4's keys.
@@ -16,16 +16,10 @@ const theme: Theme = {
     line: 'var(--line)',
     'line-strong': 'var(--line-strong)',
     accent: 'var(--accent)',
-    'accent-soft': 'var(--accent-soft)',
     'on-accent': 'var(--on-accent)',
     focus: 'var(--focus)',
     field: 'var(--field)',
     'field-ink': 'var(--field-ink)',
-  },
-  radius: {
-    sm: 'var(--radius-sm)',
-    md: 'var(--radius-md)',
-    pill: 'var(--radius-pill)',
   },
   breakpoint: {
     sm: '34em',

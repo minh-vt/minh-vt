@@ -61,10 +61,6 @@ img {
   max-width: var(--measure);
 }
 
-.u-measure-wide {
-  max-width: var(--measure-wide);
-}
-
 .u-invert {
   background-color: var(--field);
   color: var(--field-ink);
@@ -95,15 +91,6 @@ img {
     white-space: normal;
     text-wrap: balance;
   }
-}
-
-.t-hero {
-  font-family: var(--font-display);
-  font-size: var(--text-3xl);
-  font-weight: 500;
-  line-height: var(--leading-snug);
-  letter-spacing: var(--tracking-tight);
-  text-wrap: balance;
 }
 
 .t-post {

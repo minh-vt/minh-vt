@@ -1,8 +1,9 @@
 ---
 import type { Reference } from '@/lib/content'
+import { formatDate } from '@/i18n/format'
 import { local } from '@/i18n/utils'
 import OutletMark from '@/components/OutletMark.svelte'
-import type { Lang } from '@/i18n/ui'
+import type { Lang } from '@/i18n/locales'
 
 interface Props {
   lang: Lang
@@ -11,11 +12,6 @@ interface Props {
 }
 
 const { lang, items, start = 1 } = Astro.props
-const dateFormat = new Intl.DateTimeFormat(lang === 'vi' ? 'vi-VN' : 'en-GB', {
-  year: 'numeric',
-  month: '2-digit',
-  day: '2-digit',
-})
 ---
 
 <ol class="mt-2" start={start}>
@@ -40,7 +36,7 @@ const dateFormat = new Intl.DateTimeFormat(lang === 'vi' ? 'vi-VN' : 'en-GB', {
         </a>
         {row.data.date ? (
           <time class="t-meta" datetime={row.data.date.toISOString()}>
-            {dateFormat.format(row.data.date)}
+            {formatDate(row.data.date, lang, 'numeric')}
           </time>
         ) : (
           <span />

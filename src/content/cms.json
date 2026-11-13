@@ -1,56 +1,137 @@
 {
   "settings": {
-    "backend": { "name": "github", "repo": "minh-vt/minh-vt", "branch": "main" },
+    "backend": {
+      "name": "github",
+      "repo": "minh-vt/minh-vt",
+      "branch": "main"
+    },
     "media_folder": "public/",
     "public_folder": "/",
     "publish_mode": "simple",
-    "slug": { "encoding": "ascii", "clean_accents": true }
+    "slug": {
+      "encoding": "ascii",
+      "clean_accents": true
+    },
+    "output": {
+      "omit_empty_optional_fields": true
+    }
   },
-  "errors": { "slug": "Dùng chữ thường không dấu, chữ số và dấu gạch nối; ví dụ bai-viet-moi." },
+  "errors": {
+    "slug": "Dùng chữ thường không dấu, chữ số và dấu gạch nối; ví dụ bai-viet-moi."
+  },
   "collections": {
-    "about": { "label": "Giới thiệu" },
-    "posts": { "label": "Bài viết", "label_singular": "Bài", "summary": "{{title}}", "sortable_fields": ["date"] },
-    "facts": { "label": "Các mốc", "label_singular": "Mốc", "summary": "{{fields.year}} · {{fields.title.vi}}", "sortable_fields": ["order"] },
-    "work": { "label": "Việc đã làm", "label_singular": "Dự án", "summary": "{{fields.year}} · {{fields.title.vi}}", "sortable_fields": ["order"] },
-    "credentials": { "label": "Chứng chỉ", "summary": "{{fields.year}} · {{fields.title.vi}}" },
-    "outlets": { "label": "Đơn vị đăng", "summary": "{{fields.name.vi}} (tier {{fields.tier}})" },
-    "references": { "label": "Nguồn", "summary": "{{fields.outlet}} — {{fields.title}}", "sortable_fields": ["date"] },
-    "strings": { "label": "Chuỗi giao diện" },
-    "site": { "label": "Thông tin site" }
+    "about": {
+      "label": "Giới thiệu",
+      "kind": "perLocaleFiles",
+      "body": true
+    },
+    "posts": {
+      "label": "Bài viết",
+      "label_singular": "Bài",
+      "kind": "entries",
+      "summary": "{{title}}",
+      "sortable_fields": [
+        "date"
+      ],
+      "i18n": true,
+      "slug": {
+        "template": "{{slug}}"
+      },
+      "display_field": "title",
+      "extension": "mdx",
+      "body": true
+    },
+    "facts": {
+      "label": "Các mốc",
+      "label_singular": "Mốc",
+      "kind": "entries",
+      "summary": "{{fields.year}} · {{fields.title.vi}}",
+      "sortable_fields": [
+        "order"
+      ],
+      "display_field": "title.vi"
+    },
+    "work": {
+      "label": "Việc đã làm",
+      "label_singular": "Dự án",
+      "kind": "entries",
+      "summary": "{{fields.year}} · {{fields.title.vi}}",
+      "sortable_fields": [
+        "order"
+      ],
+      "display_field": "title.vi"
+    },
+    "credentials": {
+      "label": "Chứng chỉ",
+      "kind": "entries",
+      "summary": "{{fields.year}} · {{fields.title.vi}}",
+      "display_field": "title.vi"
+    },
+    "outlets": {
+      "label": "Đơn vị đăng",
+      "kind": "entries",
+      "summary": "{{fields.name.vi}} (tier {{fields.tier}})",
+      "display_field": "name.vi"
+    },
+    "references": {
+      "label": "Nguồn",
+      "kind": "entries",
+      "summary": "{{fields.outlet}} — {{fields.title}}",
+      "sortable_fields": [
+        "date"
+      ],
+      "display_field": "title"
+    },
+    "strings": {
+      "label": "Chuỗi giao diện",
+      "kind": "strings"
+    },
+    "site": {
+      "label": "Thông tin site",
+      "kind": "single"
+    }
   },
-  "fields": {
-    "title": { "label": "Tiêu đề" },
-    "value": { "label": "Giá trị" },
-    "lead": { "label": "Một câu giới thiệu" },
-    "updated": { "label": "Cập nhật" },
-    "body": { "label": "Nội dung", "widget": "markdown" },
-    "description": { "label": "Mô tả", "widget": "text" },
-    "date": { "label": "Ngày" },
-    "tags": { "label": "Thẻ" },
-    "draft": { "label": "Bản nháp" },
-    "origin": { "label": "Đăng lần đầu" },
-    "label": { "label": "Nhãn ngắn" },
-    "url": { "label": "Liên kết" },
-    "order": { "label": "Thứ tự" },
-    "year": { "label": "Năm" },
-    "summary": { "label": "Mô tả", "widget": "text" },
-    "metric": { "label": "Con số" },
-    "refs": { "label": "Nguồn (id)", "hint": "Id của file trong src/content/references" },
-    "credentials": { "label": "Chứng chỉ (id)", "hint": "Id của file trong src/content/credentials" },
-    "tech": { "label": "Công nghệ" },
-    "cover": { "label": "Ảnh bìa", "widget": "image" },
-    "issuer": { "label": "Nơi cấp" },
-    "file": { "label": "File (PDF hoặc ảnh)", "widget": "file" },
-    "preview": { "label": "Ảnh preview", "widget": "image", "hint": "Thumbnail tĩnh, không phải file PDF" },
-    "extra": { "label": "File thứ hai", "widget": "file" },
-    "kind": { "label": "Loại" },
-    "name": { "label": "Tên" },
-    "tier": { "label": "Mức uy tín", "hint": "1: báo quốc gia, ban tổ chức, cơ quan; 2: trang kết quả chính thức; 3: địa phương, tổ chức" },
-    "logo": { "label": "Logo", "widget": "image" },
-    "outlet": { "label": "Đơn vị đăng (id)", "hint": "Id của file trong src/content/outlets" },
-    "email": { "label": "Email" },
-    "github": { "label": "GitHub" },
-    "linkedin": { "label": "LinkedIn" },
-    "location": { "label": "Nơi ở" }
+  "labels": {
+    "title": "Tiêu đề",
+    "value": "Giá trị",
+    "lead": "Một câu giới thiệu",
+    "updated": "Cập nhật",
+    "credential": "Chứng chỉ nổi bật (id)",
+    "body": "Nội dung",
+    "description": "Mô tả",
+    "date": "Ngày",
+    "tags": "Thẻ",
+    "draft": "Bản nháp",
+    "origin": "Đăng lần đầu",
+    "label": "Nhãn ngắn",
+    "url": "Liên kết",
+    "order": "Thứ tự",
+    "year": "Năm",
+    "summary": "Mô tả",
+    "metric": "Con số",
+    "refs": "Nguồn",
+    "credentials": "Chứng chỉ",
+    "tech": "Công nghệ",
+    "cover": "Ảnh bìa",
+    "issuer": "Nơi cấp",
+    "file": "File (PDF hoặc ảnh)",
+    "preview": "Ảnh preview",
+    "extra": "File thứ hai",
+    "kind": "Loại",
+    "name": "Tên",
+    "tier": "Mức uy tín",
+    "logo": "Logo",
+    "outlet": "Đơn vị đăng",
+    "email": "Email",
+    "github": "GitHub",
+    "linkedin": "LinkedIn",
+    "location": "Nơi ở"
+  },
+  "hints": {
+    "refs": "Id của file trong src/content/references",
+    "credentials": "Id của file trong src/content/credentials",
+    "outlet": "Id của file trong src/content/outlets",
+    "tier": "1: báo quốc gia, ban tổ chức, cơ quan; 2: trang kết quả chính thức; 3: địa phương, tổ chức",
+    "preview": "Thumbnail tĩnh, không phải file PDF"
   }
 }

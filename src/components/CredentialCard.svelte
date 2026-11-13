@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { CredentialRow } from '@/lib/content'
   import { useTranslations } from '@/i18n/utils'
-  import type { Lang } from '@/i18n/ui'
+  import type { Lang } from '@/i18n/locales'
 
   let { item, lang }: { item: CredentialRow; lang: Lang } = $props()
   const t = $derived(useTranslations(lang))
