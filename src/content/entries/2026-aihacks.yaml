@@ -1,0 +1,11 @@
+order: 15
+year: '2026'
+title:
+  vi: 'AIHacks26'
+  en: 'AIHacks26'
+summary:
+  vi: 'Mùa thứ tư của trại hè STEM do Science Lab tổ chức, chủ đề thị giác máy tính. 27 thí sinh chia thành 7 đội, tự xây mô hình AI từ khâu xử lý dữ liệu tới sản phẩm hoàn chỉnh.'
+  en: 'The fourth season of Science Lab''s summer hackathon, on computer vision. 27 students in 7 teams built their own AI models, from preparing the data to a finished product.'
+tags: [education]
+refs: [tienphong-science-lab-2026]
+photos: [/media/aihacks-2026.webp]

@@ -26,13 +26,13 @@ export const collections = {
     }),
     schema: schemas.posts,
   }),
-  facts: defineCollection({
-    loader: glob({ pattern: '*.yaml', base: './src/content/facts' }),
-    schema: schemas.facts,
+  roles: defineCollection({
+    loader: glob({ pattern: '*.yaml', base: './src/content/roles' }),
+    schema: schemas.roles,
   }),
-  work: defineCollection({
-    loader: glob({ pattern: '*.yaml', base: './src/content/work' }),
-    schema: schemas.work,
+  entries: defineCollection({
+    loader: glob({ pattern: '*.yaml', base: './src/content/entries' }),
+    schema: schemas.entries,
   }),
   credentials: defineCollection({
     loader: glob({ pattern: '*.yaml', base: './src/content/credentials' }),

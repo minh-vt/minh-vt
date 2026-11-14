@@ -11,22 +11,28 @@
     "summary": "{{title}}",
     "sortable_fields": ["date"],
     "i18n": true,
-    "slug": { "template": "{{slug}}" },
+    "slug": {
+      "template": "{{slug}}"
+    },
     "body": true,
     "extension": "mdx",
     "display_field": "title"
   },
-  "facts": {
-    "label": "Các mốc",
-    "label_singular": "Mốc",
-    "kind": "entries",
-    "summary": "{{fields.year}} · {{fields.title.vi}}",
-    "sortable_fields": ["order"],
-    "display_field": "title.vi"
+  "home": {
+    "label": "Trang chủ",
+    "kind": "single"
   },
-  "work": {
-    "label": "Việc đã làm",
-    "label_singular": "Dự án",
+  "roles": {
+    "label": "Vai trò",
+    "label_singular": "Vai trò",
+    "kind": "entries",
+    "summary": "{{fields.start}}–{{fields.end}} · {{fields.role.vi}}, {{fields.org.vi}}",
+    "sortable_fields": ["order"],
+    "display_field": "role.vi"
+  },
+  "entries": {
+    "label": "Dòng thời gian",
+    "label_singular": "Mục",
     "kind": "entries",
     "summary": "{{fields.year}} · {{fields.title.vi}}",
     "sortable_fields": ["order"],

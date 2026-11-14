@@ -1,0 +1,10 @@
+order: 100
+year: '2023'
+title:
+  vi: 'Giải Nhất Tin học trẻ cấp tỉnh'
+  en: 'First prize, provincial Young Informatics contest'
+summary:
+  vi: 'Giải Nhất cuộc thi Tin học trẻ cấp tỉnh năm 2023.'
+  en: 'First prize in the 2023 provincial Young Informatics contest.'
+tags: [competition]
+refs: [fct-to-mo-2023]

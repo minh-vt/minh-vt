@@ -4,8 +4,8 @@
     "repo": "minh-vt/minh-vt",
     "branch": "main"
   },
-  "media_folder": "public/",
-  "public_folder": "/",
+  "media_folder": "src/assets/media",
+  "public_folder": "/media",
   "publish_mode": "simple",
   "slug": {
     "encoding": "ascii",
@@ -13,5 +13,20 @@
   },
   "output": {
     "omit_empty_optional_fields": true
+  },
+  "media_libraries": {
+    "default": {
+      "config": {
+        "slugify_filename": true,
+        "transformations": {
+          "raster_image": {
+            "format": "webp",
+            "quality": 85,
+            "width": 2000,
+            "height": 2000
+          }
+        }
+      }
+    }
   }
 }

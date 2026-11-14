@@ -48,12 +48,42 @@ const relations = (collection: string) =>
 
 const media = (kind: 'image' | 'file') => show(text, { media: kind })
 
+/**
+ * A homepage section names an area and how many of its items to show. Its
+ * title, lead and "see all" page belong to the area, so the menu, the section
+ * and the page can never disagree.
+ */
+const section = <K extends string, T extends z.ZodRawShape>(type: K, shape: T) =>
+  z.object({ type: z.literal(type), ...shape })
+const limit = (fallback: number) => z.int().min(1).default(fallback)
+
+/** Editors mark what the homepage shows; without marks, the first items show. */
+const featured = z.boolean().default(false)
+
+export const linkKinds = [
+  'email',
+  'github',
+  'linkedin',
+  'facebook',
+  'instagram',
+  'youtube',
+  'website',
+] as const
+
+/**
+ * The area pages, named by their URL slug in every locale (/timeline, /en/timeline).
+ * A key here must match a route folder in src/pages/[...lang]/.
+ */
+export const areas = ['timeline', 'press', 'blog', 'certs'] as const
+export type Area = (typeof areas)[number]
+
+export const entryTags = ['tech', 'education', 'competition', 'teaching'] as const
+
 export const schemas = {
   about: z.object({
     title: text,
     lead: text,
     updated: date.optional(),
-    credential: show(text, { relation: 'credentials' }).optional(),
   }),
   posts: z.object({
     title: text,
@@ -62,26 +92,34 @@ export const schemas = {
     draft: z.boolean().default(false),
     tags: z.array(text).default([]),
     origin: z.object({ label: text, url: z.httpUrl() }).optional(),
+    /** Posts sharing a series id are linked to each other in part order. */
+    series: z.object({ id: text, part: z.int().min(1) }).optional(),
+    featured,
   }),
-  facts: z.object({
+  /** What Minh does now and did before; the homepage lists the open ones. */
+  roles: z.object({
+    order: z.int(),
+    role: localized(),
+    org: localized(),
+    url: z.httpUrl().optional(),
+    start: text,
+    /** Empty while the role is current. */
+    end: text.optional(),
+  }),
+  /** One timeline for everything: work, teaching, competitions, projects. */
+  entries: z.object({
     order: z.int(),
     year: text,
     title: localized(),
     summary: localized(),
-    metric: localized().optional(),
+    detail: localized().optional(),
+    tags: z.array(z.enum(entryTags)).default([]),
+    tech: text.optional(),
+    url: z.httpUrl().optional(),
+    photos: z.array(media('image')).default([]),
     refs: relations('references'),
     credentials: relations('credentials'),
-  }),
-  work: z.object({
-    order: z.int(),
-    year: text,
-    title: localized(),
-    summary: localized(),
-    metric: localized().optional(),
-    tech: text,
-    refs: relations('references'),
-    cover: media('image').optional(),
-    credentials: relations('credentials'),
+    featured,
   }),
   credentials: z.object({
     year: text,
@@ -91,6 +129,7 @@ export const schemas = {
     preview: media('image'),
     extra: media('file').optional(),
     kind: z.enum(['course', 'award', 'role']),
+    featured,
   }),
   outlets: z.object({
     name: localized(),
@@ -101,14 +140,36 @@ export const schemas = {
     url: z.httpUrl(),
     outlet: show(text, { relation: 'outlets' }),
     title: text,
-    label: text.optional(),
+    /** A short name under an entry, when the outlet alone would be ambiguous. */
+    label: localized().optional(),
     date: date.optional(),
     kind: z.enum(['press', 'video', 'award', 'code', 'social']),
+    featured,
   }),
   site: z.object({
+    name: localized(),
     email: z.email(),
-    github: z.httpUrl(),
-    linkedin: z.httpUrl(),
     location: localized(),
+    portrait: media('image').optional(),
+    cv: media('file').optional(),
+    links: z
+      .array(z.object({ kind: z.enum(linkKinds), label: text, url: z.url() }))
+      .default([]),
+    /** Header menu, in order. Leaving an area out hides it from the menu only. */
+    menu: z.array(z.enum(areas)).default([...areas]),
+  }),
+  /** The homepage, top to bottom. Editors add, remove and reorder sections. */
+  home: z.object({
+    sections: z
+      .array(
+        z.discriminatedUnion('type', [
+          section('about', {}),
+          section('press', { limit: limit(4) }),
+          section('timeline', { limit: limit(4) }),
+          section('blog', { limit: limit(3) }),
+          section('certs', { limit: limit(3) }),
+        ]),
+      )
+      .default([]),
   }),
 }

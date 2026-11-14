@@ -1,29 +1,9 @@
-import { statSync } from 'node:fs'
-import { isAbsolute, relative, resolve } from 'node:path'
 import { getCollection, getEntry, type CollectionEntry } from 'astro:content'
 import { defaultLocale, isLang, type Lang } from '@/i18n/locales'
 import { parsePostId } from '@/i18n/routes'
-import { local } from '@/i18n/utils'
-
-// Anchored to the project root: server code is bundled, so import.meta.url moves.
-const publicDir = resolve(process.cwd(), 'public')
-if (statSync(publicDir, { throwIfNoEntry: false })?.isDirectory() !== true) {
-  throw new Error(`Cannot find public/ from ${process.cwd()}`)
-}
-
-/**
- * Referenced files are checked on every build, not only when the content
- * cache is cold, so deleting an asset without editing its entry still fails.
- */
-function publicFile(src: string, owner: string): string {
-  const file = resolve(publicDir, `.${src}`)
-  const missing =
-    !isAbsolute(src) ||
-    relative(publicDir, file).startsWith('..') ||
-    statSync(file, { throwIfNoEntry: false })?.isFile() !== true
-  if (missing) throw new Error(`${owner}: missing public file "${src}"`)
-  return src
-}
+import { local, pathFor } from '@/i18n/utils'
+import { publicFile } from '@/lib/files'
+import { siteImage } from '@/lib/images'
 
 export function entryLang(id: string): Lang {
   const lang = id.split('/')[0]
@@ -34,6 +14,11 @@ export function entryLang(id: string): Lang {
 /** Validates the locale/slug boundary before a public URL is built from it. */
 export function postSlug(id: string): string {
   return parsePostId(id).slug
+}
+
+/** The post's URL in the reader's locale, whatever language it is written in. */
+export function postPath(lang: Lang, id: string): string {
+  return pathFor(lang, `blog/${postSlug(id)}`)
 }
 
 function requireEntry<T extends { id: string }>(rows: T[], id: string, owner: string): T {
@@ -60,7 +45,7 @@ export async function getReferences() {
     getCollection('outlets'),
   ])
   for (const outlet of outlets) {
-    if (outlet.data.logo) publicFile(outlet.data.logo, `outlets/${outlet.id} logo`)
+    if (outlet.data.logo) siteImage(outlet.data.logo, `outlets/${outlet.id} logo`)
   }
   return entries
     .map((entry) => ({
@@ -75,6 +60,26 @@ export async function getReferences() {
 }
 export type Reference = Awaited<ReturnType<typeof getReferences>>[number]
 
+/** Coverage written by others: articles and award announcements. */
+export function pressOf(references: Reference[]) {
+  return references.filter(
+    (row) => row.data.kind === 'press' || row.data.kind === 'award',
+  )
+}
+
+/**
+ * What a homepage section shows: the items an editor marked as featured, in
+ * collection order, or the first items when nothing is marked.
+ */
+export function pickFeatured<T>(
+  items: T[],
+  limit: number,
+  isFeatured: (item: T) => boolean,
+) {
+  const marked = items.filter(isFeatured)
+  return (marked.length > 0 ? marked : items).slice(0, limit)
+}
+
 function localizeCredential(item: CollectionEntry<'credentials'>, lang: Lang) {
   return {
     ...item.data,
@@ -82,7 +87,7 @@ function localizeCredential(item: CollectionEntry<'credentials'>, lang: Lang) {
     title: local(item.data.title, lang),
     issuer: local(item.data.issuer, lang),
     file: publicFile(item.data.file, `credentials/${item.id} file`),
-    preview: publicFile(item.data.preview, `credentials/${item.id} preview`),
+    preview: siteImage(item.data.preview, `credentials/${item.id} preview`),
     ...(item.data.extra && {
       extra: publicFile(item.data.extra, `credentials/${item.id} extra`),
     }),
@@ -103,67 +108,45 @@ export async function getCredential(id: string, lang: Lang) {
   return localizeCredential(item, lang)
 }
 
-/** Text shared by every ordered entry; relationships are added by the caller. */
-function localizeText(
-  data: {
-    title: Partial<Record<Lang, string>>
-    summary: Partial<Record<Lang, string>>
-    metric?: Partial<Record<Lang, string>>
-  },
-  lang: Lang,
-) {
-  return {
-    title: local(data.title, lang),
-    summary: local(data.summary, lang),
-    metric: data.metric ? local(data.metric, lang) : undefined,
-  }
-}
-
-export async function getWork(
+/** Timeline rows in display order, localized, with relationships resolved. */
+export async function getEntries(
   lang: Lang,
   references: Reference[],
   credentials: CredentialRow[],
 ) {
-  return (await getCollection('work'))
+  return (await getCollection('entries'))
     .sort((a, b) => a.data.order - b.data.order)
     .map((item) => ({
       ...item.data,
       id: item.id,
-      ...localizeText(item.data, lang),
-      refs: resolveAll(references, item.data.refs, `work/${item.id} refs`),
+      title: local(item.data.title, lang),
+      summary: local(item.data.summary, lang),
+      detail: item.data.detail ? local(item.data.detail, lang) : undefined,
+      photos: item.data.photos.map((src) => siteImage(src, `entries/${item.id} photos`)),
+      refs: resolveAll(references, item.data.refs, `entries/${item.id} refs`),
       credentials: resolveAll(
         credentials,
         item.data.credentials,
-        `work/${item.id} credentials`,
+        `entries/${item.id} credentials`,
       ),
-      ...(item.data.cover && {
-        cover: publicFile(item.data.cover, `work/${item.id} cover`),
-      }),
     }))
 }
-export type WorkRow = Awaited<ReturnType<typeof getWork>>[number]
+export type EntryRow = Awaited<ReturnType<typeof getEntries>>[number]
 
-/** Facts in display order, localized and with validated relationships. */
-export async function getFacts(
-  lang: Lang,
-  references: Reference[],
-  credentials: CredentialRow[],
-) {
-  return (await getCollection('facts'))
+/** Roles without an end date, in editor order. */
+export async function getCurrentRoles(lang: Lang) {
+  return (await getCollection('roles'))
+    .filter((item) => !item.data.end)
     .sort((a, b) => a.data.order - b.data.order)
     .map((item) => ({
-      ...item.data,
       id: item.id,
-      ...localizeText(item.data, lang),
-      refs: resolveAll(references, item.data.refs, `facts/${item.id} refs`),
-      credentials: resolveAll(
-        credentials,
-        item.data.credentials,
-        `facts/${item.id} credentials`,
-      ),
+      role: local(item.data.role, lang),
+      org: local(item.data.org, lang),
+      url: item.data.url,
+      start: item.data.start,
     }))
 }
-export type FactRow = Awaited<ReturnType<typeof getFacts>>[number]
+export type RoleRow = Awaited<ReturnType<typeof getCurrentRoles>>[number]
 
 /** One row per slug, preferring a translation without hiding untranslated posts. */
 export async function getPosts(lang: Lang) {
@@ -188,6 +171,22 @@ export async function getAbout(lang: Lang) {
     (await getEntry('about', lang)) ?? (await getEntry('about', defaultLocale))
   if (!entry) throw new Error(`Missing about entry for source locale: ${defaultLocale}`)
   return { entry, lang: entryLang(entry.id) }
+}
+
+/** Neighbours within a series by part, otherwise by date. */
+export function neighbours(posts: LocalizedPost[], slug: string) {
+  const current = posts.find((post) => postSlug(post.entry.id) === slug)
+  if (!current) return {}
+  const series = current.entry.data.series
+  const pool = series
+    ? posts
+        .filter((post) => post.entry.data.series?.id === series.id)
+        .sort(
+          (a, b) => (a.entry.data.series?.part ?? 0) - (b.entry.data.series?.part ?? 0),
+        )
+    : [...posts].sort((a, b) => a.entry.data.date.valueOf() - b.entry.data.date.valueOf())
+  const index = pool.indexOf(current)
+  return { previous: pool[index - 1], next: pool[index + 1] }
 }
 
 export function readingMinutes(body: string | undefined): number {

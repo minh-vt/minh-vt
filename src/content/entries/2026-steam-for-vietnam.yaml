@@ -1,0 +1,10 @@
+order: 20
+year: '2026'
+title:
+  vi: 'Trợ giảng ở STEAM for Vietnam'
+  en: 'Teaching assistant at STEAM for Vietnam'
+summary:
+  vi: 'Trợ giảng tình nguyện cho chuỗi workshop Robotics BootUp.'
+  en: 'Volunteer teaching assistant for the Robotics BootUp workshop series.'
+tags: [teaching]
+credentials: [steam-ta-2026]

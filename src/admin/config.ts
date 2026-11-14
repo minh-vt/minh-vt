@@ -118,6 +118,8 @@ export function cmsConfig(): CmsConfig {
     backend: settings.backend as CmsConfig['backend'],
     media_folder: settings.media_folder,
     public_folder: settings.public_folder,
+    // Uploads are resized and converted to WebP in the browser before commit.
+    media_libraries: settings.media_libraries as CmsConfig['media_libraries'],
     publish_mode: settings.publish_mode as CmsConfig['publish_mode'],
     slug: settings.slug as CmsConfig['slug'],
     output: settings.output,

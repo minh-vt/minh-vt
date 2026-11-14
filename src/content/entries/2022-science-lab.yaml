@@ -1,0 +1,12 @@
+order: 120
+year: '2022'
+title:
+  vi: 'Đồng sáng lập Science Lab'
+  en: 'Co-founded Science Lab'
+summary:
+  vi: 'Tháng 11/2022, mình cùng một nhóm bạn ở trường chuyên Lương Văn Chánh lập Science Lab, nhóm giáo dục STEM cho học sinh Phú Yên, hoạt động theo định hướng phi lợi nhuận và được trường bảo trợ. Science Lab tổ chức trại hè STEM thường niên (Summer Hackathon), chương trình ươm tạo dự án STEM Incubator Program (SIP) và lớp học STEM lưu động. Mình vẫn điều hành một số dự án ở đây.'
+  en: 'In November 2022 I co-founded Science Lab with friends from Luong Van Chanh High School for the Gifted: a not-for-profit STEM education group for students in Phu Yen, sponsored by the school. It runs an annual summer hackathon, the STEM Incubator Program (SIP) for student projects, and the STEM Mobile Class. I still run several of its projects.'
+tags: [education, teaching]
+url: 'https://sciencelab.io.vn'
+refs: [tienphong-science-lab-2026]
+featured: true
