@@ -1,8 +1,15 @@
 ---
-import NavMenu from '@/components/NavMenu.svelte'
+import MobileNav from '@/components/MobileNav.svelte'
 import ThemeToggle from '@/components/ThemeToggle.svelte'
 import type { Lang } from '@/i18n/locales'
-import { languageName, pathFor, switchLocalePath, useTranslations } from '@/i18n/utils'
+import {
+  languageName,
+  local,
+  pathFor,
+  switchLocalePath,
+  useTranslations,
+} from '@/i18n/utils'
+import { site } from '@/lib/site'
 
 interface Props {
   lang: Lang
@@ -12,63 +19,99 @@ const { lang } = Astro.props
 const t = useTranslations(lang)
 const other = lang === 'vi' ? 'en' : 'vi'
 const home = pathFor(lang)
-const links = [
-  { href: `${home}#work`, label: t('nav.work') },
-  { href: pathFor(lang, 'blog'), label: t('nav.writing') },
-  { href: `${home}#timeline`, label: t('nav.timeline') },
-  { href: pathFor(lang, 'certs'), label: t('nav.certs') },
-  { href: `${home}#contact`, label: t('nav.contact') },
-]
-const desktopLinks = links.slice(0, 4)
+const onHome = Astro.url.pathname === home
+
+// The menu is the editor's list of area pages (site.menu). A link is current on
+// its page and on every page below it.
+const links = site.menu.map((area) => {
+  const href = pathFor(lang, area)
+  return {
+    href,
+    label: t(`area.${area}.title`),
+    current: Astro.url.pathname.startsWith(href) ? ('page' as const) : undefined,
+  }
+})
 ---
 
-<header class="sticky top-0 z-20 border-b border-line bg-paper">
-  <div class="u-wrap flex h-14 items-center justify-between gap-4">
+<header
+  class="site-header u-glass sticky top-0 z-30 border-b border-line"
+  data-name-hidden={onHome ? '' : undefined}
+>
+  <div class="u-wrap flex h-[var(--header-height)] items-center justify-between gap-4">
     <a
       href={home}
-      class="u-focus u-link t-label shrink-0 text-ink hover:text-accent"
-      aria-current={Astro.url.pathname === home ? 'page' : undefined}
+      class="site-name link t-label text-sm text-ink"
+      aria-current={onHome ? 'page' : undefined}
     >
-      {t('site.name')}
+      {local(site.name, lang)}
     </a>
 
-    <div class="flex items-center gap-2 sm:gap-4">
-      <nav class="hidden items-center gap-5 md:flex" aria-label={t('nav.menu')}>
-        {
-          desktopLinks.map((link) => (
-            <a
-              href={link.href}
-              class="u-focus u-link t-label text-ink-muted hover:text-accent"
-              aria-current={Astro.url.pathname.startsWith(link.href) ? 'page' : undefined}
-            >
-              {link.label}
-            </a>
-          ))
-        }
-      </nav>
+    <nav class="hidden items-center gap-6 md:flex" aria-label={t('nav.menu')}>
+      {
+        links.map((link) => (
+          <a href={link.href} aria-current={link.current} class="nav-link link text-sm">
+            {link.label}
+          </a>
+        ))
+      }
+    </nav>
 
-      <div class="md:hidden">
-        <NavMenu client:load links={links} label={t('nav.menu')} />
-      </div>
-
-      <span class="hidden h-4 w-px bg-line sm:block"></span>
-
+    <div class="flex items-center gap-1">
       <a
         href={switchLocalePath(Astro.url.pathname, other)}
         hreflang={other}
         lang={other}
-        class="u-focus u-link t-label justify-center px-2 text-ink-muted hover:text-accent"
+        class="btn btn-ghost btn-square text-sm"
         aria-label={`${t('lang.label')}: ${languageName(other)}`}
       >
         {other.toUpperCase()}
       </a>
-
       <ThemeToggle
         client:load
         label={t('theme.label')}
         lightLabel={t('theme.light')}
         darkLabel={t('theme.dark')}
       />
+      <a href="#contact" class="btn ml-2 hidden md:inline-flex">{t('nav.contact')}</a>
+      <div class="md:hidden">
+        <MobileNav
+          client:media="(max-width: 51.99em)"
+          links={[...links, { href: '#contact', label: t('nav.contact') }]}
+          social={site.links}
+          labels={{ open: t('nav.menu'), close: t('nav.close') }}
+        />
+      </div>
     </div>
   </div>
 </header>
+
+<script>
+  import { ScrollTrigger } from '@/lib/scroll'
+
+  const header = document.querySelector<HTMLElement>('.site-header')
+  if (header) {
+    // Step aside while reading down, come back on the way up; stay put while a
+    // sheet is open, since the page underneath is locked.
+    ScrollTrigger.create({
+      start: 'top -80',
+      end: 'max',
+      onUpdate: (self) => {
+        if (document.querySelector('dialog[open]')) return
+        header.toggleAttribute('data-hidden', self.direction === 1)
+      },
+      onLeaveBack: () => header.removeAttribute('data-hidden'),
+    })
+
+    // On the homepage the small name appears once the large one has left. The
+    // server renders it hidden there, so it never flashes in.
+    const hero = document.querySelector('[data-hero-name]')
+    if (hero) {
+      ScrollTrigger.create({
+        trigger: hero,
+        start: 'bottom top',
+        end: 'max',
+        onToggle: (self) => header.toggleAttribute('data-name-hidden', !self.isActive),
+      })
+    }
+  }
+</script>

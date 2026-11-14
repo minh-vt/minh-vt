@@ -1,6 +1,8 @@
 ---
+import CopyEmail from '@/components/CopyEmail.svelte'
+import LinkIcon from '@/components/LinkIcon.svelte'
 import { site } from '@/lib/site'
-import { useTranslations } from '@/i18n/utils'
+import { local, useTranslations, pathFor } from '@/i18n/utils'
 import type { Lang } from '@/i18n/locales'
 
 interface Props {
@@ -10,32 +12,57 @@ interface Props {
 const { lang } = Astro.props
 const t = useTranslations(lang)
 const year = new Date().getFullYear()
-const links = [
-  { href: `mailto:${site.email}`, label: site.email },
-  { href: site.github, label: 'GitHub' },
-  { href: site.linkedin, label: 'LinkedIn' },
-]
+const name = local(site.name, lang)
 ---
 
-<footer class="border-t border-line">
-  <div
-    class="u-wrap flex flex-col gap-4 py-8 md:flex-row md:items-baseline md:justify-between"
-  >
-    <p class="t-meta">{t('site.name')} · {year}</p>
-    <ul class="flex flex-wrap gap-x-5 gap-y-2">
-      {
-        links.map((link) => (
-          <li>
-            <a
-              href={link.href}
-              class="u-focus u-link t-label text-ink-muted hover:text-accent"
-              rel={link.href.startsWith('http') ? 'me' : undefined}
-            >
-              {link.label}
-            </a>
-          </li>
-        ))
-      }
-    </ul>
+<!-- Contact closes every page, so a finished post ends where the homepage does. -->
+<footer id="contact" class="u-invert scroll-mt-16 overflow-x-clip">
+  <div class="u-wrap pt-14 md:pt-20">
+    <p class="t-label">{t('section.contact')}</p>
+    <a href={`mailto:${site.email}`} class="t-email mt-4 block w-fit py-1">
+      {site.email}
+    </a>
+    <p class="mt-4 max-w-lg opacity-80">{t('section.contact.lead')}</p>
+
+    <div class="mt-6 flex flex-wrap items-center gap-x-6 gap-y-3">
+      <CopyEmail
+        client:idle
+        email={site.email}
+        label={t('contact.copy')}
+        copiedLabel={t('contact.copied')}
+      />
+      <ul class="flex flex-wrap gap-x-5">
+        {
+          site.links.map((link) => (
+            <li>
+              <a href={link.url} class="link text-sm" rel="me">
+                <LinkIcon kind={link.kind} />
+                {link.label}
+              </a>
+            </li>
+          ))
+        }
+        {
+          site.cv && (
+            <li>
+              <a href={site.cv} class="link text-sm">
+                <span class="i-ph-file-arrow-down" aria-hidden="true" />
+                {t('hero.cv')}
+              </a>
+            </li>
+          )
+        }
+        <li>
+          <a href={pathFor(lang, 'certs')} class="link text-sm">
+            {t('area.certs.title')}
+          </a>
+        </li>
+      </ul>
+    </div>
   </div>
+
+  <p class="t-monument mt-14 select-none md:mt-20" aria-hidden="true">{name}</p>
+  <p class="u-wrap t-meta pt-4 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))]">
+    {name} · {year}
+  </p>
 </footer>
