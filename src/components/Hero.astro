@@ -1,25 +1,34 @@
 ---
-import { pathFor, useTranslations } from '@/i18n/utils'
+import LinkIcon from '@/components/LinkIcon.svelte'
+import Photo from '@/components/Photo.astro'
 import type { Lang } from '@/i18n/locales'
+import { local, useTranslations } from '@/i18n/utils'
+import type { RoleRow } from '@/lib/content'
+import { site } from '@/lib/site'
 
 interface Props {
   lang: Lang
-  location: string
-  lead: string
-  name: string
-  links: { href: string; label: string }[]
+  roles: RoleRow[]
 }
 
-const { lang, location, lead, name, links } = Astro.props
+const { lang, roles } = Astro.props
 const t = useTranslations(lang)
-
+const name = local(site.name, lang)
 // Animate letters, but keep each word intact when the name wraps on phones.
 const words = name.split(' ')
+const contacts = [
+  { kind: 'email' as const, label: site.email, url: `mailto:${site.email}` },
+  ...site.links,
+]
 ---
 
+<!--
+  No tagline: the name is the only headline, followed by facts. Every block is
+  optional; without a portrait the grid simply drops that column.
+-->
 <section class="pt-6 md:pt-10">
-  <div class="overflow-x-clip">
-    <h1 class="t-monument px-[var(--layout-gutter)] text-center uppercase">
+  <div class="overflow-x-clip" data-hero-name>
+    <h1 class="t-monument px-[var(--layout-gutter)]">
       {
         words.map((word) => (
           <>
@@ -35,59 +44,98 @@ const words = name.split(' ')
     </h1>
   </div>
 
-  <div class="u-wrap mt-8 grid gap-6 md:mt-10 md:grid-cols-[1fr_2fr] md:gap-12">
-    <div>
-      <p class="t-label flex items-center gap-2">
-        <span class="inline-block size-1.5 bg-accent" aria-hidden="true"></span>
-        {location}
-      </p>
-      <ul class="mt-4 flex flex-wrap gap-x-5 gap-y-2">
-        {
-          links.map((link) => (
-            <li>
-              <a
-                href={link.href}
-                class="u-focus u-link t-meta text-ink hover:text-accent"
-                rel={link.href.startsWith('http') ? 'me' : undefined}
-              >
-                {link.label}
-                <span
-                  class="i-ph-arrow-up-right size-3 text-ink-muted"
-                  aria-hidden="true"
-                />
-              </a>
-            </li>
-          ))
-        }
-      </ul>
-    </div>
+  <div
+    class:list={[
+      'u-wrap mt-8 grid items-start gap-x-8 gap-y-6 md:mt-12',
+      site.portrait
+        ? 'grid-cols-[6.5rem_1fr] sm:grid-cols-[9rem_1fr] md:grid-cols-[13rem_1fr_auto]'
+        : 'md:grid-cols-[1fr_auto]',
+    ]}
+  >
+    {
+      site.portrait && (
+        <Photo
+          src={site.portrait}
+          alt={name}
+          widths={[104, 208, 416, 624]}
+          sizes="(min-width: 52em) 13rem, (min-width: 34em) 9rem, 6.5rem"
+          class="aspect-square w-full border border-line bg-paper-raised object-cover"
+          priority
+        />
+      )
+    }
 
-    <div>
-      <p class="t-lead u-measure">{lead}</p>
-      <div class="mt-4 flex flex-wrap gap-x-6 gap-y-1">
-        <a
-          href={`${pathFor(lang)}#work`}
-          class="u-focus u-link text-accent underline decoration-line-strong"
-        >
-          {t('hero.work')}
-          <span class="i-ph-arrow-down size-4" aria-hidden="true"></span>
-        </a>
-        <a
-          href={pathFor(lang, 'blog')}
-          class="u-focus u-link text-ink-muted underline decoration-line"
-        >
-          {t('hero.writing')}
-        </a>
-      </div>
-    </div>
+    {
+      roles.length > 0 && (
+        <div>
+          <p class="t-label">{t('hero.now')}</p>
+          <ul class="mt-2 flex flex-col gap-2">
+            {roles.map((role) => (
+              <li class="t-hero-role">
+                <span class="text-ink-muted">{role.role}, </span>
+                {role.url ? (
+                  <a href={role.url} class="link-text">
+                    {role.org}
+                    <span class="i-ph-arrow-up-right.5" aria-hidden="true" />
+                  </a>
+                ) : (
+                  <span>{role.org}</span>
+                )}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )
+    }
+
+    <ul
+      class:list={[
+        'flex flex-wrap gap-x-5 md:flex-col md:items-start',
+        site.portrait && 'col-span-2 md:col-span-1',
+      ]}
+    >
+      {
+        contacts.map((item) => (
+          <li>
+            <a
+              href={item.url}
+              rel={item.kind === 'email' ? undefined : 'me'}
+              class="link text-sm"
+            >
+              <LinkIcon kind={item.kind} />
+              {item.label}
+            </a>
+          </li>
+        ))
+      }
+      {
+        site.cv && (
+          <li>
+            <a href={site.cv} class="link text-sm">
+              <span class="i-ph-file-arrow-down" aria-hidden="true" />
+              {t('hero.cv')}
+            </a>
+          </li>
+        )
+      }
+    </ul>
   </div>
 </section>
 
 <script>
-  // The name is the only entrance animation on the site.
+  import { gsap } from '@/lib/scroll'
+
+  // The name is the only entrance animation on the site, and it plays once per
+  // visit: returning to the homepage should never make the reader wait.
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-  if (!reduced) {
-    const { default: gsap } = await import('gsap')
+  let seen = false
+  try {
+    seen = sessionStorage.getItem('hero-seen') === '1'
+    sessionStorage.setItem('hero-seen', '1')
+  } catch {
+    // Storage blocked: play it, nothing else depends on the flag.
+  }
+  if (!reduced && !seen) {
     const motion = getComputedStyle(document.documentElement)
     gsap.from('.char', {
       opacity: 0,
