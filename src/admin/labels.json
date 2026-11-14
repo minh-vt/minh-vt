@@ -1,0 +1,52 @@
+{
+  "labels": {
+    "title": "Tiêu đề",
+    "lead": "Một câu giới thiệu",
+    "updated": "Cập nhật",
+    "credential": "Chứng chỉ nổi bật",
+    "body": "Nội dung",
+    "description": "Mô tả",
+    "date": "Ngày",
+    "tags": "Thẻ",
+    "draft": "Bản nháp",
+    "origin": "Đăng lần đầu",
+    "label": "Nhãn ngắn",
+    "url": "Liên kết",
+    "order": "Thứ tự",
+    "year": "Năm",
+    "summary": "Mô tả",
+    "metric": "Con số",
+    "refs": "Nguồn",
+    "credentials": "Chứng chỉ",
+    "tech": "Công nghệ",
+    "cover": "Ảnh bìa",
+    "issuer": "Nơi cấp",
+    "file": "File (PDF hoặc ảnh)",
+    "preview": "Ảnh preview",
+    "extra": "File thứ hai",
+    "kind": "Loại",
+    "name": "Tên",
+    "tier": "Mức uy tín",
+    "logo": "Logo",
+    "outlet": "Đơn vị đăng",
+    "email": "Email",
+    "github": "GitHub",
+    "linkedin": "LinkedIn",
+    "location": "Nơi ở",
+    "value": "Giá trị"
+  },
+  "hints": {
+    "refs": "Chọn từ mục Nguồn.",
+    "credentials": "Chọn từ mục Chứng chỉ.",
+    "outlet": "Chọn từ mục Đơn vị đăng.",
+    "preview": "Ảnh thumbnail tĩnh, không phải file PDF.",
+    "tier": "1: báo quốc gia, ban tổ chức, cơ quan; 2: trang kết quả chính thức; 3: địa phương, tổ chức."
+  },
+  "widgets": {
+    "description": "text",
+    "summary": "text"
+  },
+  "errors": {
+    "slug": "Dùng chữ thường không dấu, chữ số và dấu gạch nối; ví dụ bai-viet-moi."
+  }
+}

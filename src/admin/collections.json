@@ -1,0 +1,62 @@
+{
+  "about": {
+    "label": "Giới thiệu",
+    "kind": "perLocaleFiles",
+    "body": true
+  },
+  "posts": {
+    "label": "Bài viết",
+    "label_singular": "Bài",
+    "kind": "entries",
+    "summary": "{{title}}",
+    "sortable_fields": ["date"],
+    "i18n": true,
+    "slug": { "template": "{{slug}}" },
+    "body": true,
+    "extension": "mdx",
+    "display_field": "title"
+  },
+  "facts": {
+    "label": "Các mốc",
+    "label_singular": "Mốc",
+    "kind": "entries",
+    "summary": "{{fields.year}} · {{fields.title.vi}}",
+    "sortable_fields": ["order"],
+    "display_field": "title.vi"
+  },
+  "work": {
+    "label": "Việc đã làm",
+    "label_singular": "Dự án",
+    "kind": "entries",
+    "summary": "{{fields.year}} · {{fields.title.vi}}",
+    "sortable_fields": ["order"],
+    "display_field": "title.vi"
+  },
+  "credentials": {
+    "label": "Chứng chỉ",
+    "kind": "entries",
+    "summary": "{{fields.year}} · {{fields.title.vi}}",
+    "display_field": "title.vi"
+  },
+  "outlets": {
+    "label": "Đơn vị đăng",
+    "kind": "entries",
+    "summary": "{{fields.name.vi}} (tier {{fields.tier}})",
+    "display_field": "name.vi"
+  },
+  "references": {
+    "label": "Nguồn",
+    "kind": "entries",
+    "summary": "{{fields.outlet}} — {{fields.title}}",
+    "sortable_fields": ["date"],
+    "display_field": "title"
+  },
+  "strings": {
+    "label": "Chuỗi giao diện",
+    "kind": "strings"
+  },
+  "site": {
+    "label": "Thông tin site",
+    "kind": "single"
+  }
+}

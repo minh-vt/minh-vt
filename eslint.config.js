@@ -49,7 +49,8 @@ export default [
 
   {
     languageOptions: {
-      globals: { ...globals.browser, ...globals.node },
+      // Injected by astro.config.mjs from package.json.
+      globals: { ...globals.browser, ...globals.node, __CMS_VERSION__: 'readonly' },
     },
     rules: {
       // Errors: structural conventions.

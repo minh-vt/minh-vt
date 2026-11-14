@@ -1,10 +1,13 @@
-import cms from '@/content/cms.json'
-import { contractFields, type Field } from '@/lib/cms-fields'
+import type { Collection, CmsConfig, Field } from '@sveltia/cms'
+import adminCollections from '@/admin/collections.json'
+import { contractFields } from '@/admin/fields'
+import labels from '@/admin/labels.json'
+import settings from '@/admin/settings.json'
 import { defaultLocale, locales } from '@/i18n/locales'
 import { slugSegmentPattern } from '@/i18n/routes'
 import { languageName } from '@/i18n/utils'
 
-/** Collection shapes for Sveltia. Field rules live in model.ts, labels in cms.json. */
+/** Admin-only: collection shapes for Sveltia, derived from the content contract. */
 
 interface CollectionOptions {
   label: string
@@ -19,7 +22,7 @@ interface CollectionOptions {
   display_field?: string
 }
 
-const collections = cms.collections as Record<string, CollectionOptions>
+const configured = adminCollections as Record<string, CollectionOptions>
 
 function base(name: string, options: CollectionOptions) {
   return {
@@ -32,7 +35,11 @@ function base(name: string, options: CollectionOptions) {
 }
 
 /** File collections differ only in path and format. */
-function filesCollection(name: string, options: CollectionOptions, fields: Field[]) {
+function filesCollection(
+  name: string,
+  options: CollectionOptions,
+  fields: Field[],
+): Collection {
   if (options.kind === 'single') {
     return {
       ...base(name, options),
@@ -62,7 +69,11 @@ function filesCollection(name: string, options: CollectionOptions, fields: Field
   }
 }
 
-function entryCollection(name: string, options: CollectionOptions, fields: Field[]) {
+function entryCollection(
+  name: string,
+  options: CollectionOptions,
+  fields: Field[],
+): Collection {
   const extension = options.extension ?? 'yaml'
   return {
     ...base(name, options),
@@ -72,7 +83,7 @@ function entryCollection(name: string, options: CollectionOptions, fields: Field
     extension,
     format: extension === 'mdx' ? 'frontmatter' : 'yaml',
     ...(options.slug && {
-      slug: { ...options.slug, pattern: [slugSegmentPattern.source, cms.errors.slug] },
+      slug: { ...options.slug, pattern: [slugSegmentPattern.source, labels.errors.slug] },
     }),
     fields,
   }
@@ -91,8 +102,8 @@ function stringFields(options: CollectionOptions): Field[] {
   ]
 }
 
-export function cmsConfig() {
-  const built = Object.entries(collections).map(([name, options]) => {
+export function cmsConfig(): CmsConfig {
+  const collections = Object.entries(configured).map(([name, options]) => {
     if (options.kind === 'entries') {
       return entryCollection(name, options, contractFields(name, options))
     }
@@ -103,8 +114,18 @@ export function cmsConfig() {
   })
 
   return {
-    ...cms.settings,
-    i18n: { structure: 'multiple_folders', locales, default_locale: defaultLocale },
-    collections: built,
+    // JSON widens literals; the shape is asserted against the official schema at build time.
+    backend: settings.backend as CmsConfig['backend'],
+    media_folder: settings.media_folder,
+    public_folder: settings.public_folder,
+    publish_mode: settings.publish_mode as CmsConfig['publish_mode'],
+    slug: settings.slug as CmsConfig['slug'],
+    output: settings.output,
+    i18n: {
+      structure: 'multiple_folders',
+      locales: [...locales],
+      default_locale: defaultLocale,
+    },
+    collections,
   }
 }

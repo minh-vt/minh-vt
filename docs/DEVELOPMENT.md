@@ -46,8 +46,13 @@ src/content/site.json     email, links, places
 src/pages/admin/index.astro  Sveltia CMS entry point at /admin/
 src/content/model.ts      the content contract: types, rules, relationships
 src/content.config.ts     loaders and file layout only
-src/content/cms.json      editor labels, hints, messages and CMS settings
-src/pages/admin/config.json.ts  static endpoint, one line over cmsConfig()
+src/admin/                everything the editor needs; nothing else imports it
+src/admin/labels.json     Vietnamese editor labels, hints and messages
+src/admin/settings.json   backend, media, output and slug settings
+src/admin/collections.json  collection shapes and which collection is a relation target
+src/admin/fields.ts       contract -> Sveltia fields, typed by @sveltia/cms
+src/admin/config.ts       assembles the CmsConfig
+src/pages/admin/          route surface only: /admin/ and /admin/config.json
 ```
 
 ## The content model
@@ -196,6 +201,10 @@ Nothing is hidden for lack of a translation. The fallback policy is explicit:
 | `outlets`        | publishers       | every locale, plus `tier`, `logo` |
 | `references`     | outbound links   | one link                          |
 
+Post images go through `Figure.astro`, which uses `astro:assets` and `sharp` so local images are
+optimised at build time. Plain `<img>` is only for files that are already sized correctly, such as
+the committed WebP thumbnails.
+
 Credential originals live in `public/certs/`. Each entry's `preview` points at a static WebP;
 PDFs are linked, never embedded or prefetched. Thumbnails are committed assets, not a build
 step; upload or prepare a real preview image when adding a credential. Cloudflare needs no PDF
@@ -251,10 +260,14 @@ https://developers.cloudflare.com/pages/configuration/custom-domains/
 relationships and asset kinds. Each field carries the label key it uses, so editor text stays in
 `src/content/cms.json` and a missing label is a build error rather than a guessed name.
 
-`src/lib/cms-fields.ts` reads the JSON Schema exported by Zod plus that metadata and emits editor
-fields; `src/lib/cms-config.ts` wraps them in Sveltia collection shapes. There is no second field
-list and no generated file in the repository. Unsupported shapes throw during the build instead of
-degrading to `any`.
+`src/content/model.ts` imports nothing from `src/admin/`: the contract describes data, never
+editor vocabulary. `src/admin/` reads the JSON Schema exported by Zod and adds Vietnamese labels,
+so the dependency only ever points from admin to contract.
+
+`src/admin/fields.ts` emits fields typed by the `@sveltia/cms` package rather than a hand-written
+field shape, and `src/admin/config.ts` assembles a `CmsConfig`. The CMS version is pinned once, in
+`package.json`; `astro.config.mjs` injects it into the `/admin/` script tag so the browser build and
+the types cannot drift. Unsupported shapes throw during the build instead of degrading to `any`.
 
 Relationships (`refs`, `credentials`, `outlet`, `credential`) become Sveltia Relation pickers, so
 editors choose an entry instead of typing its id. `output.omit_empty_optional_fields` keeps saved

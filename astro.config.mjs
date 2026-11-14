@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs'
 import { defineConfig } from 'astro/config'
 import svelte from '@astrojs/svelte'
 import mdx from '@astrojs/mdx'
@@ -7,6 +8,11 @@ import { unified } from '@astrojs/markdown-remark'
 import remarkMath from 'remark-math'
 import rehypeKatex from 'rehype-katex'
 import { locales, defaultLocale } from '@/i18n/locales'
+
+// One pin for the CMS: the browser script and the installed types cannot drift.
+const cmsVersion = JSON.parse(
+  readFileSync(new URL('./package.json', import.meta.url), 'utf8'),
+).devDependencies['@sveltia/cms']
 
 // https://docs.astro.build/en/reference/configuration-reference/
 export default defineConfig({
@@ -31,5 +37,6 @@ export default defineConfig({
     shikiConfig: { theme: 'css-variables' },
     processor: unified({ remarkPlugins: [remarkMath], rehypePlugins: [rehypeKatex] }),
   },
+  vite: { define: { __CMS_VERSION__: JSON.stringify(cmsVersion) } },
   devToolbar: { enabled: false },
 })

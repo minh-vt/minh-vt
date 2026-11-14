@@ -1,53 +1,41 @@
 import { z } from 'astro/zod'
-import type cms from '@/content/cms.json'
 import { defaultLocale, locales } from '@/i18n/locales'
 
 /**
- * The content contract. This file is the only place that decides what a field
- * means: its type, requiredness, default and relationships. Astro validates
- * with it; the CMS config is derived from it. Editor text stays in cms.json.
+ * The content contract: what a field means, never how an editor shows it.
+ * Astro validates with this; the admin adapter reads it. No admin vocabulary
+ * and no editor text belong here.
  */
 
-type LabelKey = keyof typeof cms.labels
-type HintKey = keyof typeof cms.hints
-
-/** What an editor needs that a Zod type cannot express. */
-export type EditorMeta = {
-  label?: string
-  hint?: string
-  media?: 'image' | 'file'
+/** Field facts the editor must know because the data model owns them. */
+export type FieldMeta = {
+  /** Collection this id points at. */
   relation?: string
   multiple?: boolean
-  multiline?: boolean
+  /** Referenced public file kind. */
+  media?: 'image' | 'file'
 }
-
-type Presentation = EditorMeta & { label: LabelKey; hint?: HintKey }
 
 const text = z.string().trim().min(1)
 
-const show = <T extends z.ZodType>(schema: T, presentation: Presentation) =>
-  schema.meta(presentation)
-
-/** Text with a label; every other field follows this same shape. */
-const field = (label: LabelKey, extra: Omit<Presentation, 'label'> = {}) =>
-  show(text, { label, ...extra })
+const show = <T extends z.ZodType>(schema: T, meta: FieldMeta) => schema.meta(meta)
 
 /** Structured text: the source locale is required, others may fall back. */
-const localized = (label: LabelKey) =>
+const localized = () =>
   z
     .partialRecord(z.enum(locales), z.string().trim())
     .refine((value) => Boolean(value[defaultLocale]), {
       error: `Missing ${defaultLocale} text`,
     })
-    .meta({ label, required: [defaultLocale] })
+    .meta({ required: [defaultLocale] })
 
 /** Calendar dates only; null, booleans and bare numbers are rejected. */
 const date = z
   .union([z.date(), z.iso.date(), z.iso.datetime({ offset: true })])
   .transform((value) => new Date(value))
-  .meta({ label: 'date', type: 'string', format: 'date-time' } as const)
+  .meta({ type: 'string', format: 'date-time' } as const)
 
-const relations = (collection: string, label: LabelKey, hint?: HintKey) =>
+const relations = (collection: string) =>
   show(
     z
       .array(text)
@@ -55,79 +43,72 @@ const relations = (collection: string, label: LabelKey, hint?: HintKey) =>
         error: 'Duplicate ids',
       })
       .default([]),
-    { label, hint, relation: collection, multiple: true },
+    { relation: collection, multiple: true },
   )
 
-const kind = <T extends readonly [string, ...string[]]>(options: T, label: LabelKey) =>
-  show(z.enum(options), { label })
+const media = (kind: 'image' | 'file') => show(text, { media: kind })
 
 export const schemas = {
   about: z.object({
-    title: field('title'),
-    lead: field('lead'),
-    updated: show(date, { label: 'updated' }).optional(),
-    credential: field('credential', { relation: 'credentials' }).optional(),
+    title: text,
+    lead: text,
+    updated: date.optional(),
+    credential: show(text, { relation: 'credentials' }).optional(),
   }),
   posts: z.object({
-    title: field('title'),
-    description: field('description', { multiline: true }),
-    date: show(date, { label: 'date' }),
-    draft: show(z.boolean().default(false), { label: 'draft' }),
-    tags: show(z.array(text).default([]), { label: 'tags' }),
-    origin: show(
-      z.object({
-        label: field('label'),
-        url: show(z.httpUrl(), { label: 'url' }),
-      }),
-      { label: 'origin' },
-    ).optional(),
+    title: text,
+    description: text,
+    date,
+    draft: z.boolean().default(false),
+    tags: z.array(text).default([]),
+    origin: z.object({ label: text, url: z.httpUrl() }).optional(),
   }),
   facts: z.object({
-    order: show(z.int(), { label: 'order' }),
-    year: field('year'),
-    title: localized('title'),
-    summary: localized('summary'),
-    metric: localized('metric').optional(),
-    refs: relations('references', 'refs', 'refs'),
-    credentials: relations('credentials', 'credentials', 'credentials'),
+    order: z.int(),
+    year: text,
+    title: localized(),
+    summary: localized(),
+    metric: localized().optional(),
+    refs: relations('references'),
+    credentials: relations('credentials'),
   }),
   work: z.object({
-    order: show(z.int(), { label: 'order' }),
-    year: field('year'),
-    title: localized('title'),
-    summary: localized('summary'),
-    metric: localized('metric').optional(),
-    tech: field('tech'),
-    refs: relations('references', 'refs', 'refs'),
-    cover: field('cover', { media: 'image' }).optional(),
-    credentials: relations('credentials', 'credentials', 'credentials'),
+    order: z.int(),
+    year: text,
+    title: localized(),
+    summary: localized(),
+    metric: localized().optional(),
+    tech: text,
+    refs: relations('references'),
+    cover: media('image').optional(),
+    credentials: relations('credentials'),
   }),
   credentials: z.object({
-    year: field('year'),
-    title: localized('title'),
-    issuer: localized('issuer'),
-    file: field('file', { media: 'file' }),
-    preview: field('preview', { media: 'image', hint: 'preview' }),
-    extra: field('extra', { media: 'file' }).optional(),
-    kind: kind(['course', 'award', 'role'], 'kind'),
+    year: text,
+    title: localized(),
+    issuer: localized(),
+    file: media('file'),
+    preview: media('image'),
+    extra: media('file').optional(),
+    kind: z.enum(['course', 'award', 'role']),
   }),
   outlets: z.object({
-    name: localized('name'),
-    tier: show(z.int().min(1).max(3), { label: 'tier', hint: 'tier' }),
-    logo: field('logo', { media: 'image' }).optional(),
+    name: localized(),
+    tier: z.int().min(1).max(3),
+    logo: media('image').optional(),
   }),
   references: z.object({
-    url: show(z.httpUrl(), { label: 'url' }),
-    outlet: field('outlet', { hint: 'outlet', relation: 'outlets' }),
-    title: field('title'),
-    label: field('label').optional(),
-    date: show(date, { label: 'date' }).optional(),
-    kind: kind(['press', 'video', 'award', 'code', 'social'], 'kind'),
+    url: z.httpUrl(),
+    outlet: show(text, { relation: 'outlets' }),
+    title: text,
+    label: text.optional(),
+    date: date.optional(),
+    kind: z.enum(['press', 'video', 'award', 'code', 'social']),
   }),
   site: z.object({
-    email: show(z.email(), { label: 'email' }),
-    github: show(z.httpUrl(), { label: 'github' }),
-    linkedin: show(z.httpUrl(), { label: 'linkedin' }),
-    location: localized('location'),
+    email: z.email(),
+    github: z.httpUrl(),
+    linkedin: z.httpUrl(),
+    location: localized(),
   }),
 }

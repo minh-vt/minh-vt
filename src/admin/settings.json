@@ -1,0 +1,17 @@
+{
+  "backend": {
+    "name": "github",
+    "repo": "minh-vt/minh-vt",
+    "branch": "main"
+  },
+  "media_folder": "public/",
+  "public_folder": "/",
+  "publish_mode": "simple",
+  "slug": {
+    "encoding": "ascii",
+    "clean_accents": true
+  },
+  "output": {
+    "omit_empty_optional_fields": true
+  }
+}

@@ -1,3 +1,8 @@
+---
+// Pinned once in package.json; astro.config.mjs injects the version.
+const cmsScript = `https://unpkg.com/@sveltia/cms@${__CMS_VERSION__}/dist/sveltia-cms.js`
+---
+
 <!doctype html>
 <html lang="vi">
   <head>
@@ -6,9 +11,8 @@
     <meta name="robots" content="noindex" />
     <title>Nội dung · minh-vt</title>
     <link href="/admin/config.json" type="application/json" rel="cms-config-url" />
-    <!-- Sveltia CMS: Git backed editor, no server. Pinned on purpose. -->
-    <script is:inline src="https://unpkg.com/@sveltia/cms@0.261.0/dist/sveltia-cms.js"
-    ></script>
+    <!-- Git-backed editor, no server. The version comes from package.json. -->
+    <script is:inline src={cmsScript}></script>
   </head>
   <body>
     <noscript>Bật JavaScript để dùng trình soạn thảo.</noscript>
