@@ -38,9 +38,4 @@ export default defineConfig({
   ],
   transformers: [transformerDirectives()],
   theme,
-  shortcuts: {
-    // The one shortcut worth naming: every interactive element uses it.
-    'u-focus':
-      'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus',
-  },
 })
