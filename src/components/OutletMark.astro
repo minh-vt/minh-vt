@@ -1,0 +1,49 @@
+---
+import Photo from '@/components/Photo.astro'
+import type { Lang } from '@/i18n/locales'
+import { local } from '@/i18n/utils'
+import type { Reference } from '@/lib/content'
+import { siteImage } from '@/lib/images'
+
+interface Props {
+  outlet: Reference['outlet']
+  lang: Lang
+  size?: 'md' | 'lg'
+}
+
+/** An outlet's logo, or its initials when it has none. Decorative: the name sits beside it. */
+const { outlet, lang, size = 'md' } = Astro.props
+const box = { md: 'size-4', lg: 'size-10' }[size]
+const pixels = { md: 16, lg: 40 }[size]
+const name = local(outlet.data.name, lang)
+const monogram = name
+  .split(/\s+/)
+  .filter((word) => word.length > 1)
+  .slice(0, 2)
+  .map((word) => word[0])
+  .join('')
+const logo = outlet.data.logo && siteImage(outlet.data.logo, `outlets/${outlet.id} logo`)
+---
+
+{
+  logo ? (
+    <Photo
+      src={logo}
+      alt=""
+      widths={[pixels, pixels * 2]}
+      sizes={`${pixels}px`}
+      class={`${box} shrink-0 object-contain`}
+    />
+  ) : (
+    <span
+      class:list={[
+        box,
+        'flex shrink-0 items-center justify-center border border-line-strong leading-none text-ink-muted',
+        size === 'lg' ? 't-label' : 'text-[length:var(--text-mark)]',
+      ]}
+      aria-hidden="true"
+    >
+      {monogram}
+    </span>
+  )
+}

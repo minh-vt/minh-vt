@@ -1,9 +1,30 @@
 {
+  "name": {
+    "vi": "Vũ Tùng Minh",
+    "en": "Vu Tung Minh"
+  },
   "email": "vuminh.work@gmail.com",
-  "github": "https://github.com/minh-vt",
-  "linkedin": "https://linkedin.com/in/minh-vt",
   "location": {
     "vi": "TP. Hồ Chí Minh · Phú Yên",
     "en": "Ho Chi Minh City · Phu Yen"
-  }
+  },
+  "portrait": "/media/portrait.webp",
+  "links": [
+    {
+      "kind": "github",
+      "label": "GitHub",
+      "url": "https://github.com/minh-vt"
+    },
+    {
+      "kind": "linkedin",
+      "label": "LinkedIn",
+      "url": "https://linkedin.com/in/minh-vt"
+    }
+  ],
+  "menu": [
+    "timeline",
+    "press",
+    "blog",
+    "certs"
+  ]
 }

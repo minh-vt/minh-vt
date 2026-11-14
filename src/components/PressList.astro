@@ -1,0 +1,81 @@
+---
+import OutletMark from '@/components/OutletMark.astro'
+import type { Lang } from '@/i18n/locales'
+import { formatDate } from '@/i18n/format'
+import { local, useTranslations, pathFor } from '@/i18n/utils'
+import type { EntryRow, Reference } from '@/lib/content'
+
+interface Props {
+  lang: Lang
+  items: Reference[]
+  entries: EntryRow[]
+}
+
+const { lang, items, entries } = Astro.props
+const t = useTranslations(lang)
+
+// An article links to the timeline entry it backs up, but only when exactly one
+// entry cites it: a profile cited by several entries is about all of them.
+const subjectOf = (ref: Reference) => {
+  const citing = entries.filter((entry) => entry.refs.includes(ref))
+  return citing.length === 1 ? citing[0] : undefined
+}
+---
+
+<ul class="mt-6 grid gap-4 md:grid-cols-2">
+  {
+    items.map((ref) => {
+      const subject = subjectOf(ref)
+      return (
+        <li class="press-card group relative flex flex-col gap-4 border border-line bg-paper-raised p-5">
+          <div class="flex items-center gap-3">
+            <OutletMark outlet={ref.outlet} {lang} size="lg" />
+            <p class="t-meta">
+              <span class="text-ink">{local(ref.outlet.data.name, lang)}</span>
+              {ref.data.date && <> · {formatDate(ref.data.date, lang, 'month')}</>}
+            </p>
+          </div>
+          <a
+            href={ref.data.url}
+            rel="noreferrer"
+            lang="vi"
+            class="t-title press-link text-ink group-hover:underline"
+          >
+            {ref.data.title}
+            <span class="i-ph-arrow-up-right ml-1 text-ink-muted" aria-hidden="true" />
+          </a>
+          {subject && (
+            <p class="t-meta relative z-1 mt-auto">
+              {t('press.on')}{' '}
+              <a
+                href={`${pathFor(lang, 'timeline')}#${subject.id}`}
+                class="link-text text-ink"
+              >
+                {subject.title}
+              </a>
+            </p>
+          )}
+        </li>
+      )
+    })
+  }
+</ul>
+
+<style>
+  /* The whole card opens the article; the "about" link stays separately clickable. */
+  .press-link::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .press-card {
+      transition: border-color var(--duration-ui) ease;
+    }
+
+    .press-card:hover {
+      border-color: var(--line-strong);
+    }
+  }
+</style>

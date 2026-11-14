@@ -75,19 +75,76 @@ function fieldFor(name: string, schema: Json, required: boolean): Field {
   if (schema.type === 'object') {
     return { ...common, widget: 'object', fields: objectFields(schema) }
   }
-  if (schema.type === 'array') {
-    const items = schema.items
-    if (typeof items !== 'object' || Array.isArray(items) || items.type !== 'string') {
-      throw new Error(`Admin list "${name}" must hold strings`)
+  if (schema.type === 'array') return listField(common, schema)
+  return scalarField(common, schema, name)
+}
+
+const types = (labels as { types?: Record<string, string> }).types ?? {}
+const optionLabels = (labels as { options?: Record<string, string> }).options ?? {}
+
+/** Select options keep their stored value and show the editor's word for it. */
+const selectOptions = (values: unknown[]) =>
+  (values as string[]).map((value) => ({ label: optionLabels[value] ?? value, value }))
+
+/** A discriminated union becomes Sveltia's variable types, keyed by `type`. */
+function variableTypes(options: Json[]) {
+  return options.map((option) => {
+    const name = (option.properties?.type as Json | undefined)?.const
+    if (typeof name !== 'string') throw new Error('Admin union option without a type')
+    const label = types[name]
+    if (!label) throw new Error(`Missing admin label for section type "${name}"`)
+    const { type: _discriminator, ...rest } = option.properties ?? {}
+    void _discriminator
+    const required = (option.required ?? []).filter((key) => key !== 'type')
+    return {
+      name,
+      label,
+      widget: 'object' as const,
+      fields: Object.entries(rest).map(([key, child]) =>
+        fieldFor(key, child as Json, required.includes(key)),
+      ),
     }
+  })
+}
+
+function listField(common: Base, schema: Json): Field {
+  const items = schema.items
+  if (typeof items !== 'object' || Array.isArray(items)) {
+    throw new Error(`Admin list "${common.name}" has no item schema`)
+  }
+  const item = items as Meta
+  const defaults = { default: schema.default as [] | undefined }
+  if (item.oneOf || item.anyOf) {
     return {
       ...common,
       widget: 'list',
-      default: schema.default as string[] | undefined,
+      types: variableTypes((item.oneOf ?? item.anyOf) as Json[]),
+    }
+  }
+  if (item.type === 'object') {
+    return { ...common, ...defaults, widget: 'list', fields: objectFields(item) }
+  }
+  if (item.media === 'image') {
+    return { ...common, widget: 'image', multiple: true }
+  }
+  if (item.type === 'string' && item.enum) {
+    return {
+      ...common,
+      ...defaults,
+      widget: 'select',
+      multiple: true,
+      options: selectOptions(item.enum),
+    }
+  }
+  if (item.type === 'string') {
+    return {
+      ...common,
+      ...defaults,
+      widget: 'list',
       field: { name: 'value', label: text.value, widget: 'string', required: true },
     }
   }
-  return scalarField(common, schema, name)
+  throw new Error(`Unsupported admin list "${common.name}"`)
 }
 
 function scalarField(common: Base, schema: Json, name: string): Field {
@@ -95,7 +152,7 @@ function scalarField(common: Base, schema: Json, name: string): Field {
     return {
       ...common,
       widget: 'select',
-      options: schema.enum as string[],
+      options: selectOptions(schema.enum),
       default: schema.default as string | undefined,
     }
   }

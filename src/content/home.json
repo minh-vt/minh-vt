@@ -1,0 +1,23 @@
+{
+  "sections": [
+    {
+      "type": "about"
+    },
+    {
+      "type": "press",
+      "limit": 4
+    },
+    {
+      "type": "timeline",
+      "limit": 4
+    },
+    {
+      "type": "blog",
+      "limit": 3
+    },
+    {
+      "type": "certs",
+      "limit": 3
+    }
+  ]
+}

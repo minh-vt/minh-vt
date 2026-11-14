@@ -1,0 +1,10 @@
+order: 110
+year: '2023'
+title:
+  vi: 'Thực tập ở Fablab Saigon'
+  en: 'Internship at Fablab Saigon'
+summary:
+  vi: 'Từ tháng 6 tới tháng 9 năm 2023. Mình dùng máy in 3D, máy CNC, và làm một chi tiết từ bản vẽ tới sản phẩm.'
+  en: 'June to September 2023: 3D printers, CNC machines, and taking a part from drawing to finished piece.'
+tags: [tech]
+photos: [/media/fablab-saigon-2023.webp]

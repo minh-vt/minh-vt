@@ -1,0 +1,9 @@
+order: 40
+role:
+  vi: 'Kỹ sư phần mềm nhúng'
+  en: 'Embedded software engineer'
+org:
+  vi: 'FPT Software'
+  en: 'FPT Software'
+start: '2023'
+end: '2025'

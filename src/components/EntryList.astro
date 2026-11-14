@@ -1,0 +1,193 @@
+---
+import Lightbox from '@/components/Lightbox.svelte'
+import LinkIcon from '@/components/LinkIcon.svelte'
+import OutletMark from '@/components/OutletMark.astro'
+import { entryTags } from '@/content/model'
+import type { Lang } from '@/i18n/locales'
+import { formatDate } from '@/i18n/format'
+import { local, useTranslations, pathFor } from '@/i18n/utils'
+import type { EntryRow, Reference } from '@/lib/content'
+import { lightboxPhotos } from '@/lib/images'
+
+interface Props {
+  lang: Lang
+  entries: EntryRow[]
+  /** The full timeline page filters by tag; the homepage excerpt does not. */
+  filters?: boolean
+}
+
+const { lang, entries, filters = false } = Astro.props
+const t = useTranslations(lang)
+const used = entryTags.filter((tag) => entries.some((entry) => entry.tags.includes(tag)))
+const showFilters = filters && used.length > 1
+
+// Thumbnails at the width the column gives them; the large version loads only
+// when a reader opens the lightbox.
+const gallery = new Map(
+  await Promise.all(
+    entries
+      .filter((entry) => entry.photos.length > 0)
+      .map(
+        async (entry) =>
+          [
+            entry.id,
+            await lightboxPhotos(
+              entry.photos,
+              entry.title,
+              '(min-width: 52em) 18rem, 24rem',
+            ),
+          ] as const,
+      ),
+  ),
+)
+const photoLabels = {
+  zoom: t('photo.zoom'),
+  close: t('nav.close'),
+  previous: t('photo.previous'),
+  next: t('photo.next'),
+}
+
+// Third-party proof leads; links to code and social posts follow.
+const rank = { press: 0, award: 1, video: 2, social: 3, code: 4 } as const
+const ordered = (refs: Reference[]) =>
+  [...refs].sort(
+    (a, b) =>
+      rank[a.data.kind] - rank[b.data.kind] || a.outlet.data.tier - b.outlet.data.tier,
+  )
+const refLabel = (ref: Reference) =>
+  ref.data.kind === 'code'
+    ? t('entry.code')
+    : local(ref.data.label ?? ref.outlet.data.name, lang)
+
+// Filtering is CSS: a checked radio hides the rows without its tag. The script
+// below only mirrors the choice in the URL so a filtered view can be shared.
+const filterCss = used
+  .map(
+    (tag) =>
+      `.entry-list:has(#filter-${tag}:checked) [data-tags]:not([data-tags~="${tag}"]){display:none}`,
+  )
+  .join('')
+---
+
+<div class="entry-list">
+  {
+    showFilters && (
+      <fieldset class="mt-6 flex flex-wrap gap-2 border-0 p-0">
+        <legend class="sr-only">{t('filter.label')}</legend>
+        {['all', ...used].map((tag) => (
+          <label class="btn text-ink-muted">
+            <input
+              type="radio"
+              name="filter"
+              value={tag}
+              id={`filter-${tag}`}
+              checked={tag === 'all'}
+              class="sr-only"
+            />
+            {tag === 'all'
+              ? t('filter.all')
+              : t(`tag.${tag as (typeof entryTags)[number]}`)}
+          </label>
+        ))}
+      </fieldset>
+    )
+  }
+
+  <ol class="mt-6">
+    {
+      entries.map((entry) => (
+        <li
+          id={entry.id}
+          data-tags={entry.tags.join(' ')}
+          class:list={[
+            'grid scroll-mt-24 gap-x-8 gap-y-3 border-t border-line py-6',
+            entry.photos.length
+              ? 'md:grid-cols-[8rem_1fr_18rem]'
+              : 'md:grid-cols-[8rem_1fr]',
+          ]}
+        >
+          <p class="t-year pt-1">{entry.year}</p>
+
+          <div class="min-w-0">
+            <h3 class="t-title">{entry.title}</h3>
+            <p class="u-measure mt-2 text-ink-muted">{entry.summary}</p>
+            {entry.detail && <p class="u-measure mt-2 text-ink">{entry.detail}</p>}
+            {entry.tech && <p class="t-meta mt-2">{entry.tech}</p>}
+
+            <ul class="mt-3 flex flex-wrap gap-x-4">
+              {entry.url && (
+                <li>
+                  <a href={entry.url} class="link t-meta">
+                    <LinkIcon kind="website" />
+                    {t('entry.site')}
+                  </a>
+                </li>
+              )}
+              {ordered(entry.refs).map((ref) => (
+                <li>
+                  <a href={ref.data.url} rel="noreferrer" class="link t-meta">
+                    <OutletMark outlet={ref.outlet} {lang} size="md" />
+                    <span>
+                      {refLabel(ref)}
+                      {ref.data.date &&
+                        ref.data.kind !== 'code' &&
+                        ` · ${formatDate(ref.data.date, lang, 'month')}`}
+                    </span>
+                  </a>
+                </li>
+              ))}
+              {entry.credentials.map((item) => (
+                <li>
+                  <a href={pathFor(lang, `certs/${item.id}`)} class="link t-meta">
+                    <span class="i-ph-certificate" aria-hidden="true" />
+                    {item.title}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {entry.photos.length > 0 && (
+            <div class="max-w-sm md:max-w-none">
+              <Lightbox
+                client:visible
+                photos={gallery.get(entry.id) ?? []}
+                labels={photoLabels}
+              />
+            </div>
+          )}
+        </li>
+      ))
+    }
+  </ol>
+  {showFilters && <style is:inline set:html={filterCss} />}
+</div>
+
+<script>
+  // Runs on every page that lists entries; without filter inputs it does nothing.
+  // ?tag=education opens the page filtered; choosing a filter updates the
+  // URL. A link to an entry the filter hides resets it, so it always lands.
+  const inputs = [...document.querySelectorAll<HTMLInputElement>('input[name="filter"]')]
+  const select = (tag: string | null) => {
+    const input = inputs.find((item) => item.value === (tag ?? 'all')) ?? inputs[0]
+    if (input) input.checked = true
+  }
+  const revealTarget = () => {
+    const target = location.hash && document.getElementById(location.hash.slice(1))
+    if (target && target.offsetParent === null) {
+      select('all')
+      target.scrollIntoView()
+    }
+  }
+  select(new URLSearchParams(location.search).get('tag'))
+  revealTarget()
+  window.addEventListener('hashchange', revealTarget)
+  for (const input of inputs) {
+    input.addEventListener('change', () => {
+      const url = new URL(location.href)
+      if (input.value === 'all') url.searchParams.delete('tag')
+      else url.searchParams.set('tag', input.value)
+      history.replaceState(null, '', url)
+    })
+  }
+</script>

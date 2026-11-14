@@ -1,0 +1,14 @@
+order: 60
+year: '2023–2025'
+title:
+  vi: 'Phần mềm nhúng ở FPT Software'
+  en: 'Embedded software at FPT Software'
+summary:
+  vi: 'Thực tập rồi làm chính thức ở nhóm OS & Middleware. Việc chính là phần mềm xử lý hình ảnh của camera akaCam trên chip Rockchip.'
+  en: 'An internship, then a full-time role in the OS & Middleware group. The main work was the image service of the akaCam camera on Rockchip chips.'
+detail:
+  vi: 'Viết lại phần này từ Python và OpenCV sang C++ và GStreamer. Camera chạy từ 32 lên 60 khung hình mỗi giây, CPU giảm từ 44,6% xuống 24,5%.'
+  en: 'Rewrote it from Python and OpenCV in C++ and GStreamer. The camera went from 32 to 60 frames per second while CPU use fell from 44.6% to 24.5%.'
+tags: [tech]
+tech: 'C++ · GStreamer · Rockchip RGA · ZeroMQ'
+featured: true

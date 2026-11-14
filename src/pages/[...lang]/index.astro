@@ -2,26 +2,25 @@
 import { render } from 'astro:content'
 import Base from '@/layouts/Base.astro'
 import Hero from '@/components/Hero.astro'
-import SectionHead from '@/components/SectionHead.astro'
-import FactRow from '@/components/FactRow.svelte'
-import WorkCards from '@/components/WorkCards.svelte'
-import Sources from '@/components/Sources.astro'
-import CredentialCard from '@/components/CredentialCard.svelte'
+import HomeSection from '@/components/home/HomeSection.astro'
+import CredentialGrid from '@/components/CredentialGrid.astro'
+import EntryList from '@/components/EntryList.astro'
+import PostList from '@/components/PostList.astro'
+import PressList from '@/components/PressList.astro'
 import { routeLocale } from '@/i18n/locales'
-import { formatDate } from '@/i18n/format'
 import { local, pathFor, useTranslations } from '@/i18n/utils'
 import { localeParams } from '@/i18n/routes'
 import {
   getAbout,
-  getCredential,
-  getFacts,
   getCredentials,
+  getCurrentRoles,
+  getEntries,
   getPosts,
   getReferences,
-  getWork,
-  postSlug,
+  pickFeatured,
+  pressOf,
 } from '@/lib/content'
-import { site } from '@/lib/site'
+import { sections, site } from '@/lib/site'
 
 export function getStaticPaths() {
   return localeParams()
@@ -30,184 +29,96 @@ export function getStaticPaths() {
 const lang = routeLocale(Astro.params.lang)
 const t = useTranslations(lang)
 
-const about = await getAbout(lang)
-const { Content } = await render(about.entry)
-
+// Loaded once and shared, so every section resolves the same objects.
 const references = await getReferences()
 const credentials = await getCredentials(lang)
-const rows = await getFacts(lang, references, credentials)
-const work = await getWork(lang, references, credentials)
-const featuredId = about.entry.data.credential
-const featuredCredential = featuredId ? await getCredential(featuredId, lang) : undefined
-const posts = (await getPosts(lang)).slice(0, 4)
-const featuredSources = references.filter((row) => row.data.kind === 'press').slice(0, 4)
-const remainingSources = references.filter((row) => !featuredSources.includes(row))
-
-const facts = [
-  { label: t('facts.basedIn'), value: local(site.location, lang), icon: 'i-ph-map-pin' },
-  { label: t('facts.now'), value: t('facts.now.value'), icon: 'i-ph-briefcase' },
-  { label: t('facts.since'), value: '2018', icon: 'i-ph-code' },
-]
-
-const links = [
-  { href: `mailto:${site.email}`, label: site.email },
-  { href: site.github, label: 'GitHub' },
-  { href: site.linkedin, label: 'LinkedIn' },
-  { href: pathFor(lang, 'certs'), label: t('nav.certs') },
-]
+const entries = await getEntries(lang, references, credentials)
+const press = pressOf(references)
+const posts = await getPosts(lang)
+const roles = await getCurrentRoles(lang)
+const about = await getAbout(lang)
+const { Content: AboutText } = await render(about.entry)
 
 const jsonLd = {
   '@context': 'https://schema.org',
   '@type': 'Person',
-  name: t('site.name'),
-  alternateName: 'Vu Tung Minh',
+  name: local(site.name, lang),
   url: Astro.site ? new URL(pathFor(lang), Astro.site).href : undefined,
   email: `mailto:${site.email}`,
-  jobTitle: t('facts.now.value'),
-  sameAs: [site.github, site.linkedin],
-  knowsAbout: ['embedded systems', 'GStreamer', 'LLM inference', 'robotics'],
-  address: {
-    '@type': 'PostalAddress',
-    addressLocality: 'Ho Chi Minh City',
-    addressCountry: 'VN',
-  },
+  ...(site.portrait &&
+    Astro.site && { image: new URL(site.portrait.src, Astro.site).href }),
+  jobTitle: roles.map((role) => `${role.role}, ${role.org}`),
+  sameAs: site.links.map((link) => link.url),
 }
 ---
 
-<Base
-  lang={lang}
-  title={t('site.title')}
-  description={t('meta.description')}
-  jsonLd={jsonLd}
->
-  <Hero
-    lang={lang}
-    name={t('site.name')}
-    location={local(site.location, lang)}
-    lead={about.entry.data.lead}
-    links={links}
-  />
-
-  <section id="work" class="u-wrap u-section">
-    <SectionHead title={t('section.work')} lead={t('section.work.lead')} />
-    <WorkCards cards={work} {lang} />
-  </section>
-
-  <section id="about" class="u-wrap u-section">
-    <SectionHead title={t('section.about')} />
-    <div class="mt-6 grid items-start gap-8 md:grid-cols-[12rem_1fr] md:gap-12">
-      <dl class="grid grid-cols-2 gap-x-6 gap-y-5 md:grid-cols-1">
-        {
-          facts.map((fact) => (
-            <div>
-              <dt class="t-label flex items-center gap-1.5">
-                <span class={`${fact.icon} size-3.5`} aria-hidden="true" />
-                {fact.label}
-              </dt>
-              <dd class="t-meta mt-1 text-ink">{fact.value}</dd>
-            </div>
-          ))
-        }
-      </dl>
-      <div>
-        <div class="prose" lang={about.lang}><Content /></div>
-        {
-          featuredCredential && (
-            <aside class="not-prose my-6 max-w-xs">
-              <CredentialCard item={featuredCredential} {lang} />
-            </aside>
+<!-- The homepage is a hub: a few featured items per area, each area its own page. -->
+<Base lang={lang} description={t('meta.description')} jsonLd={jsonLd}>
+  <Hero {lang} {roles} />
+  {
+    sections.map((section) => {
+      switch (section.type) {
+        case 'about':
+          return (
+            <HomeSection {lang} area="about">
+              <div class="prose mt-6" lang={about.lang}>
+                <AboutText />
+              </div>
+            </HomeSection>
+          )
+        case 'press': {
+          const items = pickFeatured(press, section.limit, (ref) => ref.data.featured)
+          return (
+            <HomeSection
+              {lang}
+              area="press"
+              count={{ shown: items.length, total: press.length }}
+            >
+              <PressList {lang} {items} {entries} />
+            </HomeSection>
           )
         }
-      </div>
-    </div>
-  </section>
-
-  <section id="timeline" class="u-wrap u-section">
-    <SectionHead
-      title={t('section.timeline')}
-      lead={`${rows.length} ${t('timeline.unit')}`}
-    />
-    <ol class="mt-2">
-      {rows.map((row) => <FactRow {row} {lang} />)}
-    </ol>
-    <p class="t-meta mt-4">{t('timeline.hint')}</p>
-  </section>
-
-  <section id="writing" class="u-wrap u-section">
-    <SectionHead title={t('section.writing')} lead={t('section.writing.lead')} />
-
-    {
-      posts.length === 0 ? (
-        <p class="t-meta mt-6">{t('blog.empty')}</p>
-      ) : (
-        <ul class="mt-2">
-          {posts.map((post) => (
-            <li class="border-b border-line">
-              <a
-                href={pathFor(lang, `blog/${postSlug(post.entry.id)}`)}
-                class="u-focus grid grid-cols-[1fr_auto] items-baseline gap-4 py-4"
-              >
-                <span class="t-title" lang={post.lang}>
-                  {post.entry.data.title}
-                  {post.lang !== lang && (
-                    <span class="t-meta">
-                      {' '}
-                      · {t('blog.inLanguage')} {post.lang.toUpperCase()}
-                    </span>
-                  )}
-                </span>
-                <time class="t-meta" datetime={post.entry.data.date.toISOString()}>
-                  {formatDate(post.entry.data.date, lang, 'short')}
-                </time>
-              </a>
-            </li>
-          ))}
-        </ul>
-      )
-    }
-
-    <p class="mt-6">
-      <a
-        href={pathFor(lang, 'blog')}
-        class="u-focus u-link text-ink underline decoration-line-strong hover:text-accent"
-      >
-        {t('blog.back')} →
-      </a>
-    </p>
-  </section>
-
-  <section id="sources" class="u-wrap u-section">
-    <SectionHead title={t('section.sources')} lead={t('section.sources.lead')} />
-    <Sources lang={lang} items={featuredSources} />
-    {
-      remainingSources.length > 0 && (
-        <details class="mt-4">
-          <summary class="u-focus cursor-pointer py-3 text-ink-muted hover:text-accent">
-            {t('sources.more')} ({references.length})
-          </summary>
-          <Sources
-            lang={lang}
-            items={remainingSources}
-            start={featuredSources.length + 1}
-          />
-        </details>
-      )
-    }
-  </section>
-
-  <section id="contact" class="u-invert scroll-mt-16">
-    <div class="u-wrap u-section">
-      <p class="t-label flex items-center gap-2">
-        <span class="i-ph-envelope-simple size-3.5" aria-hidden="true"></span>
-        {t('section.contact')}
-      </p>
-      <a
-        href={`mailto:${site.email}`}
-        class="u-focus t-email mt-4 block hover:text-accent"
-      >
-        {site.email}
-      </a>
-      <p class="t-meta mt-5 max-w-lg">{t('section.contact.lead')}</p>
-    </div>
-  </section>
+        case 'timeline': {
+          const items = pickFeatured(entries, section.limit, (entry) => entry.featured)
+          return (
+            <HomeSection
+              {lang}
+              area="timeline"
+              count={{ shown: items.length, total: entries.length }}
+            >
+              <EntryList {lang} entries={items} />
+            </HomeSection>
+          )
+        }
+        case 'blog': {
+          const items = pickFeatured(
+            posts,
+            section.limit,
+            (post) => post.entry.data.featured,
+          )
+          return (
+            <HomeSection
+              {lang}
+              area="blog"
+              count={{ shown: items.length, total: posts.length }}
+            >
+              <PostList {lang} posts={items} />
+            </HomeSection>
+          )
+        }
+        case 'certs': {
+          const items = pickFeatured(credentials, section.limit, (item) => item.featured)
+          return (
+            <HomeSection
+              {lang}
+              area="certs"
+              count={{ shown: items.length, total: credentials.length }}
+            >
+              <CredentialGrid {lang} {items} />
+            </HomeSection>
+          )
+        }
+      }
+    })
+  }
 </Base>

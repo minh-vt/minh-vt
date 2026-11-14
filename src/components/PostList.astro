@@ -1,0 +1,54 @@
+---
+import type { Lang } from '@/i18n/locales'
+import { formatDate } from '@/i18n/format'
+import { useTranslations } from '@/i18n/utils'
+import { postPath, type LocalizedPost } from '@/lib/content'
+
+interface Props {
+  lang: Lang
+  posts: LocalizedPost[]
+}
+
+const { lang, posts } = Astro.props
+const t = useTranslations(lang)
+---
+
+{
+  posts.length === 0 ? (
+    <p class="t-meta mt-6">{t('blog.empty')}</p>
+  ) : (
+    <ol class="mt-4">
+      {posts.map(({ entry, lang: postLang }) => (
+        <li class="border-b border-line">
+          <a
+            href={postPath(lang, entry.id)}
+            class="group grid gap-x-8 gap-y-1 py-5 md:grid-cols-[8rem_1fr]"
+          >
+            <time class="t-year pt-1" datetime={entry.data.date.toISOString()}>
+              {formatDate(entry.data.date, lang, 'month')}
+            </time>
+            <span>
+              <span class="t-section block group-hover:underline" lang={postLang}>
+                {entry.data.title}
+              </span>
+              <span class="u-measure mt-1 block text-ink-muted" lang={postLang}>
+                {entry.data.description}
+              </span>
+              {(entry.data.series || postLang !== lang) && (
+                <span class="t-meta mt-1 block">
+                  {[
+                    entry.data.series && `${t('blog.part')} ${entry.data.series.part}`,
+                    postLang !== lang &&
+                      `${t('blog.inLanguage')} ${postLang.toUpperCase()}`,
+                  ]
+                    .filter(Boolean)
+                    .join(' · ')}
+                </span>
+              )}
+            </span>
+          </a>
+        </li>
+      ))}
+    </ol>
+  )
+}

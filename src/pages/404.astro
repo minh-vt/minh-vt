@@ -1,26 +1,34 @@
 ---
 import Base from '@/layouts/Base.astro'
-import { defaultLocale } from '@/i18n/locales'
+import BackLink from '@/components/BackLink.astro'
+import { defaultLocale, locales } from '@/i18n/locales'
 import { pathFor, useTranslations } from '@/i18n/utils'
 
-const lang = defaultLocale
-const t = useTranslations(lang)
+// One static 404 serves every locale, so it speaks all of them.
+const t = useTranslations(defaultLocale)
 ---
 
 <Base
-  lang={lang}
-  title={`${t('notfound.title')} · ${t('site.name')}`}
+  lang={defaultLocale}
+  title={t('notfound.title')}
   description={t('notfound.body')}
   noindex
 >
-  <div class="u-wrap py-24 md:py-32">
+  <div class="u-wrap flex flex-col gap-12 py-24 md:py-32">
     <p class="t-label">404</p>
-    <h1 class="t-post mt-3">{t('notfound.title')}</h1>
-    <p class="t-lead mt-4">{t('notfound.body')}</p>
-    <p class="mt-8">
-      <a href={pathFor(lang)} class="u-focus t-label text-ink hover:text-accent">
-        ← {t('notfound.action')}
-      </a>
-    </p>
+    {
+      locales.map((lang) => {
+        const local = useTranslations(lang)
+        return (
+          <section {lang}>
+            <h1 class="t-post">{local('notfound.title')}</h1>
+            <p class="t-lead mt-4">{local('notfound.body')}</p>
+            <p class="mt-6">
+              <BackLink href={pathFor(lang)} label={local('notfound.action')} />
+            </p>
+          </section>
+        )
+      })
+    }
   </div>
 </Base>

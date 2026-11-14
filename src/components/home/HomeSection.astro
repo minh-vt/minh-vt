@@ -1,0 +1,49 @@
+---
+import type { Lang } from '@/i18n/locales'
+import { pathFor, useTranslations } from '@/i18n/utils'
+import type { Area } from '@/content/model'
+
+interface Props {
+  lang: Lang
+  area: Area | 'about'
+  /** Items shown here and in the whole area; "see all" appears only when some are hidden. */
+  count?: { shown: number; total: number }
+}
+
+const { lang, area, count } = Astro.props
+const t = useTranslations(lang)
+const page = area === 'about' ? undefined : pathFor(lang, area)
+const more = page && count && count.total > count.shown
+const title = t(`area.${area}.title`)
+---
+
+<!-- One frame for every homepage section: heading, content, then "see all". -->
+<section id={area} class="u-wrap u-section scroll-mt-20" aria-label={title}>
+  <div
+    class="flex flex-col gap-1 border-t border-line pt-4 md:flex-row md:items-baseline md:justify-between md:gap-8"
+  >
+    <h2 class="t-section">
+      {
+        page ? (
+          <a href={page} class="hover:underline">
+            {title}
+          </a>
+        ) : (
+          title
+        )
+      }
+    </h2>
+    {area !== 'about' && <p class="t-meta">{t(`area.${area}.lead`)}</p>}
+  </div>
+  <slot />
+  {
+    more && (
+      <p class="mt-6">
+        <a href={page} class="btn">
+          {t('nav.all')} ({count.total})
+          <span class="i-ph-arrow-right" aria-hidden="true" />
+        </a>
+      </p>
+    )
+  }
+</section>

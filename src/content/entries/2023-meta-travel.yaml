@@ -1,0 +1,14 @@
+order: 90
+year: '2023'
+title:
+  vi: 'Meta Travel'
+  en: 'Meta Travel'
+summary:
+  vi: 'Cùng Ngô Đại Thanh Quang làm dự án du lịch thực tế ảo từ mô hình 3D và dữ liệu địa lý. Dự án đạt giải Nhất khoa học kỹ thuật cấp tỉnh và vào vòng quốc gia.'
+  en: 'A virtual travel project with Ngo Dai Thanh Quang, built from 3D models and geographic data. It won the provincial science fair and went on to the national round.'
+detail:
+  vi: 'Cuộc thi Khoa học Kỹ thuật cấp quốc gia học sinh trung học năm học 2022–2023, lĩnh vực Phần mềm hệ thống: giải Triển vọng.'
+  en: 'National Science and Engineering Fair 2022–2023, Systems Software category: Promising award.'
+tags: [tech, competition]
+refs: [sang-tao-ttn-nd-2023]
+photos: [/media/visef-2023-stage.webp, /media/visef-2023-certificate.webp]

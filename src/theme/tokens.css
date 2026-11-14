@@ -45,14 +45,19 @@
   --text-lg: 1.25rem;
   --text-xl: clamp(1.375rem, 1.2rem + 0.7vw, 1.625rem);
   --text-2xl: clamp(1.75rem, 1.4rem + 1.5vw, 2.5rem);
-  /* The monument: as wide as the viewport allows without wrapping. */
-  --text-monument: clamp(2.25rem, 11.2vw, 11rem);
+  /* The monument: edge to edge without wrapping. Tuned against the 12
+     characters of the name; a longer name needs a smaller vw. */
+  --text-monument: clamp(2.25rem, 14vw, 16rem);
+  /* Monograms inside a 14px outlet mark; decorative, never the only label. */
+  --text-mark: 0.5625rem;
 
+  --leading-monument: 0.8;
   --leading-tight: 0.94;
   --leading-snug: 1.1;
   --leading-body: 1.6;
 
   --tracking-tight: -0.035em;
+  --tracking-monument: -0.05em;
   --tracking-wide: 0.025em;
 
   --measure: 42rem;
@@ -61,6 +66,10 @@
 
   /* Motion: strong curves, short feedback; only the hero gets an entrance. */
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  /* iOS-like sheet curve, for the menu and the contents sheet. */
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+  --duration-sheet: 280ms;
+  --header-height: 3.5rem;
   --duration-press: 160ms;
   --duration-ui: 200ms;
   --duration-hero: 500ms;
