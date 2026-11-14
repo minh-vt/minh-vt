@@ -1,0 +1,33 @@
+---
+import { Image } from 'astro:assets'
+import type { ImageMetadata } from 'astro'
+import { fittingWidths } from '@/lib/images'
+
+interface Props {
+  src: ImageMetadata
+  alt: string
+  /** Rendered widths in pixels; the browser picks one using `sizes`. */
+  widths: number[]
+  /** How wide the image is laid out, so the browser downloads the right width. */
+  sizes: string
+  class?: string
+  priority?: boolean
+}
+
+/**
+ * The one way to put an image on the page. astro:assets resizes and
+ * re-encodes it at build time and writes width and height, so nothing shifts.
+ */
+const { src, alt, widths, sizes, class: className, priority = false } = Astro.props
+---
+
+<Image
+  {src}
+  {alt}
+  widths={fittingWidths(src, widths)}
+  {sizes}
+  class={className}
+  loading={priority ? 'eager' : 'lazy'}
+  fetchpriority={priority ? 'high' : undefined}
+  decoding="async"
+/>

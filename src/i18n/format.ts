@@ -6,11 +6,10 @@ import type { Lang } from '@/i18n/locales'
  */
 const locales: Record<Lang, string> = { vi: 'vi-VN', en: 'en-GB' }
 
+/** One format for every list, one for the page of a single item. */
 const presets = {
-  short: { year: 'numeric', month: 'short' },
-  long: { year: 'numeric', month: 'long', day: 'numeric' },
-  numeric: { year: 'numeric', month: '2-digit', day: '2-digit' },
-  monthYear: { year: 'numeric', month: '2-digit' },
+  month: { year: 'numeric', month: 'long' },
+  day: { year: 'numeric', month: 'long', day: 'numeric' },
 } satisfies Record<string, Intl.DateTimeFormatOptions>
 
 export function formatDate(date: Date, lang: Lang, preset: keyof typeof presets): string {

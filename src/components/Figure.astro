@@ -1,8 +1,10 @@
 ---
-import { Image } from 'astro:assets'
 import type { ImageMetadata } from 'astro'
+import Photo from '@/components/Photo.astro'
+import { siteImage } from '@/lib/images'
 
 interface Props {
+  /** An imported image, or a path the CMS wrote, such as /media/photo.webp. */
   src: ImageMetadata | string
   alt: string
   caption?: string
@@ -11,11 +13,7 @@ interface Props {
   priority?: boolean
 }
 
-/**
- * One way to place a picture. Local images are optimised at build time by
- * astro:assets; a plain URL falls back to an <img> with explicit dimensions so
- * the layout never shifts. Remote URLs are not fetched at build time on purpose.
- */
+/** A captioned image inside an article, built on Photo. */
 const {
   src,
   alt,
@@ -24,24 +22,10 @@ const {
   sizes = '(min-width: 48em) 40rem, 100vw',
   priority = false,
 } = Astro.props
-
-const loading = priority ? 'eager' : 'lazy'
+const image = typeof src === 'string' ? siteImage(src, `Figure "${alt}"`) : src
 ---
 
 <figure class="my-8">
-  {
-    typeof src === 'string' ? (
-      <img
-        src={src}
-        alt={alt}
-        loading={loading}
-        decoding="async"
-        width="1200"
-        height="750"
-      />
-    ) : (
-      <Image src={src} alt={alt} widths={widths} sizes={sizes} loading={loading} />
-    )
-  }
+  <Photo src={image} {alt} {widths} {sizes} {priority} />
   {caption && <figcaption class="t-meta mt-2">{caption}</figcaption>}
 </figure>
