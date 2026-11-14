@@ -1,6 +1,7 @@
 ---
 import Base from '@/layouts/Base.astro'
 import CredentialGrid from '@/components/CredentialGrid.astro'
+import PageHeader from '@/components/PageHeader.astro'
 import { routeLocale } from '@/i18n/locales'
 import { pathFor, useTranslations } from '@/i18n/utils'
 import { localeParams } from '@/i18n/routes'
@@ -15,21 +16,13 @@ const t = useTranslations(lang)
 const items = await getCredentials(lang)
 ---
 
-<Base
-  lang={lang}
-  title={`${t('certs.title')} · ${t('site.name')}`}
-  description={t('certs.lead')}
->
-  <div class="u-wrap pt-10 pb-16 md:pt-14">
-    <a
-      href={pathFor(lang)}
-      class="u-focus u-link t-label text-ink-muted hover:text-accent"
-    >
-      ← {t('notfound.action')}
-    </a>
-    <h1 class="t-post mt-6">{t('certs.title')}</h1>
-    <p class="t-meta mt-2">{t('certs.lead')}</p>
-
-    <CredentialGrid lang={lang} items={items} />
+<Base lang={lang} title={t('area.certs.title')} description={t('area.certs.lead')}>
+  <div class="u-wrap pb-16">
+    <PageHeader
+      title={t('area.certs.title')}
+      lead={t('area.certs.lead')}
+      back={{ href: pathFor(lang), label: t('nav.home') }}
+    />
+    <CredentialGrid {lang} {items} byYear />
   </div>
 </Base>
