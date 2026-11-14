@@ -1,10 +1,11 @@
 ---
 import Base from '@/layouts/Base.astro'
+import PageHeader from '@/components/PageHeader.astro'
+import PostList from '@/components/PostList.astro'
 import { routeLocale } from '@/i18n/locales'
-import { formatDate } from '@/i18n/format'
 import { pathFor, useTranslations } from '@/i18n/utils'
 import { localeParams } from '@/i18n/routes'
-import { getPosts, postSlug } from '@/lib/content'
+import { getPosts } from '@/lib/content'
 
 export function getStaticPaths() {
   return localeParams()
@@ -15,48 +16,13 @@ const t = useTranslations(lang)
 const posts = await getPosts(lang)
 ---
 
-<Base
-  lang={lang}
-  title={`${t('section.writing')} · ${t('site.name')}`}
-  description={t('section.writing.lead')}
->
-  <div class="u-wrap pt-10 pb-16 md:pt-14">
-    <h1 class="t-post">{t('section.writing')}</h1>
-    <p class="t-meta mt-2">{t('section.writing.lead')}</p>
-
-    {
-      posts.length === 0 ? (
-        <p class="t-meta mt-10">{t('blog.empty')}</p>
-      ) : (
-        <ol class="mt-8">
-          {posts.map((post) => (
-            <li class="border-t border-line">
-              <a
-                href={pathFor(lang, `blog/${postSlug(post.entry.id)}`)}
-                class="u-focus grid gap-x-6 gap-y-1 py-5 md:grid-cols-[8rem_1fr]"
-              >
-                <time class="t-meta pt-1" datetime={post.entry.data.date.toISOString()}>
-                  {formatDate(post.entry.data.date, lang, 'long')}
-                </time>
-                <span>
-                  <span class="t-title block" lang={post.lang}>
-                    {post.entry.data.title}
-                    {post.lang !== lang && (
-                      <span class="t-meta">
-                        {' '}
-                        · {t('blog.inLanguage')} {post.lang.toUpperCase()}
-                      </span>
-                    )}
-                  </span>
-                  <span class="u-measure mt-1 block text-ink-muted" lang={post.lang}>
-                    {post.entry.data.description}
-                  </span>
-                </span>
-              </a>
-            </li>
-          ))}
-        </ol>
-      )
-    }
+<Base lang={lang} title={t('area.blog.title')} description={t('area.blog.lead')}>
+  <div class="u-wrap pb-16">
+    <PageHeader
+      title={t('area.blog.title')}
+      lead={t('area.blog.lead')}
+      back={{ href: pathFor(lang), label: t('nav.home') }}
+    />
+    <PostList {lang} {posts} />
   </div>
 </Base>
