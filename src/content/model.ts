@@ -168,6 +168,8 @@ export const schemas = {
     name: localized(),
     email: z.email(),
     location: localized(),
+    /** Browser tab and home-screen icon; SVG or a square image. */
+    icon: media('image'),
     portrait: media('image').optional(),
     /** Shown when a page is shared; the portrait otherwise. */
     shareImage: media('image').optional(),

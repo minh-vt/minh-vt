@@ -9,6 +9,7 @@ import remarkMath from 'remark-math'
 import rehypeKatex from 'rehype-katex'
 import { visit } from 'unist-util-visit'
 import { locales, defaultLocale } from '@/i18n/locales'
+import { contentFolder } from '@/content/paths'
 
 // One pin for the CMS: the browser script and the installed types cannot drift.
 const cmsVersion = JSON.parse(
@@ -18,7 +19,7 @@ const cmsVersion = JSON.parse(
 // A post page exists in every locale, but only the locales it is written in are
 // real pages; the rest show the original text and point their canonical at it.
 const writtenIn = (lang) => {
-  const dir = new URL(`./src/content/posts/${lang}/`, import.meta.url)
+  const dir = new URL(`./${contentFolder('posts')}/${lang}/`, import.meta.url)
   if (!existsSync(dir)) return new Set()
   return new Set(
     readdirSync(dir, { recursive: true })
@@ -77,6 +78,10 @@ export default defineConfig({
     // Vietnamese is served at "/" so the root never redirects to /vi/.
     routing: { prefixDefaultLocale: false },
   },
+  // SVGs come only from this repository (the CMS commits them as the owner), so
+  // rasterizing them is safe. It lets an SVG icon become the home-screen PNG and
+  // an SVG logo go through Photo like any other image instead of failing the build.
+  image: { dangerouslyProcessSVG: true },
   fonts: [
     fontFamily('Space Grotesk', '--font-grotesk', '300 700'),
     fontFamily('IBM Plex Sans', '--font-plex', '100 700'),

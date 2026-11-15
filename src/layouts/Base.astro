@@ -1,7 +1,7 @@
 ---
 import '@/styles/global.css'
 import type { ImageMetadata } from 'astro'
-import { Font } from 'astro:assets'
+import { Font, getImage } from 'astro:assets'
 import Header from '@/components/Header.astro'
 import Footer from '@/components/Footer.astro'
 import { local, pathFor, switchLocalePath, useTranslations } from '@/i18n/utils'
@@ -48,6 +48,16 @@ const xDefault = translations.includes(defaultLocale) ? defaultLocale : translat
 const share = image ?? site.shareImage ?? site.portrait
 const og = share && (await shareImage(share))
 const structured = jsonLd && serialise(jsonLd)
+
+// One icon from the CMS: as it is for the tab, as a 180px PNG for home screens.
+const iconType =
+  site.icon.format === 'svg' ? 'image/svg+xml' : `image/${site.icon.format}`
+const touchIcon = await getImage({
+  src: site.icon,
+  width: 180,
+  height: 180,
+  format: 'png',
+})
 ---
 
 <!doctype html>
@@ -64,8 +74,8 @@ const structured = jsonLd && serialise(jsonLd)
     {noindex && <meta name="robots" content="noindex" />}
     <Font cssVariable="--font-grotesk" preload={[{ subset: 'latin' }]} />
     <Font cssVariable="--font-plex" preload={[{ subset: 'latin' }]} />
-    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="icon" href={site.icon.src} type={iconType} />
+    <link rel="apple-touch-icon" href={touchIcon.src} />
     <link
       rel="alternate"
       type="application/rss+xml"
