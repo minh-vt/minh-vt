@@ -82,16 +82,16 @@ const touchIcon = await getImage({
       title={`${siteName} · ${t('area.blog.title')}`}
       href={`${pathFor(lang)}rss.xml`}
     />
-    <meta
-      name="theme-color"
-      content={chromeColor.light}
-      media="(prefers-color-scheme: light)"
-    />
-    <meta
-      name="theme-color"
-      content={chromeColor.dark}
-      media="(prefers-color-scheme: dark)"
-    />
+    {
+      (['light', 'dark'] as const).map((theme) => (
+        <meta
+          name="theme-color"
+          content={chromeColor[theme]}
+          media={`(prefers-color-scheme: ${theme})`}
+          data-theme-color={theme}
+        />
+      ))
+    }
     <meta
       property="og:type"
       content={jsonLd?.['@type'] === 'BlogPosting' ? 'article' : 'website'}
