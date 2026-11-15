@@ -1,5 +1,5 @@
 import type { Collection, CmsConfig, Field } from '@sveltia/cms'
-import adminCollections from '@/admin/collections.json'
+import { adminCollections, type CollectionOptions } from '@/admin/collections'
 import { contractFields } from '@/admin/fields'
 import labels from '@/admin/labels.json'
 import settings from '@/admin/settings.json'
@@ -8,21 +8,6 @@ import { slugSegmentPattern } from '@/i18n/routes'
 import { languageName } from '@/i18n/utils'
 
 /** Admin-only: collection shapes for Sveltia, derived from the content contract. */
-
-interface CollectionOptions {
-  label: string
-  label_singular?: string
-  kind: 'perLocaleFiles' | 'entries' | 'strings' | 'single'
-  summary?: string
-  sortable_fields?: string[]
-  i18n?: boolean
-  slug?: { template: string }
-  body?: boolean
-  extension?: 'mdx'
-  display_field?: string
-}
-
-const configured = adminCollections as Record<string, CollectionOptions>
 
 function base(name: string, options: CollectionOptions) {
   return {
@@ -103,7 +88,7 @@ function stringFields(options: CollectionOptions): Field[] {
 }
 
 export function cmsConfig(): CmsConfig {
-  const collections = Object.entries(configured).map(([name, options]) => {
+  const collections = Object.entries(adminCollections).map(([name, options]) => {
     if (options.kind === 'entries') {
       return entryCollection(name, options, contractFields(name, options))
     }

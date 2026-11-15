@@ -26,29 +26,29 @@
     "label": "Vai trò",
     "label_singular": "Vai trò",
     "kind": "entries",
-    "summary": "{{fields.start}}–{{fields.end}} · {{fields.role.vi}}, {{fields.org.vi}}",
+    "summary": "{{fields.start}}–{{fields.end}} · {{fields.role.$source}}, {{fields.org.$source}}",
     "sortable_fields": ["order"],
-    "display_field": "role.vi"
+    "display_field": "role.$source"
   },
   "entries": {
     "label": "Dòng thời gian",
     "label_singular": "Mục",
     "kind": "entries",
-    "summary": "{{fields.year}} · {{fields.title.vi}}",
+    "summary": "{{fields.year}} · {{fields.title.$source}}",
     "sortable_fields": ["order"],
-    "display_field": "title.vi"
+    "display_field": "title.$source"
   },
   "credentials": {
     "label": "Chứng chỉ",
     "kind": "entries",
-    "summary": "{{fields.year}} · {{fields.title.vi}}",
-    "display_field": "title.vi"
+    "summary": "{{fields.year}} · {{fields.title.$source}}",
+    "display_field": "title.$source"
   },
   "outlets": {
     "label": "Đơn vị đăng",
     "kind": "entries",
-    "summary": "{{fields.name.vi}} (tier {{fields.tier}})",
-    "display_field": "name.vi"
+    "summary": "{{fields.name.$source}} (tier {{fields.tier}})",
+    "display_field": "name.$source"
   },
   "references": {
     "label": "Nguồn",

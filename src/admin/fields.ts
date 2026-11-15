@@ -1,6 +1,6 @@
 import { z } from 'astro/zod'
 import type { Field } from '@sveltia/cms'
-import adminCollections from '@/admin/collections.json'
+import { adminCollections } from '@/admin/collections'
 import labels from '@/admin/labels.json'
 import { schemas } from '@/content/model'
 import { isLang } from '@/i18n/locales'
@@ -12,10 +12,13 @@ import { languageName } from '@/i18n/utils'
  */
 
 type Json = z.core.JSONSchema.JSONSchema
-type Meta = Json & { relation?: string; multiple?: boolean; media?: 'image' | 'file' }
+type Meta = Json & {
+  relation?: string
+  multiple?: boolean
+  media?: 'image' | 'file'
+}
 type Base = { name: string; label: string; required: boolean; hint?: string }
 
-const collectionOptions = adminCollections as Record<string, { display_field?: string }>
 const text = labels.labels as Record<string, string>
 const hints = labels.hints as Record<string, string>
 const widgets = labels.widgets as Record<string, string>
@@ -50,7 +53,7 @@ function objectFields(schema: Json): Field[] {
 }
 
 function relationField(common: Base, meta: Meta): Field {
-  const target = collectionOptions[meta.relation as string]
+  const target = adminCollections[meta.relation as string]
   if (!target?.display_field) {
     throw new Error(`Unknown relation target "${meta.relation}" on "${common.name}"`)
   }
