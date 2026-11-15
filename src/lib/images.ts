@@ -1,22 +1,6 @@
 import type { ImageMetadata } from 'astro'
 
-/**
- * Image fields store a site path such as `/media/photo.webp`, which is what the
- * CMS writes. The files live under `src/assets/` so astro:assets can resize and
- * re-encode them at build time; this maps one to the other.
- */
-const files = import.meta.glob<{ default: ImageMetadata }>(
-  '/src/assets/**/*.{avif,gif,jpeg,jpg,png,svg,webp}',
-  { eager: true },
-)
-
-/** Resolves an image path from content, failing the build when the file is missing. */
-export function siteImage(path: string, owner: string): ImageMetadata {
-  const file = files[`/src/assets${path}`]
-  if (!file)
-    throw new Error(`${owner}: missing image "${path}" (expected src/assets${path})`)
-  return file.default
-}
+/** Rendering helpers; resolving a stored path to a file is src/lib/assets.ts. */
 
 /** One encoded image at several widths, for markup rendered outside Astro. */
 type Rendition = {

@@ -1,4 +1,5 @@
 import { z } from 'astro/zod'
+import { assetPath, type AssetGroup } from '@/content/paths'
 import { defaultLocale, locales } from '@/i18n/locales'
 
 /**
@@ -12,8 +13,10 @@ type FieldMeta = {
   /** Collection this id points at. */
   relation?: string
   multiple?: boolean
-  /** Referenced public file kind. */
+  /** Referenced file kind. */
   media?: 'image' | 'file'
+  /** Asset folder the file is uploaded to and must come from. */
+  group?: AssetGroup
 }
 
 const text = z.string().trim().min(1)
@@ -46,7 +49,18 @@ const relations = (collection: string) =>
     { relation: collection, multiple: true },
   )
 
-const media = (kind: 'image' | 'file') => show(text, { media: kind })
+/**
+ * A file chosen in the CMS, stored as `/<group>/<file>`. The prefix is checked
+ * here, so a path pointing into the wrong folder fails the build with the
+ * field's name instead of a missing-file error later.
+ */
+const media = (kind: 'image' | 'file', group: AssetGroup = 'media') =>
+  show(
+    text.refine((path) => path.startsWith(`${assetPath(group)}/`), {
+      error: `Expected a file in ${assetPath(group)}/`,
+    }),
+    { media: kind, group },
+  )
 
 /**
  * A homepage section names an area and how many of its items to show. Its
@@ -129,16 +143,16 @@ export const schemas = {
     year: text,
     title: localized(),
     issuer: localized(),
-    file: media('file'),
-    preview: media('image'),
-    extra: media('file').optional(),
+    file: media('file', 'certs'),
+    preview: media('image', 'certs/previews'),
+    extra: media('file', 'certs').optional(),
     kind: z.enum(['course', 'award', 'role']),
     featured,
   }),
   outlets: z.object({
     name: localized(),
     tier: z.int().min(1).max(3),
-    logo: media('image').optional(),
+    logo: media('image', 'logos').optional(),
   }),
   references: z.object({
     url: z.httpUrl(),

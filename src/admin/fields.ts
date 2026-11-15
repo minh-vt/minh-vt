@@ -2,6 +2,7 @@ import { z } from 'astro/zod'
 import type { Field } from '@sveltia/cms'
 import { adminCollections } from '@/admin/collections'
 import labels from '@/admin/labels.json'
+import { assetFolder, assetPath, type AssetGroup } from '@/content/paths'
 import { schemas } from '@/content/model'
 import { isLang } from '@/i18n/locales'
 import { languageName } from '@/i18n/utils'
@@ -16,6 +17,7 @@ type Meta = Json & {
   relation?: string
   multiple?: boolean
   media?: 'image' | 'file'
+  group?: AssetGroup
 }
 type Base = { name: string; label: string; required: boolean; hint?: string }
 
@@ -68,13 +70,21 @@ function relationField(common: Base, meta: Meta): Field {
   }
 }
 
+/** Uploads land in the folder the contract names for the field. */
+const folder = (meta: Meta) =>
+  meta.group && {
+    media_folder: assetFolder(meta.group),
+    public_folder: assetPath(meta.group),
+  }
+
 function fieldFor(name: string, schema: Json, required: boolean): Field {
   const meta = schema as Meta
   const common = base(name, required)
 
   if (meta.relation) return relationField(common, meta)
-  if (meta.media === 'image') return { ...common, widget: 'image' }
-  if (meta.media === 'file') return { ...common, widget: 'file' }
+  if (meta.media) {
+    return { ...common, widget: meta.media, ...folder(meta) }
+  }
   if (schema.type === 'object') {
     return { ...common, widget: 'object', fields: objectFields(schema) }
   }
@@ -128,7 +138,7 @@ function listField(common: Base, schema: Json): Field {
     return { ...common, ...defaults, widget: 'list', fields: objectFields(item) }
   }
   if (item.media === 'image') {
-    return { ...common, widget: 'image', multiple: true }
+    return { ...common, widget: 'image', multiple: true, ...folder(item) }
   }
   if (item.type === 'string' && item.enum) {
     return {

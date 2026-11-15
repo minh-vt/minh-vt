@@ -12,7 +12,7 @@
     instagram: 'i-ph-instagram-logo',
     youtube: 'i-ph-youtube-logo',
     website: 'i-ph-globe-simple',
-  } as const
+  } satisfies Record<(typeof linkKinds)[number], string>
 </script>
 
 <span class="{icons[kind]} shrink-0" aria-hidden="true"></span>

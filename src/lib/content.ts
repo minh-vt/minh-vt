@@ -2,8 +2,7 @@ import { getCollection, getEntry, type CollectionEntry } from 'astro:content'
 import { defaultLocale, isLang, type Lang } from '@/i18n/locales'
 import { parsePostId } from '@/i18n/routes'
 import { local, pathFor } from '@/i18n/utils'
-import { publicFile } from '@/lib/files'
-import { siteImage } from '@/lib/images'
+import { siteFile, siteImage } from '@/lib/assets'
 
 export function entryLang(id: string): Lang {
   const lang = id.split('/')[0]
@@ -86,10 +85,10 @@ function localizeCredential(item: CollectionEntry<'credentials'>, lang: Lang) {
     id: item.id,
     title: local(item.data.title, lang),
     issuer: local(item.data.issuer, lang),
-    file: publicFile(item.data.file, `credentials/${item.id} file`),
+    file: siteFile(item.data.file, `credentials/${item.id} file`),
     preview: siteImage(item.data.preview, `credentials/${item.id} preview`),
     ...(item.data.extra && {
-      extra: publicFile(item.data.extra, `credentials/${item.id} extra`),
+      extra: siteFile(item.data.extra, `credentials/${item.id} extra`),
     }),
   }
 }

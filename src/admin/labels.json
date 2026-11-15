@@ -107,5 +107,9 @@
     "timeline": "Dòng thời gian",
     "blog": "Bài viết",
     "certs": "Chứng chỉ"
+  },
+  "assets": {
+    "logos": "Logo đơn vị đăng",
+    "certs": "Chứng chỉ"
   }
 }

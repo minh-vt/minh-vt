@@ -1,8 +1,7 @@
 import raw from '@/content/site.json'
 import home from '@/content/home.json'
 import { schemas } from '@/content/model'
-import { publicFile } from '@/lib/files'
-import { siteImage } from '@/lib/images'
+import { siteFile, siteImage } from '@/lib/assets'
 
 const parsed = schemas.site.parse(raw)
 
@@ -13,7 +12,7 @@ export const site = {
   shareImage: parsed.shareImage
     ? siteImage(parsed.shareImage, 'site shareImage')
     : undefined,
-  cv: parsed.cv && publicFile(parsed.cv, 'site cv'),
+  cv: parsed.cv && siteFile(parsed.cv, 'site cv'),
 }
 
 /** Homepage sections in editor order. */

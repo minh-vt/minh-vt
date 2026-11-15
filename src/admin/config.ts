@@ -1,8 +1,9 @@
-import type { Collection, CmsConfig, Field } from '@sveltia/cms'
+import type { AssetCollection, Collection, CmsConfig, Field } from '@sveltia/cms'
 import { adminCollections, type CollectionOptions } from '@/admin/collections'
 import { contractFields } from '@/admin/fields'
 import labels from '@/admin/labels.json'
 import settings from '@/admin/settings.json'
+import { assetFolder, assetGroups, assetPath, contentFolder } from '@/content/paths'
 import { defaultLocale, locales } from '@/i18n/locales'
 import { slugSegmentPattern } from '@/i18n/routes'
 import { languageName } from '@/i18n/utils'
@@ -32,7 +33,7 @@ function filesCollection(
         {
           name,
           label: options.label,
-          file: `src/content/${name}.json`,
+          file: `${contentFolder(name)}.json`,
           format: 'json',
           fields,
         },
@@ -46,8 +47,8 @@ function filesCollection(
       name: `${name}_${locale}`,
       label: languageName(locale),
       file: strings
-        ? `src/content/strings/${locale}.json`
-        : `src/content/${name}/${locale}.mdx`,
+        ? `${contentFolder(name)}/${locale}.json`
+        : `${contentFolder(name)}/${locale}.mdx`,
       ...(strings && { format: 'json' }),
       fields,
     })),
@@ -63,7 +64,7 @@ function entryCollection(
   return {
     ...base(name, options),
     ...(options.i18n && { i18n: true }),
-    folder: `src/content/${name}`,
+    folder: contentFolder(name),
     create: true,
     extension,
     format: extension === 'mdx' ? 'frontmatter' : 'yaml',
@@ -87,6 +88,26 @@ function stringFields(options: CollectionOptions): Field[] {
   ]
 }
 
+/**
+ * Every asset folder besides the shared one (the global media folder) appears
+ * in the media picker and the asset library. Nested groups (certs/previews) are
+ * browsed as subfolders of their parent.
+ */
+function assetCollections(): AssetCollection[] {
+  const names = labels.assets as Record<string, string>
+  return assetGroups
+    .filter((group) => group !== 'media' && !group.includes('/'))
+    .map((group) => {
+      if (!names[group]) throw new Error(`Missing admin label for asset group "${group}"`)
+      return {
+        name: group,
+        label: names[group],
+        media_folder: assetFolder(group),
+        public_folder: assetPath(group),
+      }
+    })
+}
+
 export function cmsConfig(): CmsConfig {
   const collections = Object.entries(adminCollections).map(([name, options]) => {
     if (options.kind === 'entries') {
@@ -101,8 +122,10 @@ export function cmsConfig(): CmsConfig {
   return {
     // JSON widens literals; the shape is asserted against the official schema at build time.
     backend: settings.backend as CmsConfig['backend'],
-    media_folder: settings.media_folder,
-    public_folder: settings.public_folder,
+    // Fields without a group of their own upload to the shared media folder.
+    media_folder: assetFolder('media').slice(1),
+    public_folder: assetPath('media'),
+    asset_collections: assetCollections(),
     // Uploads are resized and converted to WebP in the browser before commit.
     media_libraries: settings.media_libraries as CmsConfig['media_libraries'],
     publish_mode: settings.publish_mode as CmsConfig['publish_mode'],
