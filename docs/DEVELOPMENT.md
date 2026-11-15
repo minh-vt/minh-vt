@@ -36,7 +36,7 @@ src/content/about/        prose, one file per locale
 src/content/posts/        prose, one file per locale
 src/content/entries/      structured, one file holds every locale
 src/content/home.json     homepage sections, edited in the CMS
-src/assets/media/         images uploaded through the CMS, resized at build
+src/assets/               every uploaded file, one folder per asset group (src/content/paths.ts)
 src/content/references/   structured, one file per link
 src/lib/content.ts        the only place that reads the collections
 src/i18n/                 UI strings, paths and date formatting
@@ -48,7 +48,7 @@ src/content/model.ts      the content contract: types, rules, relationships
 src/content.config.ts     loaders and file layout only
 src/admin/                everything the editor needs; nothing else imports it
 src/admin/labels.json     Vietnamese editor labels, hints and messages
-src/admin/settings.json   backend, media, output and slug settings
+src/admin/settings.json   backend, output, slug and upload settings
 src/admin/collections.json  collection shapes and which collection is a relation target
 src/admin/fields.ts       contract -> Sveltia fields, typed by @sveltia/cms
 src/admin/config.ts       assembles the CmsConfig
@@ -144,9 +144,10 @@ sets `math: true` on posts that contain a formula, and only those posts link KaT
 Calendar dates are formatted by `src/i18n/format.ts` in UTC. A portfolio date is a day, not an
 instant; formatting in the build machine's timezone shifted some dates by one day.
 
-Every referenced public file — credential `file`/`preview`/`extra`, outlet `logo`, work `cover` —
-is checked for existence while the page renders. That runs on every build, unlike a schema check,
-which a warm content cache can skip. Paths escaping `public/` are refused.
+Every referenced file (credential `file`/`preview`/`extra`, outlet `logo`, entry `photos`, site
+`icon`/`portrait`/`cv`) is checked twice: the schema checks it points into its field's asset
+folder, and `src/lib/assets.ts` checks the file exists while the page renders. The second check
+runs on every build, unlike a schema check, which a warm content cache can skip.
 
 ## Motion
 
@@ -253,8 +254,17 @@ instead of sitting in review:
 The alias is `@/*` to `src/*`, declared in `tsconfig.json`; Astro resolves it natively
 (https://docs.astro.build/en/guides/typescript/#import-aliases).
 
-`src/theme/browser-chrome.ts` is the single exemption from the colour rule: the `theme-color` meta
-tags are read before any CSS exists, so those two literals cannot be tokens.
+The `theme-color` meta tags cannot read a custom property, so `src/theme/browser-chrome.ts` reads
+`--paper` for each theme out of `tokens.css` at build time (and fails the build if it cannot). The
+theme button switches which of the two tags applies, so the browser bar follows the chosen theme.
+
+Breakpoints live in `src/theme/breakpoints.ts`. UnoCSS builds `sm:`/`md:`/`lg:` from it,
+`global.css` uses them through `@screen`, and markup uses `from()`/`below()` for `client:media`
+and image `sizes`. No component writes an `em` media query by hand.
+
+The hero and footer name (`t-monument`) is sized from its own length: `monumentFit()` in
+`src/lib/site.ts` sets `--name-chars` and `--word-chars`, and `--text-monument` divides the width
+by them. Changing the name in the CMS cannot make it overflow.
 
 Warnings, not errors, cover code that is getting hard to read: `max-depth`, `max-params`,
 `complexity`, `no-console`, and `max-lines` for scripts and components. `.astro` templates are
@@ -302,21 +312,39 @@ Post images go through `Figure.astro`, which posts can use without an import:
 `<Figure src="/media/photo.webp" alt="…" caption="…" />`. It resolves the path like any other image
 field and renders `Photo.astro`.
 
-Credential originals live in `public/certs/`. Each entry's `preview` points at a static WebP;
-PDFs are linked, never embedded or prefetched. Thumbnails are committed assets, not a build
-step; upload or prepare a real preview image when adding a credential. Cloudflare needs no PDF
-renderer or thumbnail-generation script.
+Credential originals live in `src/assets/certs/` and their previews in
+`src/assets/certs/previews/`. PDFs are linked, never embedded; Vite copies each one to
+`/_astro/` with a content hash. Previews are uploaded images, not a build step, so Cloudflare
+needs no PDF renderer.
 
 `CredentialCard.astro` renders the credential index. On the homepage an entry with
 `credentials: [nand2tetris-2022]` links straight to the file; an unknown id fails the build.
 
 ### Images and files
 
-Every image and file is chosen in the CMS. Images upload to `src/assets/media/` and content stores a
-site path such as `/media/photo.webp`; `siteImage()` in `src/lib/images.ts` maps that path to the
-file under `src/assets/` and fails the build when it is missing. Living in `src/` is what lets
-astro:assets resize and re-encode every image at build time. PDFs and other files stay in `public/`
-and are checked by `publicFile()`.
+Every image and file, including the site icon, is chosen in the CMS and lives under
+`src/assets/`; there is no `public/` folder. `src/content/paths.ts` lists the asset groups:
+
+| Group            | Folder                       | Used by                                  |
+| ---------------- | ---------------------------- | ---------------------------------------- |
+| `media`          | `src/assets/media/`          | photos, portrait, share images, icon, CV |
+| `logos`          | `src/assets/logos/`          | outlet logos                             |
+| `certs`          | `src/assets/certs/`          | credential originals (PDF or image)      |
+| `certs/previews` | `src/assets/certs/previews/` | credential previews                      |
+
+Content stores a public path such as `/logos/first.webp`. The contract (`media(kind, group)` in
+`model.ts`) checks the prefix; the CMS uploads each field into its group's folder; `logos` and
+`certs` also appear as asset collections in the media picker and the asset library, next to the
+global media folder. `siteImage()` and `siteFile()` in `src/lib/assets.ts` map the path to the
+file and fail the build when it is missing: images go through astro:assets, PDFs through Vite's
+`?url`. Adding a group means one entry in `assetGroups`, a folder, and a label in
+`labels.json` under `assets`.
+
+SVGs are rasterized when needed (`image.dangerouslyProcessSVG`): they only ever come from this
+repository. The icon is served as it is for the tab and as a 180px PNG for home screens, so give an
+SVG icon a `width`/`height` of at least 180.
+
+`robots.txt` is built from `site` (`src/pages/robots.txt.ts`), so the domain is written once.
 
 `Photo.astro` is the one image component: it renders astro:assets `<Image>` with `widths` and
 `sizes`, so the browser downloads the width the layout needs. `Figure.astro` adds a caption for
@@ -369,7 +397,7 @@ https://developers.cloudflare.com/pages/configuration/custom-domains/
 
 ## Before going live
 
-1. `site` in `astro.config.mjs`, and the `Sitemap:` line in `public/robots.txt`.
+1. `site` in `astro.config.mjs`; canonical URLs, the sitemap and `robots.txt` follow it.
 2. `backend.repo` and `backend.base_url` (the OAuth worker) in `src/admin/settings.json` if the
    repository or the auth worker changes.
 3. Run `bun run check` and `bun run build`, then inspect production output in a browser:
@@ -386,9 +414,14 @@ editor vocabulary. `src/admin/` reads the JSON Schema exported by Zod and adds V
 so the dependency only ever points from admin to contract.
 
 `src/admin/fields.ts` emits fields typed by the `@sveltia/cms` package rather than a hand-written
-field shape, and `src/admin/config.ts` assembles a `CmsConfig`. The CMS version is pinned once, in
-`package.json`; `astro.config.mjs` injects it into the `/admin/` script tag so the browser build and
-the types cannot drift. Unsupported shapes throw during the build instead of degrading to `any`.
+field shape, and `src/admin/config.ts` assembles a `CmsConfig`. `/admin/` bundles the editor from
+the installed `@sveltia/cms` package (`CMS.init()`), so the editor and its types are one version
+and nothing loads from a CDN. Unsupported shapes throw during the build instead of degrading to
+`any`. Summaries and relation labels in `collections.json` write `$source` for the source locale
+(`title.$source`); `src/admin/collections.ts` substitutes the default locale.
+
+The menu areas in `model.ts` must each have a page folder; `astro.config.mjs` checks this at
+startup, so a new area without a page fails `dev` and `build` instead of linking to a 404.
 
 Relationships (`refs`, `credentials`, `outlet`, `credential`) become Sveltia Relation pickers, so
 editors choose an entry instead of typing its id. `output.omit_empty_optional_fields` keeps saved
