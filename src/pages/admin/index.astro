@@ -1,20 +1,29 @@
 ---
-// Pinned once in package.json; astro.config.mjs injects the version.
-const cmsScript = `https://unpkg.com/@sveltia/cms@${__CMS_VERSION__}/dist/sveltia-cms.js`
+import labels from '@/admin/labels.json'
+import { defaultLocale } from '@/i18n/locales'
+import { local } from '@/i18n/utils'
+import { site } from '@/lib/site'
 ---
 
 <!doctype html>
-<html lang="vi">
+<html lang={defaultLocale}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="robots" content="noindex" />
-    <title>Nội dung · minh-vt</title>
+    <title>{labels.page.title} · {local(site.name, defaultLocale)}</title>
+    <link rel="icon" href={site.icon.src} />
     <link href="/admin/config.json" type="application/json" rel="cms-config-url" />
-    <!-- Git-backed editor, no server. The version comes from package.json. -->
-    <script is:inline src={cmsScript}></script>
   </head>
   <body>
-    <noscript>Bật JavaScript để dùng trình soạn thảo.</noscript>
+    <noscript>{labels.page.noscript}</noscript>
   </body>
 </html>
+
+<script>
+  // Bundled from the installed package, so the editor and its types are the
+  // same version and nothing loads from a CDN. The config comes from the link.
+  import CMS from '@sveltia/cms'
+
+  void CMS.init()
+</script>

@@ -1,4 +1,4 @@
-import { existsSync, readdirSync, readFileSync } from 'node:fs'
+import { existsSync, readdirSync } from 'node:fs'
 import { defineConfig, fontProviders } from 'astro/config'
 import svelte from '@astrojs/svelte'
 import mdx from '@astrojs/mdx'
@@ -11,11 +11,6 @@ import { visit } from 'unist-util-visit'
 import { locales, defaultLocale, localeTags } from '@/i18n/locales'
 import { contentFolder } from '@/content/paths'
 import { areas } from '@/content/model'
-
-// One pin for the CMS: the browser script and the installed types cannot drift.
-const cmsVersion = JSON.parse(
-  readFileSync(new URL('./package.json', import.meta.url), 'utf8'),
-).devDependencies['@sveltia/cms']
 
 // Each area in the content model is a page folder; the menu, the homepage
 // sections and "see all" links are built from that list, so a missing folder
@@ -111,6 +106,8 @@ export default defineConfig({
       rehypePlugins: [rehypeKatex],
     }),
   },
-  vite: { define: { __CMS_VERSION__: JSON.stringify(cmsVersion) } },
+  // The CMS editor at /admin/ is one ~2.7MB bundle and the only chunk past the
+  // default 500kB; the limit sits just above it so any other large chunk still warns.
+  vite: { build: { chunkSizeWarningLimit: 3000 } },
   devToolbar: { enabled: false },
 })
