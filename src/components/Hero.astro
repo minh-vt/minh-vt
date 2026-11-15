@@ -4,7 +4,7 @@ import Photo from '@/components/Photo.astro'
 import type { Lang } from '@/i18n/locales'
 import { local, useTranslations } from '@/i18n/utils'
 import type { RoleRow } from '@/lib/content'
-import { site } from '@/lib/site'
+import { monumentFit, site } from '@/lib/site'
 import { from } from '@/theme/breakpoints'
 
 interface Props {
@@ -33,7 +33,7 @@ const contacts = [
 -->
 <section class="pt-6 md:pt-10">
   <div class="overflow-x-clip" data-hero-name>
-    <h1 class="t-monument px-[var(--layout-gutter)]">
+    <h1 class="t-monument px-[var(--layout-gutter)]" style={monumentFit(name)}>
       {
         words.map((word) => (
           <>

@@ -1,7 +1,7 @@
 ---
 import CopyEmail from '@/components/CopyEmail.astro'
 import LinkIcon from '@/components/LinkIcon.svelte'
-import { site } from '@/lib/site'
+import { monumentFit, site } from '@/lib/site'
 import { local, useTranslations, pathFor } from '@/i18n/utils'
 import type { Lang } from '@/i18n/locales'
 
@@ -60,7 +60,13 @@ const name = local(site.name, lang)
     </div>
   </div>
 
-  <p class="t-monument mt-14 select-none md:mt-20" aria-hidden="true">{name}</p>
+  <p
+    class="t-monument mt-14 select-none md:mt-20"
+    style={monumentFit(name)}
+    aria-hidden="true"
+  >
+    {name}
+  </p>
   <p class="u-wrap t-meta pt-4 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))]">
     {name} · {year}
   </p>
