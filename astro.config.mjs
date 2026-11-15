@@ -10,11 +10,25 @@ import rehypeKatex from 'rehype-katex'
 import { visit } from 'unist-util-visit'
 import { locales, defaultLocale, localeTags } from '@/i18n/locales'
 import { contentFolder } from '@/content/paths'
+import { areas } from '@/content/model'
 
 // One pin for the CMS: the browser script and the installed types cannot drift.
 const cmsVersion = JSON.parse(
   readFileSync(new URL('./package.json', import.meta.url), 'utf8'),
 ).devDependencies['@sveltia/cms']
+
+// Each area in the content model is a page folder; the menu, the homepage
+// sections and "see all" links are built from that list, so a missing folder
+// would only show up as a 404 in production. Fail at startup instead.
+for (const area of areas) {
+  if (
+    !existsSync(new URL(`./src/pages/[...lang]/${area}/index.astro`, import.meta.url))
+  ) {
+    throw new Error(
+      `Area "${area}" has no page: add src/pages/[...lang]/${area}/index.astro`,
+    )
+  }
+}
 
 // A post page exists in every locale, but only the locales it is written in are
 // real pages; the rest show the original text and point their canonical at it.
