@@ -10,9 +10,11 @@ const parsed = schemas.site.parse(raw)
 export const site = {
   ...parsed,
   portrait: parsed.portrait ? siteImage(parsed.portrait, 'site portrait') : undefined,
+  shareImage: parsed.shareImage
+    ? siteImage(parsed.shareImage, 'site shareImage')
+    : undefined,
   cv: parsed.cv && publicFile(parsed.cv, 'site cv'),
 }
 
 /** Homepage sections in editor order. */
 export const sections = schemas.home.parse(home).sections
-export type Section = (typeof sections)[number]

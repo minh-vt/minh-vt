@@ -4,8 +4,9 @@ import Lightbox from '@/components/Lightbox.svelte'
 import PageHeader from '@/components/PageHeader.astro'
 import { lightboxPhotos } from '@/lib/images'
 import { routeLocale } from '@/i18n/locales'
-import { useTranslations, pathFor } from '@/i18n/utils'
+import { lightboxLabels, useTranslations, pathFor } from '@/i18n/utils'
 import { localeParams } from '@/i18n/routes'
+import { absolute } from '@/lib/seo'
 import {
   getCredentials,
   getEntries,
@@ -41,10 +42,26 @@ const { item, related } = Astro.props
 const lang = routeLocale(Astro.params.lang)
 const t = useTranslations(lang)
 const files = [item.file, ...(item.extra ? [item.extra] : [])]
+
+const category = { course: 'certificate', award: 'award', role: 'certificate' } as const
+const jsonLd = {
+  '@type': 'EducationalOccupationalCredential',
+  name: item.title,
+  credentialCategory: category[item.kind],
+  recognizedBy: { '@type': 'Organization', name: item.issuer },
+  dateCreated: item.year,
+  url: absolute(item.file),
+}
 ---
 
 <!-- A credential gets a page of its own; the original file opens from here. -->
-<Base lang={lang} title={item.title} description={`${item.title} · ${item.issuer}`}>
+<Base
+  lang={lang}
+  title={item.title}
+  description={`${item.title} · ${item.issuer}`}
+  image={item.preview}
+  {jsonLd}
+>
   <div class="u-wrap pb-16">
     <PageHeader
       title={item.title}
@@ -60,12 +77,7 @@ const files = [item.file, ...(item.extra ? [item.extra] : [])]
           item.title,
           '(min-width: 52em) 40rem, 100vw',
         )}
-        labels={{
-          zoom: t('photo.zoom'),
-          close: t('nav.close'),
-          previous: t('photo.previous'),
-          next: t('photo.next'),
-        }}
+        labels={lightboxLabels(lang)}
       />
       <div class="flex flex-col items-start gap-6">
         <ul class="flex flex-col gap-2">

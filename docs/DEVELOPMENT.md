@@ -135,8 +135,9 @@ pattern with the loader.
 
 Formulas are LaTeX in MDX. `remark-math` and `rehype-katex` are attached once in `astro.config.mjs`
 through `markdown.processor`, so MDX inherits them; KaTeX renders at build time and the page ships
-no maths JavaScript. Inline `$...$`, block `$$...$$`. `Post.astro` loads KaTeX's stylesheet and
-the overflow handler, so pages without an article do not carry either.
+no maths JavaScript. Inline `$...$`, block `$$...$$`. A small remark plugin in the same config
+sets `math: true` on posts that contain a formula, and only those posts link KaTeX's stylesheet
+(imported with `?url`, so it is its own file). `Post.astro` also owns the overflow handler.
 
 ## Dates and assets
 
@@ -149,14 +150,18 @@ which a warm content cache can skip. Paths escaping `public/` are refused.
 
 ## Motion
 
-Only the hero name has a GSAP entrance, and `Hero.astro` owns that script. It plays once per
-browser session, so returning to the homepage never makes the reader wait. Reading content never
-waits for a scroll animation; reduced motion skips the entrance and every transform.
+Only the hero name has an entrance: a CSS animation, one letter after another (`--duration-hero`,
+`--stagger`). An inline script in `Hero.astro` sets `data-intro` before first paint, once per
+browser session, so returning to the homepage never makes the reader wait. Reduced motion skips
+the entrance and every transform.
 
-Scroll behaviour comes from GSAP's `ScrollTrigger`, not hand-written listeners: the header hides
-while reading down and returns on the way up, the menu marks the homepage section in view, and the
-post contents mark the heading being read. The reading progress bar is a CSS scroll timeline, with
-`ScrollTrigger` as the fallback where `animation-timeline` is unsupported.
+Every scroll-linked behaviour is a toggle, so none of them loads an animation library. They use
+`onScroll()` from `src/lib/scroll.ts` (one `requestAnimationFrame` per frame) or an
+`IntersectionObserver`: the header hides while reading down and returns on the way up, the small
+name appears once the hero name has left, the dock appears a screen down, and the post contents
+mark the heading being read. The reading progress bar is a CSS scroll timeline, with `onScroll()`
+as the fallback where `animation-timeline` is unsupported (Firefox). Its CSS is written as
+longhands: the minifier folds `animation` plus `animation-timeline` into an invalid shorthand.
 
 The mobile menu and the mobile contents are melt `Dialog`s styled as bottom sheets: melt owns
 focus, Escape, outside clicks and the scroll lock. The sheet uses `--ease-drawer`.
@@ -187,12 +192,45 @@ Sheets (the mobile menu and the mobile contents) are one component, `Sheet.svelt
 `CredentialGrid`) render the same items on the homepage and on their area page, and every area page
 opens with `PageHeader.astro`. The back-to-top dock lives in `Base.astro` on every page; the post
 layout adds its contents button to it through the `dock` slot. Page
-titles get the site name appended once, in `Base.astro`. Scroll scripts import GSAP and
-`ScrollTrigger` from `src/lib/scroll.ts`, which registers the plugin once.
+titles get the site name appended once, in `Base.astro`. Lightbox control names come from
+`lightboxLabels()` in `src/i18n/utils.ts`.
 
-Islands hydrate only where they are used: the mobile menu with `client:media` below the desktop
-breakpoint, the contents sheet below `lg`, the copy button on idle. The theme toggle is a single
-island shared by both layouts.
+Svelte islands hydrate only where a component needs one: the mobile menu with `client:media`
+below the desktop breakpoint, the contents sheet below `lg`, the lightbox when visible. The theme
+toggle and the copy-email button are plain `<button>`s with a few lines of script
+(`ThemeToggle.astro`, `CopyEmail.astro`), so a page without a sheet or a lightbox loads no Svelte
+runtime. Both render disabled and enable themselves once their script runs.
+
+Links prefetch on hover or focus (`prefetch.prefetchAll` in `astro.config.mjs`).
+
+## Fonts
+
+Space Grotesk and IBM Plex Sans come from the Fonts API (`fonts` in `astro.config.mjs`, provider
+Fontsource): downloaded at build time, served from `/_astro/fonts/`, split by subset (latin,
+latin-ext, vietnamese) with `unicode-range`. `<Font>` in `Base.astro` inlines the `@font-face`
+rules and preloads the latin files. Each family gets a fallback whose metrics are adjusted to
+match, so swapping to the web font does not move the layout (CLS 0). `--font-display` and
+`--font-body` in `tokens.css` point at the variables the API defines (`--font-grotesk`,
+`--font-plex`).
+
+## Search and sharing
+
+`Base.astro` writes the canonical URL, `hreflang` alternates with `x-default`, Open Graph and the
+Twitter card for every page. Helpers live in `src/lib/seo.ts`.
+
+- Share image: a page's own `image`, else `site.shareImage`, else the portrait. It is re-encoded
+  to JPEG at most 1200px wide and never cropped; a wide image (about 1200×630) gets the large
+  card, a square one the small card. Posts take `image`, credential pages use their preview.
+- Untranslated posts: `/en/blog/<slug>/` of a post written only in Vietnamese shows the original
+  text, so its canonical points at `/blog/<slug>/` and it declares no `hreflang`. The sitemap
+  leaves those copies out and lists `hreflang` alternates only between real translations.
+- Structured data: `ProfilePage` with a `Person` on the homepage (`about.lead` is its description
+  and the meta description, `about.updated` its `dateModified`, `site.location` its
+  `homeLocation`, current roles its `affiliation`); `BlogPosting` on posts, with the same
+  `Person` as author; `EducationalOccupationalCredential` on credential pages; a
+  `BreadcrumbList` from `BackLink.astro` on every page below the homepage.
+- Feeds: `/rss.xml` and `/en/rss.xml` (`@astrojs/rss`), linked from every page's head.
+- `public/apple-touch-icon.png` is `favicon.svg` rendered at 180px on the paper colour.
 
 Typography belongs to `src/styles/global.css`, not UnoCSS's typography preset. This prevents a
 second `.prose` rule from overriding the theme, font size and measure. Shiki's `css-variables`
@@ -260,16 +298,16 @@ Nothing is hidden for lack of a translation. The fallback policy is explicit:
 | `outlets`        | publishers       | every locale, plus `tier`, `logo` |
 | `references`     | outbound links   | one link                          |
 
-Post images go through `Figure.astro`, which uses `astro:assets` and `sharp` so local images are
-optimised at build time. Plain `<img>` is only for files that are already sized correctly, such as
-the committed WebP thumbnails.
+Post images go through `Figure.astro`, which posts can use without an import:
+`<Figure src="/media/photo.webp" alt="…" caption="…" />`. It resolves the path like any other image
+field and renders `Photo.astro`.
 
 Credential originals live in `public/certs/`. Each entry's `preview` points at a static WebP;
 PDFs are linked, never embedded or prefetched. Thumbnails are committed assets, not a build
 step; upload or prepare a real preview image when adding a credential. Cloudflare needs no PDF
 renderer or thumbnail-generation script.
 
-`CredentialCard.svelte` renders the credential index. On the homepage an entry with
+`CredentialCard.astro` renders the credential index. On the homepage an entry with
 `credentials: [nand2tetris-2022]` links straight to the file; an unknown id fails the build.
 
 ### Images and files
@@ -315,6 +353,12 @@ https://developers.cloudflare.com/pages/configuration/build-image/
 Because `check` runs inside the build command, a type error or a lint error fails the deploy
 instead of shipping.
 
+### CMS sign-in
+
+Sveltia's GitHub sign-in needs an OAuth server, and its default is Netlify's, which knows nothing
+about a Cloudflare site ("Not Found"). `backend.base_url` in `src/admin/settings.json` points at
+our own Sveltia CMS Authenticator worker instead, backed by a GitHub App installed on the repo.
+
 ### Custom domain
 
 The zone for `minhvt.id.vn` is already on Cloudflare, which is the one requirement for an apex
@@ -326,15 +370,16 @@ https://developers.cloudflare.com/pages/configuration/custom-domains/
 ## Before going live
 
 1. `site` in `astro.config.mjs`, and the `Sitemap:` line in `public/robots.txt`.
-2. `settings.backend.repo` in `src/content/cms.json` if the repository name changes.
+2. `backend.repo` and `backend.base_url` (the OAuth worker) in `src/admin/settings.json` if the
+   repository or the auth worker changes.
 3. Run `bun run check` and `bun run build`, then inspect production output in a browser:
    both themes/locales, mobile menu, the copy-email button, previews and article math.
 
 ## CMS contract
 
 `src/content/model.ts` is the single source: field types, requiredness, defaults, enums,
-relationships and asset kinds. Each field carries the label key it uses, so editor text stays in
-`src/content/cms.json` and a missing label is a build error rather than a guessed name.
+relationships and asset kinds. Editor text (labels, hints) stays in `src/admin/labels.json`,
+keyed by field name, and a missing label is a build error rather than a guessed name.
 
 `src/content/model.ts` imports nothing from `src/admin/`: the contract describes data, never
 editor vocabulary. `src/admin/` reads the JSON Schema exported by Zod and adds Vietnamese labels,

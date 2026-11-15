@@ -15,6 +15,17 @@ export function useTranslations(lang: Lang) {
   }
 }
 
+/** The lightbox's control names, the same wherever photos open. */
+export function lightboxLabels(lang: Lang) {
+  const t = useTranslations(lang)
+  return {
+    zoom: t('photo.zoom'),
+    close: t('nav.close'),
+    previous: t('photo.previous'),
+    next: t('photo.next'),
+  }
+}
+
 /** Display name of a language, which is content like any other label. */
 export function languageName(lang: Lang): string {
   return useTranslations(lang)('lang.name')

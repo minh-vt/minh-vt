@@ -1,13 +1,42 @@
 ---
+import { routeLocale } from '@/i18n/locales'
+import { pathFor, useTranslations } from '@/i18n/utils'
+import { absolute, jsonLd } from '@/lib/seo'
+
 interface Props {
   href: string
   label: string
+  /** This page's own name, the last step of the breadcrumb trail. Pages
+      outside the site's structure (404) leave it out and get no trail. */
+  current?: string
 }
 
-const { href, label } = Astro.props
+const { href, label, current } = Astro.props
+// The way back is also where the page sits; search engines get the same trail.
+const lang = routeLocale(Astro.currentLocale)
+const home = pathFor(lang)
+const trail = [
+  { name: useTranslations(lang)('nav.home'), path: home },
+  ...(href === home ? [] : [{ name: label, path: href }]),
+]
+const breadcrumbs =
+  current &&
+  jsonLd({
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      ...trail.map((step, index) => ({
+        '@type': 'ListItem',
+        position: index + 1,
+        name: step.name,
+        item: absolute(step.path),
+      })),
+      { '@type': 'ListItem', position: trail.length + 1, name: current },
+    ],
+  })
 ---
 
 <a {href} class="link t-label">
   <span class="i-ph-arrow-left" aria-hidden="true"></span>
   {label}
 </a>
+{breadcrumbs && <script type="application/ld+json" set:html={breadcrumbs} />}

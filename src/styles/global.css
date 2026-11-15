@@ -406,23 +406,30 @@ section[id],
   border-bottom: 1px solid var(--line);
 }
 
-/* Inline characters need a transformable box for the hero entrance. */
+/* Hero entrance: letters rise in one after another. Hero.astro sets
+   data-intro once per visit, before first paint. */
 .char {
   display: inline-block;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  html {
-    scroll-behavior: auto;
+@media (prefers-reduced-motion: no-preference) {
+  [data-intro] .char {
+    animation: char-in var(--duration-hero) var(--ease-out) both;
+    animation-delay: calc(var(--i) * var(--stagger));
   }
+}
 
-  .btn {
-    transition: none;
+@keyframes char-in {
+  from {
+    opacity: 0;
+    transform: translateY(12%);
   }
+}
 
-  .btn:active:not(:focus-visible) {
-    transform: none;
-  }
+/* The theme button shows the theme it switches to. */
+[data-theme='dark'] .theme-icon-light,
+:root:not([data-theme='dark']) .theme-icon-dark {
+  display: none;
 }
 
 /* Translucent chrome: content stays visible underneath the header. */
@@ -467,16 +474,23 @@ section[id],
   color: var(--ink);
 }
 
-/* Bottom sheet built on the native dialog that melt opens with showModal(). */
-.sheet {
+/* Dialogs: melt opens the native <dialog> with showModal(), sets data-open a
+   tick later and removes it before close(), waiting for transitionend. So each
+   dialog styles its closed state under :not([data-open]) and animates both ways. */
+.sheet,
+.lightbox {
   position: fixed;
-  inset: auto 0 0;
   width: 100%;
   max-width: 100%;
-  max-height: 85dvh;
   margin: 0;
-  overflow-y: auto;
   border: 0;
+}
+
+/* Bottom sheet: the menu and the contents on phones. */
+.sheet {
+  inset: auto 0 0;
+  max-height: 85dvh;
+  overflow-y: auto;
   border-top: 1px solid var(--line);
   padding: 0.75rem var(--layout-gutter) calc(1.25rem + env(safe-area-inset-bottom, 0px));
   background-color: var(--paper);
@@ -484,8 +498,6 @@ section[id],
   transition: transform var(--duration-sheet) var(--ease-drawer);
 }
 
-/* melt sets data-open a tick after showModal() and removes it before close(),
-   waiting for transitionend, so the sheet slides both ways. */
 .sheet:not([data-open]) {
   transform: translateY(100%);
 }
@@ -501,14 +513,6 @@ section[id],
   background-color: color-mix(in oklch, var(--ink) 40%, transparent);
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .site-header,
-  .site-header .site-name,
-  .sheet {
-    transition: none;
-  }
-}
-
 /* Reading: progress bar, contents and the thumb-zone dock. */
 .read-progress {
   position: fixed;
@@ -521,8 +525,12 @@ section[id],
 }
 
 @supports (animation-timeline: scroll()) {
+  /* Longhands on purpose: the minifier folds a shorthand plus
+     animation-timeline into one invalid shorthand. */
   .read-progress {
-    animation: read-progress linear both;
+    animation-name: read-progress;
+    animation-timing-function: linear;
+    animation-fill-mode: both;
     animation-timeline: scroll(root);
   }
 
@@ -575,25 +583,13 @@ section[id],
   pointer-events: auto;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .dock {
-    transition: opacity var(--duration-ui) ease;
-    transform: none;
-  }
-}
-
 /* Lightbox: the photo at full size over a dark field. It is a modal, so it
    grows from the centre; it fades and settles in, and leaves faster. */
 .lightbox {
-  position: fixed;
   inset: 0;
-  width: 100%;
   height: 100dvh;
-  max-width: 100%;
   max-height: 100dvh;
-  margin: 0;
   padding: 0 0 env(safe-area-inset-bottom, 0px);
-  border: 0;
   background-color: var(--field);
   color: var(--field-ink);
   transition: opacity var(--duration-ui) var(--ease-out);
@@ -630,12 +626,27 @@ section[id],
   cursor: zoom-in;
 }
 
+/* Reduced motion: state changes still happen, they just do not travel. */
 @media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .btn,
+  .site-header,
+  .site-header .site-name,
+  .sheet,
   .lightbox-image {
     transition: none;
   }
 
+  .btn:active:not(:focus-visible),
   .lightbox:not([data-open]) .lightbox-image {
+    transform: none;
+  }
+
+  .dock {
+    transition: opacity var(--duration-ui) ease;
     transform: none;
   }
 }

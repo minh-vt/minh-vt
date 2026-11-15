@@ -19,7 +19,7 @@ export function siteImage(path: string, owner: string): ImageMetadata {
 }
 
 /** One encoded image at several widths, for markup rendered outside Astro. */
-export type Rendition = {
+type Rendition = {
   src: string
   srcset: string
   sizes: string
@@ -32,7 +32,7 @@ export function fittingWidths(image: ImageMetadata, widths: number[]) {
   return [...widths.filter((width) => width < image.width), image.width]
 }
 
-export async function rendition(
+async function rendition(
   image: ImageMetadata,
   widths: number[],
   sizes: string,

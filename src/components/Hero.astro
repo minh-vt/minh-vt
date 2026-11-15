@@ -15,7 +15,11 @@ const { lang, roles } = Astro.props
 const t = useTranslations(lang)
 const name = local(site.name, lang)
 // Animate letters, but keep each word intact when the name wraps on phones.
-const words = name.split(' ')
+// Letters are numbered across words so the entrance runs left to right.
+let index = 0
+const words = name
+  .split(' ')
+  .map((word) => [...word].map((char) => ({ char, i: index++ })))
 const contacts = [
   { kind: 'email' as const, label: site.email, url: `mailto:${site.email}` },
   ...site.links,
@@ -33,8 +37,10 @@ const contacts = [
         words.map((word) => (
           <>
             <span class="inline-block whitespace-nowrap" aria-hidden="true">
-              {[...word].map((char) => (
-                <span class="char">{char}</span>
+              {word.map(({ char, i }) => (
+                <span class="char" style={`--i: ${i}`}>
+                  {char}
+                </span>
               ))}
             </span>{' '}
           </>
@@ -43,6 +49,23 @@ const contacts = [
       <span class="sr-only">{name}</span>
     </h1>
   </div>
+  <script is:inline>
+    // The name is the only entrance animation on the site, and it plays once
+    // per visit: returning to the homepage should never make the reader wait.
+    // Inline so the attribute lands before first paint; the motion itself is
+    // CSS, which also honours reduced motion.
+    {
+      let seen = false
+      try {
+        seen = sessionStorage.getItem('hero-seen') === '1'
+        sessionStorage.setItem('hero-seen', '1')
+      } catch {
+        // Storage blocked: play it, nothing else depends on the flag.
+      }
+      if (!seen)
+        document.querySelector('[data-hero-name]')?.setAttribute('data-intro', '')
+    }
+  </script>
 
   <div
     class:list={[
@@ -121,28 +144,3 @@ const contacts = [
     </ul>
   </div>
 </section>
-
-<script>
-  import { gsap } from '@/lib/scroll'
-
-  // The name is the only entrance animation on the site, and it plays once per
-  // visit: returning to the homepage should never make the reader wait.
-  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-  let seen = false
-  try {
-    seen = sessionStorage.getItem('hero-seen') === '1'
-    sessionStorage.setItem('hero-seen', '1')
-  } catch {
-    // Storage blocked: play it, nothing else depends on the flag.
-  }
-  if (!reduced && !seen) {
-    const motion = getComputedStyle(document.documentElement)
-    gsap.from('.char', {
-      opacity: 0,
-      yPercent: 12,
-      duration: parseFloat(motion.getPropertyValue('--duration-hero')) / 1000,
-      ease: 'power3.out',
-      stagger: parseFloat(motion.getPropertyValue('--stagger')) / 1000,
-    })
-  }
-</script>

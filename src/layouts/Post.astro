@@ -1,9 +1,10 @@
 ---
-import 'katex/dist/katex.min.css'
+// Emitted as its own file, linked only from posts that contain math.
+import katexCss from 'katex/dist/katex.min.css?url'
 import Base from '@/layouts/Base.astro'
 import BackLink from '@/components/BackLink.astro'
 import TocSheet from '@/components/TocSheet.svelte'
-import type { MarkdownHeading } from 'astro'
+import type { ImageMetadata, MarkdownHeading } from 'astro'
 import type { Lang } from '@/i18n/locales'
 import { formatDate } from '@/i18n/format'
 import { languageName, useTranslations, pathFor } from '@/i18n/utils'
@@ -15,6 +16,11 @@ interface Props {
   title: string
   description: string
   date: Date
+  image?: ImageMetadata
+  /** Locales the post is written in; see Base. */
+  translations: readonly Lang[]
+  /** Whether the post contains math and needs the KaTeX stylesheet. */
+  math: boolean
   minutes: number
   origin?: { label: string; url: string }
   jsonLd?: Record<string, unknown>
@@ -30,6 +36,9 @@ const {
   title,
   description,
   date,
+  image,
+  translations,
+  math,
   minutes,
   origin,
   jsonLd,
@@ -44,7 +53,8 @@ const outline = headings.filter((heading) => heading.depth === 2 || heading.dept
 const items = outline.length >= 3 ? outline : []
 ---
 
-<Base lang={lang} {title} description={description} jsonLd={jsonLd}>
+<Base lang={lang} {title} {description} {jsonLd} {image} {translations}>
+  {math && <link slot="head" rel="stylesheet" href={katexCss} />}
   <div class="read-progress" role="presentation" aria-hidden="true"></div>
 
   <div
@@ -80,7 +90,11 @@ const items = outline.length >= 3 ? outline : []
     }
 
     <article class="u-measure mx-auto w-full lg:mx-0">
-      <BackLink href={pathFor(lang, 'blog')} label={t('area.blog.title')} />
+      <BackLink
+        href={pathFor(lang, 'blog')}
+        label={t('area.blog.title')}
+        current={title}
+      />
 
       <header class="mt-6">
         {
@@ -165,7 +179,7 @@ const items = outline.length >= 3 ? outline : []
 </Base>
 
 <script>
-  import { gsap, markCurrent, ScrollTrigger } from '@/lib/scroll'
+  import { markCurrent, onScroll } from '@/lib/scroll'
 
   // Long code and formulas keep their own horizontal scroll, including keyboard.
   const overflow = new ResizeObserver((entries) => {
@@ -178,33 +192,28 @@ const items = outline.length >= 3 ? outline : []
     .querySelectorAll('.prose pre, .katex-display')
     .forEach((element) => overflow.observe(element))
 
-  // Reading progress: CSS scroll timelines where supported, ScrollTrigger otherwise.
-  const bar = document.querySelector('.read-progress')
+  // Reading progress: a CSS scroll timeline where supported, a scroll listener
+  // otherwise (Firefox).
+  const bar = document.querySelector<HTMLElement>('.read-progress')
   if (bar && !CSS.supports('animation-timeline: scroll()')) {
-    gsap.fromTo(
-      bar,
-      { scaleX: 0 },
-      { scaleX: 1, ease: 'none', scrollTrigger: { start: 0, end: 'max', scrub: true } },
-    )
+    onScroll(() => {
+      const max = document.documentElement.scrollHeight - window.innerHeight
+      bar.style.transform = `scaleX(${max > 0 ? window.scrollY / max : 0})`
+    })
   }
 
-  // Mark the heading being read in both contents lists, top to bottom. The
-  // sheet's links render later, so they are looked up each time.
+  // The heading being read is the last one above 30% of the viewport; mark it in
+  // both contents lists. The sheet hydrates later, so its links are looked up
+  // on every update.
   const headings = [...document.querySelectorAll<HTMLElement>('.prose :is(h2, h3)[id]')]
-  headings.forEach((heading, index) => {
-    const next = headings[index + 1]
-    ScrollTrigger.create({
-      trigger: heading,
-      start: 'top 30%',
-      endTrigger: next ?? '.prose',
-      end: next ? 'top 30%' : 'bottom 30%',
-      onToggle: (self) => {
-        if (!self.isActive) return
-        const links = document.querySelectorAll<HTMLElement>('[data-toc-link]')
-        markCurrent(links, (link) => link.dataset.tocLink === heading.id)
-      },
+  if (headings.length > 0) {
+    onScroll(() => {
+      const line = window.innerHeight * 0.3
+      const reading = headings.findLast(
+        (heading) => heading.getBoundingClientRect().top <= line,
+      )
+      const links = document.querySelectorAll<HTMLElement>('[data-toc-link]')
+      markCurrent(links, (link) => link.dataset.tocLink === reading?.id)
     })
-  })
-  // Fonts, images and formulas change the layout after load.
-  window.addEventListener('load', () => ScrollTrigger.refresh())
+  }
 </script>

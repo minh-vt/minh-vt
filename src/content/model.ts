@@ -8,7 +8,7 @@ import { defaultLocale, locales } from '@/i18n/locales'
  */
 
 /** Field facts the editor must know because the data model owns them. */
-export type FieldMeta = {
+type FieldMeta = {
   /** Collection this id points at. */
   relation?: string
   multiple?: boolean
@@ -80,8 +80,8 @@ export type Area = (typeof areas)[number]
 export const entryTags = ['tech', 'education', 'competition', 'teaching'] as const
 
 export const schemas = {
+  /** `lead` is the homepage description; `updated` is when the profile last changed. */
   about: z.object({
-    title: text,
     lead: text,
     updated: date.optional(),
   }),
@@ -89,11 +89,15 @@ export const schemas = {
     title: text,
     description: text,
     date,
+    /** Set when a published post is revised. */
+    updated: date.optional(),
     draft: z.boolean().default(false),
     tags: z.array(text).default([]),
     origin: z.object({ label: text, url: z.httpUrl() }).optional(),
     /** Posts sharing a series id are linked to each other in part order. */
     series: z.object({ id: text, part: z.int().min(1) }).optional(),
+    /** Shown when the post is shared; the site's share image otherwise. */
+    image: media('image').optional(),
     featured,
   }),
   /** What Minh does now and did before; the homepage lists the open ones. */
@@ -151,6 +155,8 @@ export const schemas = {
     email: z.email(),
     location: localized(),
     portrait: media('image').optional(),
+    /** Shown when a page is shared; the portrait otherwise. */
+    shareImage: media('image').optional(),
     cv: media('file').optional(),
     links: z
       .array(z.object({ kind: z.enum(linkKinds), label: text, url: z.url() }))

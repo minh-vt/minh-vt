@@ -1,6 +1,6 @@
 ---
 import MobileNav from '@/components/MobileNav.svelte'
-import ThemeToggle from '@/components/ThemeToggle.svelte'
+import ThemeToggle from '@/components/ThemeToggle.astro'
 import type { Lang } from '@/i18n/locales'
 import {
   languageName,
@@ -67,7 +67,6 @@ const links = site.menu.map((area) => {
         {other.toUpperCase()}
       </a>
       <ThemeToggle
-        client:load
         label={t('theme.label')}
         lightLabel={t('theme.light')}
         darkLabel={t('theme.dark')}
@@ -86,32 +85,28 @@ const links = site.menu.map((area) => {
 </header>
 
 <script>
-  import { ScrollTrigger } from '@/lib/scroll'
+  import { onScroll } from '@/lib/scroll'
 
   const header = document.querySelector<HTMLElement>('.site-header')
   if (header) {
     // Step aside while reading down, come back on the way up; stay put while a
     // sheet is open, since the page underneath is locked.
-    ScrollTrigger.create({
-      start: 'top -80',
-      end: 'max',
-      onUpdate: (self) => {
-        if (document.querySelector('dialog[open]')) return
-        header.toggleAttribute('data-hidden', self.direction === 1)
-      },
-      onLeaveBack: () => header.removeAttribute('data-hidden'),
+    let last = window.scrollY
+    onScroll(() => {
+      const y = window.scrollY
+      if (y !== last && !document.querySelector('dialog[open]')) {
+        header.toggleAttribute('data-hidden', y > 80 && y > last)
+      }
+      last = y
     })
 
     // On the homepage the small name appears once the large one has left. The
     // server renders it hidden there, so it never flashes in.
     const hero = document.querySelector('[data-hero-name]')
     if (hero) {
-      ScrollTrigger.create({
-        trigger: hero,
-        start: 'bottom top',
-        end: 'max',
-        onToggle: (self) => header.toggleAttribute('data-name-hidden', !self.isActive),
-      })
+      new IntersectionObserver(([entry]) => {
+        header.toggleAttribute('data-name-hidden', entry.boundingClientRect.bottom > 0)
+      }).observe(hero)
     }
   }
 </script>

@@ -5,7 +5,7 @@ import OutletMark from '@/components/OutletMark.astro'
 import { entryTags } from '@/content/model'
 import type { Lang } from '@/i18n/locales'
 import { formatDate } from '@/i18n/format'
-import { local, useTranslations, pathFor } from '@/i18n/utils'
+import { lightboxLabels, local, useTranslations, pathFor } from '@/i18n/utils'
 import type { EntryRow, Reference } from '@/lib/content'
 import { lightboxPhotos } from '@/lib/images'
 
@@ -40,12 +40,7 @@ const gallery = new Map(
       ),
   ),
 )
-const photoLabels = {
-  zoom: t('photo.zoom'),
-  close: t('nav.close'),
-  previous: t('photo.previous'),
-  next: t('photo.next'),
-}
+const photoLabels = lightboxLabels(lang)
 
 // Third-party proof leads; links to code and social posts follow.
 const rank = { press: 0, award: 1, video: 2, social: 3, code: 4 } as const

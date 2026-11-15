@@ -101,13 +101,6 @@ export async function getCredentials(lang: Lang) {
     .sort((a, b) => b.year.localeCompare(a.year) || a.title.localeCompare(b.title))
 }
 
-/** A standalone MDX preview needs one credential, not the whole collection. */
-export async function getCredential(id: string, lang: Lang) {
-  const item = await getEntry('credentials', id)
-  if (!item) throw new Error(`Unknown credential id: ${id}`)
-  return localizeCredential(item, lang)
-}
-
 /** Timeline rows in display order, localized, with relationships resolved. */
 export async function getEntries(
   lang: Lang,
@@ -148,20 +141,29 @@ export async function getCurrentRoles(lang: Lang) {
 }
 export type RoleRow = Awaited<ReturnType<typeof getCurrentRoles>>[number]
 
-/** One row per slug, preferring a translation without hiding untranslated posts. */
+/**
+ * One row per slug, preferring a translation without hiding untranslated posts.
+ * `languages` lists every locale the post is written in.
+ */
 export async function getPosts(lang: Lang) {
   const entries = await getCollection('posts')
   const chosen = new Map<string, CollectionEntry<'posts'>>()
+  const languages = new Map<string, Lang[]>()
   for (const entry of entries) {
     const slug = postSlug(entry.id)
     if (entry.data.draft) continue
+    languages.set(slug, [...(languages.get(slug) ?? []), entryLang(entry.id)])
     const current = chosen.get(slug)
     if (!current || (entryLang(current.id) !== lang && entryLang(entry.id) === lang)) {
       chosen.set(slug, entry)
     }
   }
   return [...chosen.values()]
-    .map((entry) => ({ entry, lang: entryLang(entry.id) }))
+    .map((entry) => ({
+      entry,
+      lang: entryLang(entry.id),
+      languages: languages.get(postSlug(entry.id)) ?? [],
+    }))
     .sort((a, b) => b.entry.data.date.valueOf() - a.entry.data.date.valueOf())
 }
 export type LocalizedPost = Awaited<ReturnType<typeof getPosts>>[number]

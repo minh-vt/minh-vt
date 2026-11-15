@@ -1,5 +1,5 @@
 ---
-import CopyEmail from '@/components/CopyEmail.svelte'
+import CopyEmail from '@/components/CopyEmail.astro'
 import LinkIcon from '@/components/LinkIcon.svelte'
 import { site } from '@/lib/site'
 import { local, useTranslations, pathFor } from '@/i18n/utils'
@@ -26,7 +26,6 @@ const name = local(site.name, lang)
 
     <div class="mt-6 flex flex-wrap items-center gap-x-6 gap-y-3">
       <CopyEmail
-        client:idle
         email={site.email}
         label={t('contact.copy')}
         copiedLabel={t('contact.copied')}
