@@ -2,7 +2,8 @@
   "backend": {
     "name": "github",
     "repo": "minh-vt/minh-vt",
-    "branch": "main"
+    "branch": "main",
+    "base_url": "https://auth.minhvt.id.vn"
   },
   "media_folder": "src/assets/media",
   "public_folder": "/media",
