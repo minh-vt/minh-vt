@@ -1,6 +1,6 @@
 import type { ImageMetadata } from 'astro'
 import { getImage } from 'astro:assets'
-import type { Lang } from '@/i18n/locales'
+import { localeTags, type Lang } from '@/i18n/locales'
 import { local, pathFor } from '@/i18n/utils'
 import { site } from '@/lib/site'
 
@@ -9,7 +9,8 @@ export function absolute(path: string): string {
   return new URL(path, import.meta.env.SITE).href
 }
 
-export const ogLocale: Record<Lang, string> = { vi: 'vi_VN', en: 'en_US' }
+/** Open Graph writes the same tag with an underscore (vi_VN). */
+export const ogLocale = (lang: Lang) => localeTags[lang].replace('-', '_')
 
 /**
  * The picture a link shows when shared. Platforms want JPEG or PNG, so it is

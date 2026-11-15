@@ -4,6 +4,8 @@ import type { Lang } from '@/i18n/locales'
  * Dates are calendar dates, not instants. They are formatted in UTC so the
  * build machine's timezone cannot shift a published date by a day.
  */
+// A date style, not a target region (that is localeTags): en-GB writes
+// "5 August 2026", which reads the same everywhere.
 const locales: Record<Lang, string> = { vi: 'vi-VN', en: 'en-GB' }
 
 /** One format for every list, one for the page of a single item. */

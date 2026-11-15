@@ -100,12 +100,12 @@ const touchIcon = await getImage({
     <meta property="og:title" content={fullTitle} />
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonical} />
-    <meta property="og:locale" content={ogLocale[lang]} />
+    <meta property="og:locale" content={ogLocale(lang)} />
     {
       translations
         .filter((locale) => locale !== lang)
         .map((locale) => (
-          <meta property="og:locale:alternate" content={ogLocale[locale]} />
+          <meta property="og:locale:alternate" content={ogLocale(locale)} />
         ))
     }
     {

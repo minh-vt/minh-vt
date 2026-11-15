@@ -8,7 +8,7 @@ import { unified } from '@astrojs/markdown-remark'
 import remarkMath from 'remark-math'
 import rehypeKatex from 'rehype-katex'
 import { visit } from 'unist-util-visit'
-import { locales, defaultLocale } from '@/i18n/locales'
+import { locales, defaultLocale, localeTags } from '@/i18n/locales'
 import { contentFolder } from '@/content/paths'
 
 // One pin for the CMS: the browser script and the installed types cannot drift.
@@ -68,7 +68,7 @@ export default defineConfig({
     sitemap({
       filter: (page) =>
         !new URL(page).pathname.startsWith('/admin/') && isTranslatedPage(page),
-      i18n: { defaultLocale, locales: { vi: 'vi-VN', en: 'en-US' } },
+      i18n: { defaultLocale, locales: localeTags },
     }),
   ],
   // Optional [...lang] routes render every locale without duplicated pages.
