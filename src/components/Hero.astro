@@ -5,6 +5,7 @@ import type { Lang } from '@/i18n/locales'
 import { local, useTranslations } from '@/i18n/utils'
 import type { RoleRow } from '@/lib/content'
 import { site } from '@/lib/site'
+import { from } from '@/theme/breakpoints'
 
 interface Props {
   lang: Lang
@@ -81,7 +82,7 @@ const contacts = [
           src={site.portrait}
           alt={name}
           widths={[104, 208, 416, 624]}
-          sizes="(min-width: 52em) 13rem, (min-width: 34em) 9rem, 6.5rem"
+          sizes={`${from('md')} 13rem, ${from('sm')} 9rem, 6.5rem`}
           class="aspect-square w-full border border-line bg-paper-raised object-cover"
           priority
         />

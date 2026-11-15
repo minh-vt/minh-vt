@@ -4,6 +4,7 @@ import katexCss from 'katex/dist/katex.min.css?url'
 import Base from '@/layouts/Base.astro'
 import BackLink from '@/components/BackLink.astro'
 import TocSheet from '@/components/TocSheet.svelte'
+import { below } from '@/theme/breakpoints'
 import type { ImageMetadata, MarkdownHeading } from 'astro'
 import type { Lang } from '@/i18n/locales'
 import { formatDate } from '@/i18n/format'
@@ -169,7 +170,7 @@ const items = outline.length >= 3 ? outline : []
     items.length > 0 && (
       <div slot="dock" class="lg:hidden">
         <TocSheet
-          client:media="(max-width: 71.99em)"
+          client:media={below('lg')}
           items={items.map(({ slug, text, depth }) => ({ slug, text, depth }))}
           labels={{ toc: t('blog.toc'), close: t('nav.close') }}
         />

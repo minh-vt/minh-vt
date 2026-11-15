@@ -10,6 +10,7 @@ import {
   useTranslations,
 } from '@/i18n/utils'
 import { site } from '@/lib/site'
+import { below } from '@/theme/breakpoints'
 
 interface Props {
   lang: Lang
@@ -74,7 +75,7 @@ const links = site.menu.map((area) => {
       <a href="#contact" class="btn ml-2 hidden md:inline-flex">{t('nav.contact')}</a>
       <div class="md:hidden">
         <MobileNav
-          client:media="(max-width: 51.99em)"
+          client:media={below('md')}
           links={[...links, { href: '#contact', label: t('nav.contact') }]}
           social={site.links}
           labels={{ open: t('nav.menu'), close: t('nav.close') }}

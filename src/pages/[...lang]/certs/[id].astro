@@ -3,6 +3,7 @@ import Base from '@/layouts/Base.astro'
 import Lightbox from '@/components/Lightbox.svelte'
 import PageHeader from '@/components/PageHeader.astro'
 import { lightboxPhotos } from '@/lib/images'
+import { from } from '@/theme/breakpoints'
 import { routeLocale } from '@/i18n/locales'
 import { lightboxLabels, useTranslations, pathFor } from '@/i18n/utils'
 import { localeParams } from '@/i18n/routes'
@@ -75,7 +76,7 @@ const jsonLd = {
         photos={await lightboxPhotos(
           [item.preview],
           item.title,
-          '(min-width: 52em) 40rem, 100vw',
+          `${from('md')} 40rem, 100vw`,
         )}
         labels={lightboxLabels(lang)}
       />

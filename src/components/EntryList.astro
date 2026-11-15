@@ -8,6 +8,7 @@ import { formatDate } from '@/i18n/format'
 import { lightboxLabels, local, useTranslations, pathFor } from '@/i18n/utils'
 import type { EntryRow, Reference } from '@/lib/content'
 import { lightboxPhotos } from '@/lib/images'
+import { from } from '@/theme/breakpoints'
 
 interface Props {
   lang: Lang
@@ -31,11 +32,7 @@ const gallery = new Map(
         async (entry) =>
           [
             entry.id,
-            await lightboxPhotos(
-              entry.photos,
-              entry.title,
-              '(min-width: 52em) 18rem, 24rem',
-            ),
+            await lightboxPhotos(entry.photos, entry.title, `${from('md')} 18rem, 24rem`),
           ] as const,
       ),
   ),

@@ -2,6 +2,7 @@
 import type { ImageMetadata } from 'astro'
 import Photo from '@/components/Photo.astro'
 import { siteImage } from '@/lib/images'
+import { from } from '@/theme/breakpoints'
 
 interface Props {
   /** An imported image, or a path the CMS wrote, such as /media/photo.webp. */
@@ -19,7 +20,7 @@ const {
   alt,
   caption,
   widths = [480, 900, 1440],
-  sizes = '(min-width: 48em) 40rem, 100vw',
+  sizes = `${from('md')} 42rem, 100vw`,
   priority = false,
 } = Astro.props
 const image = typeof src === 'string' ? siteImage(src, `Figure "${alt}"`) : src
