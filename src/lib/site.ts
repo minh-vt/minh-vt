@@ -1,20 +1,16 @@
-import raw from '@/content/site.json'
+import { getEntry } from 'astro:content'
+import { z } from 'astro/zod'
 import home from '@/content/home.json'
-import { schemas } from '@/content/model'
-import { siteFile, siteImage } from '@/lib/assets'
+import { fields, inLocale } from '@/content/model'
+import type { Lang } from '@/i18n/locales'
 
-const parsed = schemas.site.parse(raw)
+const entry = await getEntry('site', 'site')
+if (!entry) throw new Error('Missing src/content/site.json')
+const record = entry.data
 
-/** Site details from the CMS; referenced files are checked on every build. */
-export const site = {
-  ...parsed,
-  icon: siteImage(parsed.icon, 'site icon'),
-  portrait: parsed.portrait ? siteImage(parsed.portrait, 'site portrait') : undefined,
-  shareImage: parsed.shareImage
-    ? siteImage(parsed.shareImage, 'site shareImage')
-    : undefined,
-  cv: parsed.cv && siteFile(parsed.cv, 'site cv'),
-}
+/** Site details from the CMS in one locale; Astro has resolved every image. */
+export const siteFor = (lang: Lang) => inLocale(record, lang)
+export type Site = ReturnType<typeof siteFor>
 
 /** Homepage sections in editor order. */
-export const sections = schemas.home.parse(home).sections
+export const sections = z.object(fields.home()).parse(home).sections

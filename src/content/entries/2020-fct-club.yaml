@@ -1,14 +1,18 @@
-order: 150
-year: '2020'
-title:
-  vi: 'Vào FCT Club'
-  en: 'Joined FCT Club'
-summary:
-  vi: 'Năm lớp 9, mình đi hơn 1.000 km ra Hà Nội dự trại hè của FCT Club, câu lạc bộ lập trình do FPT lập. Mình học ở đó ba năm, tới hết lớp 12.'
-  en: 'In ninth grade I travelled more than 1,000 km to Hanoi for the FCT Club summer camp, a programming club set up by FPT. I stayed for three years, until the end of high school.'
-detail:
-  vi: 'Được câu lạc bộ chọn là học viên xuất sắc nhất.'
-  en: 'Named the club''s best learner.'
-tags: [education]
-refs: [dantri-fct-2025, fct-to-mo-2023, fct-best-learner-2023]
-credentials: [fct-best-learner-2021]
+vi:
+  order: 150
+  year: '2020'
+  title: Vào FCT Club
+  summary: Năm lớp 9, mình đi hơn 1.000 km ra Hà Nội dự trại hè của FCT Club, câu lạc bộ lập trình do FPT lập. Mình học ở đó ba năm, tới hết lớp 12.
+  detail: Được câu lạc bộ chọn là học viên xuất sắc nhất.
+  tags:
+  - education
+  refs:
+  - dantri-fct-2025
+  - fct-to-mo-2023
+  - fct-best-learner-2023
+  credentials:
+  - fct-best-learner-2021
+en:
+  title: Joined FCT Club
+  summary: In ninth grade I travelled more than 1,000 km to Hanoi for the FCT Club summer camp, a programming club set up by FPT. I stayed for three years, until the end of high school.
+  detail: Named the club's best learner.

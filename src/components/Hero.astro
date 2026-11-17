@@ -1,11 +1,11 @@
 ---
+import { Image } from 'astro:assets'
 import LinkIcon from '@/components/LinkIcon.svelte'
 import Monument from '@/components/Monument.astro'
-import Photo from '@/components/Photo.astro'
 import type { Lang } from '@/i18n/locales'
-import { local, useTranslations } from '@/i18n/utils'
+import { useTranslations } from '@/i18n/utils'
 import type { RoleRow } from '@/lib/content'
-import { site } from '@/lib/site'
+import { siteFor } from '@/lib/site'
 import { from } from '@/theme/breakpoints'
 
 interface Props {
@@ -14,8 +14,9 @@ interface Props {
 }
 
 const { lang, roles } = Astro.props
+const site = siteFor(lang)
 const t = useTranslations(lang)
-const name = local(site.name, lang)
+const name = site.name
 const contacts = [
   { kind: 'email' as const, label: site.email, url: `mailto:${site.email}` },
   ...site.links,
@@ -58,10 +59,10 @@ const contacts = [
   >
     {
       site.portrait && (
-        <Photo
+        <Image
           src={site.portrait}
           alt={name}
-          widths={[104, 208, 416, 624]}
+          width={208}
           sizes={`${from('md')} 13rem, ${from('sm')} 9rem, 6.5rem`}
           class="aspect-square w-full border border-line bg-paper-raised object-cover"
           priority
@@ -115,7 +116,7 @@ const contacts = [
       {
         site.cv && (
           <li>
-            <a href={site.cv} class="link text-sm">
+            <a href={site.cv} class="link text-sm" data-astro-prefetch="false">
               <span class="i-ph-file-arrow-down" aria-hidden="true" />
               {t('hero.cv')}
             </a>

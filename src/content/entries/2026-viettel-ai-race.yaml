@@ -1,14 +1,15 @@
-order: 10
-year: '2026'
-title:
-  vi: 'Viettel AI Race 2026'
-  en: 'Viettel AI Race 2026'
-summary:
-  vi: 'Thi một mình trong một tuần. Bài toán là làm mô hình ngôn ngữ LFM2.5 trả lời nhanh hơn trên một phần GPU được chia sẵn. Mình viết ba kernel Triton gộp các bước tính toán và xếp hạng 77 trên 220.'
-  en: 'A solo week-long contest: make the LFM2.5 language model answer faster on a slice of a GPU. I wrote three Triton kernels that fuse compute steps and finished 77th of 220.'
-detail:
-  vi: 'Ba kernel chỉ giảm khoảng 1% độ trễ. Bài viết trên blog kể lại vì sao.'
-  en: 'The kernels cut latency by about 1%. The blog post explains why.'
-tags: [tech, competition]
-tech: 'Triton · vLLM · Docker'
-featured: true
+vi:
+  order: 10
+  year: '2026'
+  title: Viettel AI Race 2026
+  summary: Thi một mình trong một tuần. Bài toán là làm mô hình ngôn ngữ LFM2.5 trả lời nhanh hơn trên một phần GPU được chia sẵn. Mình viết ba kernel Triton gộp các bước tính toán và xếp hạng 77 trên 220.
+  detail: Ba kernel chỉ giảm khoảng 1% độ trễ. Bài viết trên blog kể lại vì sao.
+  tags:
+  - tech
+  - competition
+  tech: Triton · vLLM · Docker
+  featured: true
+en:
+  title: Viettel AI Race 2026
+  summary: 'A solo week-long contest: make the LFM2.5 language model answer faster on a slice of a GPU. I wrote three Triton kernels that fuse compute steps and finished 77th of 220.'
+  detail: The kernels cut latency by about 1%. The blog post explains why.

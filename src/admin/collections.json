@@ -1,7 +1,8 @@
 {
   "about": {
     "label": "Giới thiệu",
-    "kind": "perLocaleFiles",
+    "kind": "file",
+    "file": "about/{{locale}}.mdx",
     "body": true
   },
   "posts": {
@@ -10,7 +11,7 @@
     "kind": "entries",
     "summary": "{{title}}",
     "sortable_fields": ["date"],
-    "i18n": true,
+    "perLocaleFiles": true,
     "slug": {
       "template": "{{slug}}"
     },
@@ -20,49 +21,64 @@
   },
   "home": {
     "label": "Trang chủ",
-    "kind": "single"
+    "kind": "file",
+    "file": "home.json"
   },
   "roles": {
     "label": "Vai trò",
     "label_singular": "Vai trò",
     "kind": "entries",
-    "summary": "{{fields.start}}–{{fields.end}} · {{fields.role.$source}}, {{fields.org.$source}}",
+    "summary": "{{fields.start}}–{{fields.end}} · {{fields.role}}, {{fields.org}}",
     "sortable_fields": ["order"],
-    "display_field": "role.$source"
+    "display_field": "role"
   },
   "entries": {
     "label": "Dòng thời gian",
     "label_singular": "Mục",
     "kind": "entries",
-    "summary": "{{fields.year}} · {{fields.title.$source}}",
+    "summary": "{{fields.year}} · {{fields.title}}",
     "sortable_fields": ["order"],
-    "display_field": "title.$source"
+    "display_field": "title"
   },
   "credentials": {
     "label": "Chứng chỉ",
     "kind": "entries",
-    "summary": "{{fields.year}} · {{fields.title.$source}}",
-    "display_field": "title.$source"
+    "summary": "{{fields.year}} · {{fields.title}}",
+    "display_field": "title",
+    "media_folder": "/src/assets/certs",
+    "public_folder": "@/assets/certs",
+    "files": {
+      "media_folder": "/public/certs",
+      "public_folder": "/certs"
+    }
   },
   "outlets": {
     "label": "Đơn vị đăng",
     "kind": "entries",
-    "summary": "{{fields.name.$source}} (tier {{fields.tier}})",
-    "display_field": "name.$source"
+    "summary": "{{fields.name}} (tier {{fields.tier}})",
+    "display_field": "name",
+    "media_folder": "/src/assets/logos",
+    "public_folder": "@/assets/logos"
   },
   "references": {
     "label": "Nguồn",
     "kind": "entries",
-    "summary": "{{fields.outlet}} — {{fields.title}}",
+    "summary": "{{fields.outlet}} · {{fields.title}}",
     "sortable_fields": ["date"],
     "display_field": "title"
   },
   "strings": {
     "label": "Chuỗi giao diện",
-    "kind": "strings"
+    "kind": "strings",
+    "file": "strings/{{locale}}.json"
   },
   "site": {
     "label": "Thông tin site",
-    "kind": "single"
+    "kind": "file",
+    "file": "site.json",
+    "files": {
+      "media_folder": "/public/media",
+      "public_folder": "/media"
+    }
   }
 }

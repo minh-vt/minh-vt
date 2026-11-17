@@ -1,12 +1,11 @@
 import type { AssetCollection, Collection, CmsConfig, Field } from '@sveltia/cms'
 import { adminCollections, type CollectionOptions } from '@/admin/collections'
-import { contractFields } from '@/admin/fields'
+import { contractFields, hasTranslations, translate } from '@/admin/fields'
 import labels from '@/admin/labels.json'
 import settings from '@/admin/settings.json'
-import { assetFolder, assetGroups, assetPath, contentFolder } from '@/content/paths'
+import { contentPath } from '@/content/paths'
 import { defaultLocale, locales } from '@/i18n/locales'
 import { slugSegmentPattern } from '@/i18n/routes'
-import { languageName } from '@/i18n/utils'
 
 /** Admin-only: collection shapes for Sveltia, derived from the content contract. */
 
@@ -20,51 +19,75 @@ function base(name: string, options: CollectionOptions) {
   }
 }
 
-/** File collections differ only in path and format. */
-function filesCollection(
+/** `file` fields upload where the collection says downloads go (public/). */
+function withFiles(list: Field[], files: CollectionOptions['files']): Field[] {
+  if (!files) return list
+  return list.map((field) => {
+    if (field.widget === 'file') return { ...field, ...files }
+    if ('fields' in field && Array.isArray(field.fields)) {
+      return { ...field, fields: withFiles(field.fields, files) } as Field
+    }
+    return field
+  })
+}
+
+/** Image uploads land in the collection's folder; Astro's image() resolves them. */
+const folder = (options: CollectionOptions) =>
+  options.media_folder && {
+    media_folder: options.media_folder,
+    public_folder: options.public_folder,
+  }
+
+/**
+ * One file in src/content/. A `{{locale}}` in its path makes one file per
+ * locale; otherwise translated fields share the file, keyed by locale.
+ */
+function fileCollection(
   name: string,
   options: CollectionOptions,
-  fields: Field[],
+  list: Field[],
 ): Collection {
-  if (options.kind === 'single') {
-    return {
-      ...base(name, options),
-      files: [
-        {
-          name,
-          label: options.label,
-          file: `${contentFolder(name)}.json`,
-          format: 'json',
-          fields,
-        },
-      ],
-    }
-  }
-  const strings = options.kind === 'strings'
+  if (!options.file) throw new Error(`collections.json: "${name}" needs a file path`)
+  const perLocale = options.file.includes('{{locale}}')
+  const fields = withFiles(perLocale ? list.map(translate) : list, options.files)
+  // Sveltia wants i18n on the collection and on the file itself.
+  const i18n = (perLocale || hasTranslations(fields)) && { i18n: true }
   return {
     ...base(name, options),
-    files: locales.map((locale) => ({
-      name: `${name}_${locale}`,
-      label: languageName(locale),
-      file: strings
-        ? `${contentFolder(name)}/${locale}.json`
-        : `${contentFolder(name)}/${locale}.mdx`,
-      ...(strings && { format: 'json' }),
-      fields,
-    })),
+    ...i18n,
+    files: [
+      {
+        name,
+        label: options.label,
+        ...i18n,
+        file: contentPath(options.file),
+        ...(options.file.endsWith('.json') && { format: 'json' as const }),
+        ...folder(options),
+        fields,
+      },
+    ],
   }
 }
 
+/**
+ * One file per record. Posts keep one file per locale (the global structure);
+ * a record with translatable fields keeps every locale in one file.
+ */
 function entryCollection(
   name: string,
   options: CollectionOptions,
-  fields: Field[],
+  list: Field[],
 ): Collection {
   const extension = options.extension ?? 'yaml'
+  const fields = withFiles(list, options.files)
+  const i18n = options.perLocaleFiles
+    ? true
+    : hasTranslations(fields) && { structure: 'single_file' as const }
   return {
     ...base(name, options),
-    ...(options.i18n && { i18n: true }),
-    folder: contentFolder(name),
+    ...(i18n && { i18n }),
+    folder: contentPath(name),
+    ...folder(options),
     create: true,
     extension,
     format: extension === 'mdx' ? 'frontmatter' : 'yaml',
@@ -76,55 +99,62 @@ function entryCollection(
 }
 
 /** Dotted translation keys are data, not field names, so one root keyvalue holds them. */
-function stringFields(options: CollectionOptions): Field[] {
-  return [
-    {
-      name: 'strings',
-      label: options.label,
-      widget: 'keyvalue',
-      required: true,
-      root: true,
-    },
-  ]
-}
+const stringFields = (options: CollectionOptions): Field[] => [
+  {
+    name: 'strings',
+    label: options.label,
+    widget: 'keyvalue',
+    required: true,
+    root: true,
+  },
+]
 
 /**
- * Every asset folder besides the shared one (the global media folder) appears
- * in the media picker and the asset library. Nested groups (certs/previews) are
- * browsed as subfolders of their parent.
+ * Every folder a collection uploads to appears in the media picker and the
+ * asset library, next to the global one, under the collection's name.
  */
 function assetCollections(): AssetCollection[] {
-  const names = labels.assets as Record<string, string>
-  return assetGroups
-    .filter((group) => group !== 'media' && !group.includes('/'))
-    .map((group) => {
-      if (!names[group]) throw new Error(`Missing admin label for asset group "${group}"`)
-      return {
-        name: group,
-        label: names[group],
-        media_folder: assetFolder(group),
-        public_folder: assetPath(group),
-      }
-    })
+  return Object.entries(adminCollections).flatMap(([name, options]) => [
+    ...(options.media_folder
+      ? [
+          {
+            name,
+            label: options.label,
+            media_folder: options.media_folder,
+            public_folder: options.public_folder,
+          },
+        ]
+      : []),
+    ...(options.files
+      ? [
+          {
+            name: `${name}-files`,
+            label: `${options.label} · ${labels.files}`,
+            ...options.files,
+          },
+        ]
+      : []),
+  ])
 }
 
 export function cmsConfig(): CmsConfig {
   const collections = Object.entries(adminCollections).map(([name, options]) => {
-    if (options.kind === 'entries') {
-      return entryCollection(name, options, contractFields(name, options))
-    }
-    if (options.kind === 'strings') {
-      return filesCollection(name, options, stringFields(options))
-    }
-    return filesCollection(name, options, contractFields(name, options))
+    if (options.kind === 'strings')
+      return fileCollection(name, options, stringFields(options))
+    const fields = contractFields(name, {
+      body: options.body,
+      perLocale: options.perLocaleFiles,
+    })
+    return options.kind === 'entries'
+      ? entryCollection(name, options, fields)
+      : fileCollection(name, options, fields)
   })
 
   return {
     // JSON widens literals; the shape is asserted against the official schema at build time.
     backend: settings.backend as CmsConfig['backend'],
-    // Fields without a group of their own upload to the shared media folder.
-    media_folder: assetFolder('media').slice(1),
-    public_folder: assetPath('media'),
+    media_folder: settings.media_folder,
+    public_folder: settings.public_folder,
     asset_collections: assetCollections(),
     // Uploads are resized and converted to WebP in the browser before commit.
     media_libraries: settings.media_libraries as CmsConfig['media_libraries'],

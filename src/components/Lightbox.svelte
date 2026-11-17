@@ -1,7 +1,7 @@
 <script lang="ts">
   import { Dialog } from 'melt/builders'
   import { onMount } from 'svelte'
-  import type { LightboxPhoto } from '@/lib/images'
+  import type { LightboxPhoto } from '@/lib/renditions'
 
   let {
     photos,
@@ -47,6 +47,7 @@
     <li class:col-span-2={at === 0}>
       <a
         href={photo.full.src}
+        data-astro-prefetch="false"
         class="lightbox-thumb group relative block"
         onclick={(event) => open(event, at)}
       >

@@ -13,7 +13,7 @@ export function getStaticPaths() {
 
 const lang = routeLocale(Astro.params.lang)
 const t = useTranslations(lang)
-const entries = await getEntries(lang, await getReferences(), await getCredentials(lang))
+const entries = await getEntries(lang, await getReferences(lang), await getCredentials(lang))
 ---
 
 <Base lang={lang} title={t('area.timeline.title')} description={t('area.timeline.lead')}>

@@ -4,8 +4,8 @@ import type { ImageMetadata } from 'astro'
 import { Font, getImage } from 'astro:assets'
 import Header from '@/components/Header.astro'
 import Footer from '@/components/Footer.astro'
-import { local, pathFor, switchLocalePath, useTranslations } from '@/i18n/utils'
-import { site } from '@/lib/site'
+import { pathFor, switchLocalePath, useTranslations } from '@/i18n/utils'
+import { siteFor } from '@/lib/site'
 import { absolute, jsonLd as serialise, ogLocale, shareImage } from '@/lib/seo'
 import { defaultLocale, locales, type Lang } from '@/i18n/locales'
 import { chromeColor } from '@/theme/browser-chrome'
@@ -19,10 +19,7 @@ interface Props {
   jsonLd?: Record<string, unknown>
   /** Shown when the page is shared; the site's share image otherwise. */
   image?: ImageMetadata
-  /**
-   * Locales this page is written in. A page shown in another locale (an
-   * untranslated post under /en/) points its canonical at the original.
-   */
+  /** Locales this page exists in; a post has a page only where it is written. */
   translations?: readonly Lang[]
   noindex?: boolean
 }
@@ -36,14 +33,15 @@ const {
   translations = locales,
   noindex = false,
 } = Astro.props
+const site = siteFor(lang)
 const t = useTranslations(lang)
-const siteName = local(site.name, lang)
+const siteName = site.name
 const fullTitle = title ? `${title} · ${siteName}` : siteName
 
 // Same page in another locale, derived from the path rather than a regex.
 const alternate = (target: Lang) => absolute(switchLocalePath(Astro.url.pathname, target))
-const canonical = alternate(translations.includes(lang) ? lang : translations[0])
-const xDefault = translations.includes(defaultLocale) ? defaultLocale : translations[0]
+const canonical = alternate(lang)
+const xDefault = translations.includes(defaultLocale) ? defaultLocale : lang
 
 const share = image ?? site.shareImage ?? site.portrait
 const og = share && (await shareImage(share))
@@ -151,7 +149,7 @@ const touchIcon = await getImage({
     >
       {t('nav.skip')}
     </a>
-    <Header lang={lang} />
+    <Header {lang} {translations} />
     <main id="main">
       <slot />
     </main>

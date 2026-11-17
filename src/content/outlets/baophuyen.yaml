@@ -1,4 +1,5 @@
-name:
-  vi: 'Báo Phú Yên'
-  en: 'Phu Yen Newspaper'
-tier: 3
+vi:
+  name: Báo Phú Yên
+  tier: 3
+en:
+  name: Phu Yen Newspaper

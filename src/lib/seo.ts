@@ -1,8 +1,8 @@
 import type { ImageMetadata } from 'astro'
 import { getImage } from 'astro:assets'
 import { localeTags, type Lang } from '@/i18n/locales'
-import { local, pathFor } from '@/i18n/utils'
-import { site } from '@/lib/site'
+import { pathFor } from '@/i18n/utils'
+import { siteFor } from '@/lib/site'
 
 /** Absolute URL on the deployed origin (`site` in astro.config.mjs). */
 export function absolute(path: string): string {
@@ -36,7 +36,7 @@ export function person(lang: Lang) {
   return {
     '@type': 'Person',
     '@id': `${absolute(pathFor(lang))}#person`,
-    name: local(site.name, lang),
+    name: siteFor(lang).name,
     url: absolute(pathFor(lang)),
   }
 }

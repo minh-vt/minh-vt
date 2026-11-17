@@ -1,12 +1,16 @@
-order: 40
-year: '2025'
-title:
-  vi: 'Compass Award'
-  en: 'Compass Award'
-summary:
-  vi: 'Giải FIRST Tech Challenge dành cho người huấn luyện, do chính học sinh đề cử bằng video. Mình nhận giải tại Vietnam Championship tháng 2/2025, cùng đội 28344 của Science Lab.'
-  en: 'A FIRST Tech Challenge award for a coach, nominated by the students themselves in a video. I received it at the Vietnam Championship in February 2025, with Science Lab''s team 28344.'
-tags: [teaching, competition]
-refs: [first-compass-2025]
-photos: [/media/compass-award-2025.webp]
-featured: true
+vi:
+  order: 40
+  year: '2025'
+  title: Compass Award
+  summary: Giải FIRST Tech Challenge dành cho người huấn luyện, do chính học sinh đề cử bằng video. Mình nhận giải tại Vietnam Championship tháng 2/2025, cùng đội 28344 của Science Lab.
+  tags:
+  - teaching
+  - competition
+  refs:
+  - first-compass-2025
+  photos:
+  - '@/assets/media/compass-award-2025.webp'
+  featured: true
+en:
+  title: Compass Award
+  summary: A FIRST Tech Challenge award for a coach, nominated by the students themselves in a video. I received it at the Vietnam Championship in February 2025, with Science Lab's team 28344.

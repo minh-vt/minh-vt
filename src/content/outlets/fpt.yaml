@@ -1,5 +1,6 @@
-name:
-  vi: 'Đại học FPT'
-  en: 'FPT University'
-tier: 1
-logo: /logos/fpt.png
+vi:
+  name: Đại học FPT
+  tier: 1
+  logo: '@/assets/logos/fpt.webp'
+en:
+  name: FPT University

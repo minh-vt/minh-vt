@@ -2,7 +2,7 @@
 import Base from '@/layouts/Base.astro'
 import Lightbox from '@/components/Lightbox.svelte'
 import PageHeader from '@/components/PageHeader.astro'
-import { lightboxPhotos } from '@/lib/images'
+import { lightboxPhotos } from '@/lib/renditions'
 import { from } from '@/theme/breakpoints'
 import { routeLocale } from '@/i18n/locales'
 import { lightboxLabels, useTranslations, pathFor } from '@/i18n/utils'
@@ -21,7 +21,7 @@ export async function getStaticPaths() {
     localeParams().map(async ({ params }) => {
       const lang = routeLocale(params.lang)
       const credentials = await getCredentials(lang)
-      const entries = await getEntries(lang, await getReferences(), credentials)
+      const entries = await getEntries(lang, await getReferences(lang), credentials)
       return credentials.map((item) => ({
         params: { lang: params.lang, id: item.id },
         props: {
@@ -73,11 +73,10 @@ const jsonLd = {
     <div class="mt-8 grid items-start gap-8 md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
       <Lightbox
         client:visible
-        photos={await lightboxPhotos(
-          [item.preview],
-          item.title,
-          `${from('md')} 40rem, 100vw`,
-        )}
+        photos={await lightboxPhotos([item.preview], item.title, {
+          width: 832,
+          sizes: `${from('md')} 40rem, 100vw`,
+        })}
         labels={lightboxLabels(lang)}
       />
       <div class="flex flex-col items-start gap-6">
@@ -85,7 +84,7 @@ const jsonLd = {
           {
             files.map((file, index) => (
               <li>
-                <a href={file} class="btn">
+                <a href={file} class="btn" data-astro-prefetch="false">
                   <span class="i-ph-file-arrow-down" aria-hidden="true" />
                   {index === 0 ? t('certs.open') : t('certs.extra')}
                 </a>

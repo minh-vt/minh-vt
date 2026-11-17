@@ -1,10 +1,12 @@
-order: 140
-year: '2021'
-title:
-  vi: 'Huy chương Bạc Code Warrior'
-  en: 'Silver medal, Code Warrior'
-summary:
-  vi: 'Huy chương Bạc bảng Sinh viên toàn quốc ở cuộc thi Code Warrior, FPT Techday 2021.'
-  en: 'Silver medal in the national student division of Code Warrior at FPT Techday 2021.'
-tags: [competition]
-refs: [fct-to-mo-2023]
+vi:
+  order: 140
+  year: '2021'
+  title: Huy chương Bạc Code Warrior
+  summary: Huy chương Bạc bảng Sinh viên toàn quốc ở cuộc thi Code Warrior, FPT Techday 2021.
+  tags:
+  - competition
+  refs:
+  - fct-to-mo-2023
+en:
+  title: Silver medal, Code Warrior
+  summary: Silver medal in the national student division of Code Warrior at FPT Techday 2021.

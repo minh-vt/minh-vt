@@ -1,5 +1,6 @@
-name:
-  vi: 'GitHub'
-  en: 'GitHub'
-tier: 3
-logo: /logos/github.png
+vi:
+  name: GitHub
+  tier: 3
+  logo: '@/assets/logos/github.webp'
+en:
+  name: GitHub

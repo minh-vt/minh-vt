@@ -110,12 +110,9 @@
     "blog": "Bài viết",
     "certs": "Chứng chỉ"
   },
-  "assets": {
-    "logos": "Logo đơn vị đăng",
-    "certs": "Chứng chỉ"
-  },
   "page": {
     "title": "Nội dung",
     "noscript": "Bật JavaScript để dùng trình soạn thảo."
-  }
+  },
+  "files": "file tải về"
 }

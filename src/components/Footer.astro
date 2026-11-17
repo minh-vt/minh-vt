@@ -2,8 +2,8 @@
 import CopyEmail from '@/components/CopyEmail.astro'
 import LinkIcon from '@/components/LinkIcon.svelte'
 import Monument from '@/components/Monument.astro'
-import { site } from '@/lib/site'
-import { local, useTranslations, pathFor } from '@/i18n/utils'
+import { siteFor } from '@/lib/site'
+import { useTranslations, pathFor } from '@/i18n/utils'
 import type { Lang } from '@/i18n/locales'
 
 interface Props {
@@ -11,9 +11,10 @@ interface Props {
 }
 
 const { lang } = Astro.props
+const site = siteFor(lang)
 const t = useTranslations(lang)
 const year = new Date().getFullYear()
-const name = local(site.name, lang)
+const name = site.name
 ---
 
 <!-- Contact closes every page, so a finished post ends where the homepage does. -->
@@ -45,7 +46,7 @@ const name = local(site.name, lang)
         {
           site.cv && (
             <li>
-              <a href={site.cv} class="link text-sm">
+              <a href={site.cv} class="link text-sm" data-astro-prefetch="false">
                 <span class="i-ph-file-arrow-down" aria-hidden="true" />
                 {t('hero.cv')}
               </a>

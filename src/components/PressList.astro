@@ -2,7 +2,7 @@
 import OutletMark from '@/components/OutletMark.astro'
 import type { Lang } from '@/i18n/locales'
 import { formatDate } from '@/i18n/format'
-import { local, useTranslations, pathFor } from '@/i18n/utils'
+import { useTranslations, pathFor } from '@/i18n/utils'
 import type { EntryRow, Reference } from '@/lib/content'
 
 interface Props {
@@ -29,19 +29,19 @@ const subjectOf = (ref: Reference) => {
       return (
         <li class="press-card group relative flex flex-col gap-4 border border-line bg-paper-raised p-5">
           <div class="flex items-center gap-3">
-            <OutletMark outlet={ref.outlet} {lang} size="lg" />
+            <OutletMark outlet={ref.outlet} size="lg" />
             <p class="t-meta">
-              <span class="text-ink">{local(ref.outlet.data.name, lang)}</span>
-              {ref.data.date && <> · {formatDate(ref.data.date, lang, 'month')}</>}
+              <span class="text-ink">{ref.outlet.name}</span>
+              {ref.date && <> · {formatDate(ref.date, lang, 'month')}</>}
             </p>
           </div>
           <a
-            href={ref.data.url}
+            href={ref.url}
             rel="noreferrer"
             lang="vi"
             class="t-title press-link text-ink group-hover:underline"
           >
-            {ref.data.title}
+            {ref.title}
             <span class="i-ph-arrow-up-right ml-1 text-ink-muted" aria-hidden="true" />
           </a>
           {subject && (

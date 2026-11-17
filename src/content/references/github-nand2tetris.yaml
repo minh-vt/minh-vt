@@ -1,4 +1,5 @@
-url: 'https://github.com/minh-vt/nand2tetris'
-outlet: github
-title: 'nand2tetris — a computer built from NAND gates'
-kind: code
+vi:
+  url: https://github.com/minh-vt/nand2tetris
+  outlet: github
+  title: nand2tetris — a computer built from NAND gates
+  kind: code

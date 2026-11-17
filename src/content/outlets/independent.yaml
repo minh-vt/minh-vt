@@ -1,4 +1,5 @@
-name:
-  vi: 'Độc lập'
-  en: 'Independent'
-tier: 3
+vi:
+  name: Độc lập
+  tier: 3
+en:
+  name: Independent

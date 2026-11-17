@@ -1,11 +1,14 @@
-order: 70
-year: '2023'
-title:
-  vi: 'Đội trưởng đội robotics ở VORC'
-  en: 'Robotics team captain at VORC'
-summary:
-  vi: 'Dẫn đội đầu tiên của Science Lab dự Vietnam Open Robotics Challenge. Đội trường chuyên Lương Văn Chánh giành giải Nhất khu vực miền Trung và Tây Nguyên, kèm Inspire Award.'
-  en: 'Led the first Science Lab team at the Vietnam Open Robotics Challenge. The Luong Van Chanh team won first prize in the Central and Central Highlands region, plus the Inspire Award.'
-tags: [competition]
-refs: [tuoitre-vorc-2024]
-photos: [/media/vorc-2023.webp]
+vi:
+  order: 70
+  year: '2023'
+  title: Đội trưởng đội robotics ở VORC
+  summary: Dẫn đội đầu tiên của Science Lab dự Vietnam Open Robotics Challenge. Đội trường chuyên Lương Văn Chánh giành giải Nhất khu vực miền Trung và Tây Nguyên, kèm Inspire Award.
+  tags:
+  - competition
+  refs:
+  - tuoitre-vorc-2024
+  photos:
+  - '@/assets/media/vorc-2023.webp'
+en:
+  title: Robotics team captain at VORC
+  summary: Led the first Science Lab team at the Vietnam Open Robotics Challenge. The Luong Van Chanh team won first prize in the Central and Central Highlands region, plus the Inspire Award.

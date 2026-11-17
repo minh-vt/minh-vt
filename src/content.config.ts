@@ -1,18 +1,18 @@
 import { defineCollection } from 'astro:content'
 import { glob } from 'astro/loaders'
-import type { z } from 'astro/zod'
-import { schemas } from '@/content/model'
-import { contentFolder } from '@/content/paths'
+import { byLocale, fields } from '@/content/model'
+import { contentPath } from '@/content/paths'
 import { routeLocale } from '@/i18n/locales'
 import { parsePostId } from '@/i18n/routes'
+import { z } from 'astro/zod'
 
 /** Loaders and file layout only; the field contract lives in model.ts. */
 
-const base = (name: string) => `./${contentFolder(name)}`
+const base = (path: string) => `./${contentPath(path)}`
 
-/** One YAML file per entry, named by its id. */
-const yaml = <S extends z.ZodType>(name: string, schema: S) =>
-  defineCollection({ loader: glob({ pattern: '*.yaml', base: base(name) }), schema })
+/** One YAML file per record, every locale inside it (Sveltia single_file). */
+const translated = (name: keyof typeof fields) =>
+  glob({ pattern: '*.yaml', base: base(name) })
 
 export const collections = {
   about: defineCollection({
@@ -21,7 +21,7 @@ export const collections = {
       base: base('about'),
       generateId: ({ entry }) => routeLocale(entry.replace(/\.mdx$/, '')),
     }),
-    schema: schemas.about,
+    schema: z.object(fields.about()),
   }),
   posts: defineCollection({
     loader: glob({
@@ -33,11 +33,31 @@ export const collections = {
         return id
       },
     }),
-    schema: schemas.posts,
+    schema: (context) => z.object(fields.posts(context)),
   }),
-  roles: yaml('roles', schemas.roles),
-  entries: yaml('entries', schemas.entries),
-  credentials: yaml('credentials', schemas.credentials),
-  outlets: yaml('outlets', schemas.outlets),
-  references: yaml('references', schemas.references),
+  roles: defineCollection({
+    loader: translated('roles'),
+    schema: byLocale(z.object(fields.roles())),
+  }),
+  entries: defineCollection({
+    loader: translated('entries'),
+    schema: (context) => byLocale(z.object(fields.entries(context))),
+  }),
+  credentials: defineCollection({
+    loader: translated('credentials'),
+    schema: (context) => byLocale(z.object(fields.credentials(context))),
+  }),
+  outlets: defineCollection({
+    loader: translated('outlets'),
+    schema: (context) => byLocale(z.object(fields.outlets(context))),
+  }),
+  references: defineCollection({
+    loader: translated('references'),
+    schema: byLocale(z.object(fields.references())),
+  }),
+  /** One file, src/content/site.json; its id is `site`. */
+  site: defineCollection({
+    loader: glob({ pattern: 'site.json', base: base('') }),
+    schema: (context) => byLocale(z.object(fields.site(context))),
+  }),
 }

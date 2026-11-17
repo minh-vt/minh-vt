@@ -13,7 +13,7 @@ export function getStaticPaths() {
 
 const lang = routeLocale(Astro.params.lang)
 const t = useTranslations(lang)
-const references = await getReferences()
+const references = await getReferences(lang)
 const entries = await getEntries(lang, references, await getCredentials(lang))
 ---
 

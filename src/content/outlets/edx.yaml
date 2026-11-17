@@ -1,4 +1,5 @@
-name:
-  vi: 'edX'
-  en: 'edX'
-tier: 3
+vi:
+  name: edX
+  tier: 3
+en:
+  name: edX

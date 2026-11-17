@@ -1,5 +1,6 @@
-name:
-  vi: 'Facebook'
-  en: 'Facebook'
-tier: 3
-logo: /logos/facebook.png
+vi:
+  name: Facebook
+  tier: 3
+  logo: '@/assets/logos/facebook.webp'
+en:
+  name: Facebook

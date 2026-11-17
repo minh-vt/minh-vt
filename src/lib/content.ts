@@ -1,8 +1,8 @@
 import { getCollection, getEntry, type CollectionEntry } from 'astro:content'
+import { inLocale, type Translated } from '@/content/model'
 import { defaultLocale, isLang, type Lang } from '@/i18n/locales'
 import { parsePostId } from '@/i18n/routes'
-import { local, pathFor } from '@/i18n/utils'
-import { siteFile, siteImage } from '@/lib/assets'
+import { pathFor } from '@/i18n/utils'
 
 export function entryLang(id: string): Lang {
   const lang = id.split('/')[0]
@@ -15,9 +15,12 @@ export function postSlug(id: string): string {
   return parsePostId(id).slug
 }
 
-/** The post's URL in the reader's locale, whatever language it is written in. */
-export function postPath(lang: Lang, id: string): string {
-  return pathFor(lang, `blog/${postSlug(id)}`)
+/**
+ * A post has a page only in the language it is written in; every list links
+ * there, so an untranslated post is one URL, never a copy under each locale.
+ */
+export function postPath(id: string): string {
+  return pathFor(entryLang(id), `blog/${postSlug(id)}`)
 }
 
 function requireEntry<T extends { id: string }>(rows: T[], id: string, owner: string): T {
@@ -37,33 +40,32 @@ function resolveAll<T extends { id: string }>(
   return ids.map((id) => requireEntry(rows, id, owner))
 }
 
+/** A translated collection in one locale, each row with its id. */
+const inLocaleRows = <T>(items: { id: string; data: Translated<T> }[], lang: Lang) =>
+  items.map((item) => ({ id: item.id, ...inLocale(item.data, lang) }))
+
 /** Newest first, with the most authoritative outlets leading. */
-export async function getReferences() {
-  const [entries, outlets] = await Promise.all([
-    getCollection('references'),
-    getCollection('outlets'),
+export async function getReferences(lang: Lang) {
+  const [references, outlets] = await Promise.all([
+    getCollection('references').then((items) => inLocaleRows(items, lang)),
+    getCollection('outlets').then((items) => inLocaleRows(items, lang)),
   ])
-  for (const outlet of outlets) {
-    if (outlet.data.logo) siteImage(outlet.data.logo, `outlets/${outlet.id} logo`)
-  }
-  return entries
-    .map((entry) => ({
-      ...entry,
-      outlet: requireEntry(outlets, entry.data.outlet, `references/${entry.id} outlet`),
+  return references
+    .map((row) => ({
+      ...row,
+      outlet: requireEntry(outlets, row.outlet, `references/${row.id} outlet`),
     }))
     .sort(
       (a, b) =>
-        a.outlet.data.tier - b.outlet.data.tier ||
-        (b.data.date?.valueOf() ?? 0) - (a.data.date?.valueOf() ?? 0),
+        a.outlet.tier - b.outlet.tier ||
+        (b.date?.valueOf() ?? 0) - (a.date?.valueOf() ?? 0),
     )
 }
 export type Reference = Awaited<ReturnType<typeof getReferences>>[number]
 
 /** Coverage written by others: articles and award announcements. */
 export function pressOf(references: Reference[]) {
-  return references.filter(
-    (row) => row.data.kind === 'press' || row.data.kind === 'award',
-  )
+  return references.filter((row) => row.kind === 'press' || row.kind === 'award')
 }
 
 /**
@@ -79,26 +81,12 @@ export function pickFeatured<T>(
   return (marked.length > 0 ? marked : items).slice(0, limit)
 }
 
-function localizeCredential(item: CollectionEntry<'credentials'>, lang: Lang) {
-  return {
-    ...item.data,
-    id: item.id,
-    title: local(item.data.title, lang),
-    issuer: local(item.data.issuer, lang),
-    file: siteFile(item.data.file, `credentials/${item.id} file`),
-    preview: siteImage(item.data.preview, `credentials/${item.id} preview`),
-    ...(item.data.extra && {
-      extra: siteFile(item.data.extra, `credentials/${item.id} extra`),
-    }),
-  }
-}
-export type CredentialRow = ReturnType<typeof localizeCredential>
-
 export async function getCredentials(lang: Lang) {
-  return (await getCollection('credentials'))
-    .map((item) => localizeCredential(item, lang))
-    .sort((a, b) => b.year.localeCompare(a.year) || a.title.localeCompare(b.title))
+  return inLocaleRows(await getCollection('credentials'), lang).sort(
+    (a, b) => b.year.localeCompare(a.year) || a.title.localeCompare(b.title),
+  )
 }
+export type CredentialRow = Awaited<ReturnType<typeof getCredentials>>[number]
 
 /** Timeline rows in display order, localized, with relationships resolved. */
 export async function getEntries(
@@ -106,20 +94,15 @@ export async function getEntries(
   references: Reference[],
   credentials: CredentialRow[],
 ) {
-  return (await getCollection('entries'))
-    .sort((a, b) => a.data.order - b.data.order)
-    .map((item) => ({
-      ...item.data,
-      id: item.id,
-      title: local(item.data.title, lang),
-      summary: local(item.data.summary, lang),
-      detail: item.data.detail ? local(item.data.detail, lang) : undefined,
-      photos: item.data.photos.map((src) => siteImage(src, `entries/${item.id} photos`)),
-      refs: resolveAll(references, item.data.refs, `entries/${item.id} refs`),
+  return inLocaleRows(await getCollection('entries'), lang)
+    .sort((a, b) => a.order - b.order)
+    .map((row) => ({
+      ...row,
+      refs: resolveAll(references, row.refs, `entries/${row.id} refs`),
       credentials: resolveAll(
         credentials,
-        item.data.credentials,
-        `entries/${item.id} credentials`,
+        row.credentials,
+        `entries/${row.id} credentials`,
       ),
     }))
 }
@@ -127,16 +110,9 @@ export type EntryRow = Awaited<ReturnType<typeof getEntries>>[number]
 
 /** Roles without an end date, in editor order. */
 export async function getCurrentRoles(lang: Lang) {
-  return (await getCollection('roles'))
-    .filter((item) => !item.data.end)
-    .sort((a, b) => a.data.order - b.data.order)
-    .map((item) => ({
-      id: item.id,
-      role: local(item.data.role, lang),
-      org: local(item.data.org, lang),
-      url: item.data.url,
-      start: item.data.start,
-    }))
+  return inLocaleRows(await getCollection('roles'), lang)
+    .filter((row) => !row.end)
+    .sort((a, b) => a.order - b.order)
 }
 export type RoleRow = Awaited<ReturnType<typeof getCurrentRoles>>[number]
 

@@ -5,6 +5,8 @@
     "branch": "main",
     "base_url": "https://auth.minhvt.id.vn"
   },
+  "media_folder": "src/assets/media",
+  "public_folder": "@/assets/media",
   "publish_mode": "simple",
   "slug": {
     "encoding": "ascii",

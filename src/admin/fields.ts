@@ -2,10 +2,7 @@ import { z } from 'astro/zod'
 import type { Field } from '@sveltia/cms'
 import { adminCollections } from '@/admin/collections'
 import labels from '@/admin/labels.json'
-import { assetFolder, assetPath, type AssetGroup } from '@/content/paths'
-import { schemas } from '@/content/model'
-import { isLang } from '@/i18n/locales'
-import { languageName } from '@/i18n/utils'
+import { downloadTypes, fields, type Context } from '@/content/model'
 
 /**
  * Admin-only projection: the contract says what a field means, this file says
@@ -17,36 +14,34 @@ type Meta = Json & {
   relation?: string
   multiple?: boolean
   media?: 'image' | 'file'
-  group?: AssetGroup
+  i18n?: boolean
 }
-type Base = { name: string; label: string; required: boolean; hint?: string }
+type Base = {
+  name: string
+  label: string
+  required: boolean
+  hint?: string
+  i18n?: boolean
+}
 
 const text = labels.labels as Record<string, string>
 const hints = labels.hints as Record<string, string>
 const widgets = labels.widgets as Record<string, string>
 
-function base(name: string, required: boolean): Base {
+/** Fields the contract marks translatable are edited per locale; the rest once. */
+function base(name: string, required: boolean, meta: Meta): Base {
   const value = text[name]
   if (!value) throw new Error(`Missing admin label for field "${name}"`)
-  return { name, label: value, required, ...(hints[name] && { hint: hints[name] }) }
+  return {
+    name,
+    label: value,
+    required,
+    ...(hints[name] && { hint: hints[name] }),
+    ...(meta.i18n && { i18n: true }),
+  }
 }
 
-/** Localized text is a locale record; its subfields are languages, not fields. */
 function objectFields(schema: Json): Field[] {
-  const names = schema.propertyNames
-  if (!schema.properties && typeof names === 'object' && Array.isArray(names.enum)) {
-    return names.enum.map((key) => {
-      if (typeof key !== 'string' || !isLang(key)) {
-        throw new Error(`Unsupported admin record key: ${String(key)}`)
-      }
-      return {
-        name: key,
-        label: languageName(key),
-        widget: 'string',
-        required: schema.required?.includes(key) ?? false,
-      }
-    })
-  }
   if (!schema.properties) throw new Error('Admin object declares no properties')
   const required = schema.required ?? []
   return Object.entries(schema.properties).map(([name, child]) =>
@@ -70,21 +65,16 @@ function relationField(common: Base, meta: Meta): Field {
   }
 }
 
-/** Uploads land in the folder the contract names for the field. */
-const folder = (meta: Meta) =>
-  meta.group && {
-    media_folder: assetFolder(meta.group),
-    public_folder: assetPath(meta.group),
-  }
+/** A download field offers only the types the contract accepts. */
+const accept = downloadTypes.map((type) => `.${type}`).join(',')
 
 function fieldFor(name: string, schema: Json, required: boolean): Field {
   const meta = schema as Meta
-  const common = base(name, required)
+  const common = base(name, required, meta)
 
   if (meta.relation) return relationField(common, meta)
-  if (meta.media) {
-    return { ...common, widget: meta.media, ...folder(meta) }
-  }
+  if (meta.media === 'image') return { ...common, widget: 'image' }
+  if (meta.media === 'file') return { ...common, widget: 'file', accept }
   if (schema.type === 'object') {
     return { ...common, widget: 'object', fields: objectFields(schema) }
   }
@@ -138,7 +128,7 @@ function listField(common: Base, schema: Json): Field {
     return { ...common, ...defaults, widget: 'list', fields: objectFields(item) }
   }
   if (item.media === 'image') {
-    return { ...common, widget: 'image', multiple: true, ...folder(item) }
+    return { ...common, widget: 'image', multiple: true }
   }
   if (item.type === 'string' && item.enum) {
     return {
@@ -196,7 +186,7 @@ function scalarField(common: Base, schema: Json, name: string): Field {
   throw new Error(`Unsupported admin field type "${String(schema.type)}" on "${name}"`)
 }
 
-function translate(field: Field): Field {
+export function translate(field: Field): Field {
   if (field.widget === 'object' && 'fields' in field) {
     return { ...field, i18n: true, fields: field.fields.map(translate) }
   }
@@ -206,18 +196,32 @@ function translate(field: Field): Field {
   return { ...field, i18n: true }
 }
 
+/** In the admin, an image field is a path the CMS writes; Astro checks it at build. */
+const admin: Context = { image: () => z.string().meta({ media: 'image' }) }
+
 /** Admin fields for one collection, plus an optional prose body. */
 export function contractFields(
   name: string,
-  options: { body?: boolean; i18n?: boolean },
+  options: { body?: boolean; perLocale?: boolean },
 ): Field[] {
-  const schema = (schemas as Record<string, z.ZodType | undefined>)[name]
-  if (!schema) throw new Error(`No content model for admin collection "${name}"`)
-  const fields = objectFields(
-    z.toJSONSchema(schema, { io: 'input', unrepresentable: 'any' }),
+  const shape = (
+    fields as Record<string, ((context: Context) => z.ZodRawShape) | undefined>
+  )[name]
+  if (!shape) throw new Error(`No content model for admin collection "${name}"`)
+  const result = objectFields(
+    z.toJSONSchema(z.object(shape(admin)), { io: 'input', unrepresentable: 'any' }),
   )
   if (options.body) {
-    fields.push({ name: 'body', label: text.body, widget: 'markdown', required: true })
+    result.push({ name: 'body', label: text.body, widget: 'markdown', required: true })
   }
-  return options.i18n ? fields.map(translate) : fields
+  // One file per locale: every field belongs to that locale's file.
+  return options.perLocale ? result.map(translate) : result
 }
+
+/** Whether any field is edited per locale (the record holds every locale). */
+export const hasTranslations = (list: Field[]): boolean =>
+  list.some(
+    (field) =>
+      field.i18n === true ||
+      ('fields' in field && Array.isArray(field.fields) && hasTranslations(field.fields)),
+  )

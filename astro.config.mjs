@@ -1,4 +1,6 @@
-import { existsSync, readdirSync } from 'node:fs'
+import { existsSync, readdirSync, readFileSync } from 'node:fs'
+import { fileURLToPath } from 'node:url'
+import { join } from 'node:path'
 import { defineConfig, fontProviders } from 'astro/config'
 import svelte from '@astrojs/svelte'
 import mdx from '@astrojs/mdx'
@@ -9,8 +11,7 @@ import remarkMath from 'remark-math'
 import rehypeKatex from 'rehype-katex'
 import { visit } from 'unist-util-visit'
 import { locales, defaultLocale, localeTags } from '@/i18n/locales'
-import { contentFolder } from '@/content/paths'
-import { areas } from '@/content/model'
+import { areas, downloadTypes } from '@/content/model'
 
 // Each area in the content model is a page folder; the menu, the homepage
 // sections and "see all" links are built from that list, so a missing folder
@@ -25,23 +26,31 @@ for (const area of areas) {
   }
 }
 
-// A post page exists in every locale, but only the locales it is written in are
-// real pages; the rest show the original text and point their canonical at it.
-const writtenIn = (lang) => {
-  const dir = new URL(`./${contentFolder('posts')}/${lang}/`, import.meta.url)
-  if (!existsSync(dir)) return new Set()
-  return new Set(
-    readdirSync(dir, { recursive: true })
-      .filter((file) => /\.mdx?$/.test(file))
-      .map((file) => file.replace(/\.mdx?$/, '')),
-  )
-}
-const postsByLang = Object.fromEntries(locales.map((lang) => [lang, writtenIn(lang)]))
-const isTranslatedPage = (page) => {
-  const [first, ...rest] = new URL(page).pathname.split('/').filter(Boolean)
-  const lang = locales.includes(first) ? first : defaultLocale
-  const [area, ...slug] = locales.includes(first) ? rest : [first, ...rest]
-  return area !== 'blog' || slug.length === 0 || postsByLang[lang].has(slug.join('/'))
+// Downloads are served from public/ as they are, so nothing resolves them
+// while pages render. After the build, every link to a downloadable file must
+// point at a file in the output; a CV or PDF removed without editing its entry
+// fails here, wherever public/ is configured to be.
+const fileLinks = {
+  name: 'file-links',
+  hooks: {
+    'astro:build:done': ({ dir }) => {
+      const root = fileURLToPath(dir)
+      const link = new RegExp(`href="(/[^"]+\\.(?:${downloadTypes.join('|')}))"`, 'gi')
+      const missing = new Set()
+      for (const page of readdirSync(root, { recursive: true })) {
+        if (!String(page).endsWith('.html')) continue
+        for (const [, href] of readFileSync(join(root, page), 'utf8').matchAll(link)) {
+          if (!existsSync(join(root, decodeURI(href))))
+            missing.add(`${href} (in ${page})`)
+        }
+      }
+      if (missing.size > 0) {
+        throw new Error(
+          `Links to files that are not in the build:\n${[...missing].join('\n')}`,
+        )
+      }
+    },
+  },
 }
 
 // Flags pages that contain math, so only those load the KaTeX stylesheet.
@@ -74,9 +83,9 @@ export default defineConfig({
     UnoCSS({ injectReset: false }),
     svelte(),
     mdx(),
+    fileLinks,
     sitemap({
-      filter: (page) =>
-        !new URL(page).pathname.startsWith('/admin/') && isTranslatedPage(page),
+      filter: (page) => !new URL(page).pathname.startsWith('/admin/'),
       i18n: { defaultLocale, locales: localeTags },
     }),
   ],
@@ -90,12 +99,17 @@ export default defineConfig({
   // SVGs come only from this repository (the CMS commits them as the owner), so
   // rasterizing them is safe. It lets an SVG icon become the home-screen PNG and
   // an SVG logo go through Photo like any other image instead of failing the build.
-  image: { dangerouslyProcessSVG: true },
+  // Every image is responsive by default: given the widest it is laid out
+  // (`width`), Astro writes 1x and 2x renditions, capped at the source, and the
+  // `sizes` attribute. Logos use the fixed layout.
+  image: { layout: 'constrained', dangerouslyProcessSVG: true },
   fonts: [
     fontFamily('Space Grotesk', '--font-grotesk', '300 700'),
     fontFamily('IBM Plex Sans', '--font-plex', '100 700'),
   ],
-  // Menu and list links start loading on hover or focus.
+  // Menu and list links start loading on hover or focus. Links to files (PDFs,
+  // the CV, full-size photos) opt out with data-astro-prefetch="false", or a
+  // hover would download them.
   prefetch: { prefetchAll: true, defaultStrategy: 'hover' },
   // Math is rendered at build time by KaTeX: no runtime JS, and MDX inherits
   // the same processor, which is why the plugins live here and not on mdx().

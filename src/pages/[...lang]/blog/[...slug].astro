@@ -5,7 +5,6 @@ import Figure from '@/components/Figure.astro'
 import { routeLocale } from '@/i18n/locales'
 import { localeParams } from '@/i18n/routes'
 import {
-  entryLang,
   getPosts,
   neighbours,
   postPath,
@@ -13,8 +12,7 @@ import {
   readingMinutes,
   type LocalizedPost,
 } from '@/lib/content'
-import { siteImage } from '@/lib/assets'
-import { site } from '@/lib/site'
+import { siteFor } from '@/lib/site'
 import { absolute, person, shareImage } from '@/lib/seo'
 
 export async function getStaticPaths() {
@@ -22,10 +20,14 @@ export async function getStaticPaths() {
     localeParams().map(async ({ params }) => {
       const lang = routeLocale(params.lang)
       const posts = await getPosts(lang)
-      return posts.map((post) => ({
-        params: { lang: params.lang, slug: postSlug(post.entry.id) },
-        props: { post, ...neighbours(posts, postSlug(post.entry.id)) },
-      }))
+      // Pages only for posts written in this locale; lists link the rest to
+      // their own language (postPath).
+      return posts
+        .filter((post) => post.lang === lang)
+        .map((post) => ({
+          params: { lang: params.lang, slug: postSlug(post.entry.id) },
+          props: { post, ...neighbours(posts, postSlug(post.entry.id)) },
+        }))
     }),
   )
   return paths.flat()
@@ -38,13 +40,11 @@ interface Props {
 }
 const { post, previous, next } = Astro.props
 const lang = routeLocale(Astro.params.lang)
-const contentLang = entryLang(post.entry.id)
 const { Content, headings, remarkPluginFrontmatter } = await render(post.entry)
 const { title, description, date, updated } = post.entry.data
 
 const image = post.entry.data.image
-  ? siteImage(post.entry.data.image, `posts/${post.entry.id} image`)
-  : undefined
+const site = siteFor(lang)
 const share = image ?? site.shareImage ?? site.portrait
 // Described in the language it is written in, at the URL it is written for.
 const jsonLd = {
@@ -53,17 +53,16 @@ const jsonLd = {
   description,
   datePublished: date.toISOString(),
   dateModified: (updated ?? date).toISOString(),
-  inLanguage: contentLang,
-  author: person(contentLang),
-  publisher: person(contentLang),
+  inLanguage: lang,
+  author: person(lang),
+  publisher: person(lang),
   ...(share && { image: (await shareImage(share)).url }),
-  mainEntityOfPage: absolute(postPath(contentLang, post.entry.id)),
+  mainEntityOfPage: absolute(postPath(post.entry.id)),
 }
 ---
 
 <Post
   lang={lang}
-  contentLang={contentLang}
   {title}
   {description}
   {date}

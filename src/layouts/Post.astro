@@ -8,17 +8,16 @@ import { below } from '@/theme/breakpoints'
 import type { ImageMetadata, MarkdownHeading } from 'astro'
 import type { Lang } from '@/i18n/locales'
 import { formatDate } from '@/i18n/format'
-import { languageName, useTranslations, pathFor } from '@/i18n/utils'
+import { useTranslations, pathFor } from '@/i18n/utils'
 import { postPath, type LocalizedPost } from '@/lib/content'
 
 interface Props {
   lang: Lang
-  contentLang: Lang
   title: string
   description: string
   date: Date
   image?: ImageMetadata
-  /** Locales the post is written in; see Base. */
+  /** Locales the post is written in, for hreflang and the language switch. */
   translations: readonly Lang[]
   /** Whether the post contains math and needs the KaTeX stylesheet. */
   math: boolean
@@ -33,7 +32,6 @@ interface Props {
 
 const {
   lang,
-  contentLang,
   title,
   description,
   date,
@@ -69,7 +67,7 @@ const items = outline.length >= 3 ? outline : []
         <aside class="hidden lg:block">
           <nav aria-label={t('blog.toc')} class="toc-aside">
             <p class="t-label">{t('blog.toc')}</p>
-            <ol class="mt-3 border-l border-line" lang={contentLang}>
+            <ol class="mt-3 border-l border-line">
               {items.map((heading) => (
                 <li>
                   <a
@@ -105,20 +103,12 @@ const items = outline.length >= 3 ? outline : []
             </p>
           )
         }
-        <h1 class="t-post mt-1" lang={contentLang}>{title}</h1>
-        <p class="t-lead mt-3" lang={contentLang}>{description}</p>
+        <h1 class="t-post mt-1">{title}</h1>
+        <p class="t-lead mt-3">{description}</p>
         <p class="t-meta mt-4">
           <time datetime={date.toISOString()}>{formatDate(date, lang, 'day')}</time>
           <span aria-hidden="true"> · </span>
           {minutes}{' '}{t('blog.reading')}
-          {
-            contentLang !== lang && (
-              <>
-                <span aria-hidden="true"> · </span>
-                {t('blog.inLanguage')} {languageName(contentLang)}
-              </>
-            )
-          }
         </p>
         {
           origin && (
@@ -132,7 +122,7 @@ const items = outline.length >= 3 ? outline : []
         }
       </header>
 
-      <div class="prose mt-10" lang={contentLang}>
+      <div class="prose mt-10">
         <slot />
       </div>
 
@@ -140,7 +130,7 @@ const items = outline.length >= 3 ? outline : []
         (previous || next) && (
           <nav class="mt-14 grid gap-4 border-t border-line pt-6 sm:grid-cols-2">
             {previous ? (
-              <a href={postPath(lang, previous.entry.id)} class="group block">
+              <a href={postPath(previous.entry.id)} class="group block">
                 <span class="t-label">← {t('blog.prev')}</span>
                 <span
                   class="t-title mt-1 block group-hover:underline"
@@ -153,7 +143,7 @@ const items = outline.length >= 3 ? outline : []
               <span />
             )}
             {next && (
-              <a href={postPath(lang, next.entry.id)} class="group block sm:text-right">
+              <a href={postPath(next.entry.id)} class="group block sm:text-right">
                 <span class="t-label">{t('blog.next')} →</span>
                 <span class="t-title mt-1 block group-hover:underline" lang={next.lang}>
                   {next.entry.data.title}

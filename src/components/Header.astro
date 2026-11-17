@@ -1,24 +1,28 @@
 ---
 import MobileNav from '@/components/MobileNav.svelte'
 import ThemeToggle from '@/components/ThemeToggle.astro'
-import type { Lang } from '@/i18n/locales'
-import {
-  languageName,
-  local,
-  pathFor,
-  switchLocalePath,
-  useTranslations,
-} from '@/i18n/utils'
-import { site } from '@/lib/site'
+import { locales, type Lang } from '@/i18n/locales'
+import { languageName, pathFor, switchLocalePath, useTranslations } from '@/i18n/utils'
+import { siteFor } from '@/lib/site'
 import { below } from '@/theme/breakpoints'
 
 interface Props {
   lang: Lang
+  /** Locales this page exists in; the others link to their homepage. */
+  translations: readonly Lang[]
 }
 
-const { lang } = Astro.props
+const { lang, translations } = Astro.props
+const site = siteFor(lang)
 const t = useTranslations(lang)
-const other = lang === 'vi' ? 'en' : 'vi'
+const others = locales
+  .filter((locale) => locale !== lang)
+  .map((locale) => ({
+    lang: locale,
+    href: translations.includes(locale)
+      ? switchLocalePath(Astro.url.pathname, locale)
+      : pathFor(locale),
+  }))
 const home = pathFor(lang)
 const onHome = Astro.url.pathname === home
 
@@ -44,7 +48,7 @@ const links = site.menu.map((area) => {
       class="site-name link t-label text-sm text-ink"
       aria-current={onHome ? 'page' : undefined}
     >
-      {local(site.name, lang)}
+      {site.name}
     </a>
 
     <nav class="hidden items-center gap-6 md:flex" aria-label={t('nav.menu')}>
@@ -58,15 +62,19 @@ const links = site.menu.map((area) => {
     </nav>
 
     <div class="flex items-center gap-1">
-      <a
-        href={switchLocalePath(Astro.url.pathname, other)}
-        hreflang={other}
-        lang={other}
-        class="btn btn-ghost btn-square text-sm"
-        aria-label={`${t('lang.label')}: ${languageName(other)}`}
-      >
-        {other.toUpperCase()}
-      </a>
+      {
+        others.map((other) => (
+          <a
+            href={other.href}
+            hreflang={other.lang}
+            lang={other.lang}
+            class="btn btn-ghost btn-square text-sm"
+            aria-label={`${t('lang.label')}: ${languageName(other.lang)}`}
+          >
+            {other.lang.toUpperCase()}
+          </a>
+        ))
+      }
       <ThemeToggle
         label={t('theme.label')}
         lightLabel={t('theme.light')}

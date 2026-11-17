@@ -1,32 +1,19 @@
 ---
 import type { ImageMetadata } from 'astro'
-import Photo from '@/components/Photo.astro'
-import { siteImage } from '@/lib/assets'
+import { Image } from 'astro:assets'
 import { from } from '@/theme/breakpoints'
 
 interface Props {
-  /** An imported image, or a path the CMS wrote, such as /media/photo.webp. */
-  src: ImageMetadata | string
+  src: ImageMetadata
   alt: string
   caption?: string
-  widths?: number[]
-  sizes?: string
-  priority?: boolean
 }
 
-/** A captioned image inside an article, built on Photo. */
-const {
-  src,
-  alt,
-  caption,
-  widths = [480, 900, 1440],
-  sizes = `${from('md')} 42rem, 100vw`,
-  priority = false,
-} = Astro.props
-const image = typeof src === 'string' ? siteImage(src, `Figure "${alt}"`) : src
+/** A captioned image inside an article, at the width of the text column. */
+const { src, alt, caption } = Astro.props
 ---
 
 <figure class="my-8">
-  <Photo src={image} {alt} {widths} {sizes} {priority} />
+  <Image {src} {alt} width={672} sizes={`${from('md')} 42rem, 100vw`} />
   {caption && <figcaption class="t-meta mt-2">{caption}</figcaption>}
 </figure>
