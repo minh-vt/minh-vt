@@ -1,15 +1,14 @@
-# Keeps the profile README in step with the site. Content edited in the CMS is a
-# commit to main; this rebuilds the site, splices the generated section into
-# README.md and commits it when it changed.
+# Keeps the profile README in step with the site. Every push to main (a CMS
+# edit or code that shapes the README) rebuilds the site, splices the generated
+# section into README.md and commits it when it changed. Runs on every push, not
+# a path list: the README depends on code as well as content, and only the
+# newest run commits (cancel-in-progress), so a run that lost the race to a
+# newer commit is replaced rather than leaving the README stale.
 name: README
 
 on:
   push:
     branches: [main]
-    paths:
-      - 'src/content/**'
-      - 'src/pages/README.md.ts'
-      - 'scripts/readme.ts'
   workflow_dispatch:
 
 permissions:

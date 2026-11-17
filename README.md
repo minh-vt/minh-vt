@@ -18,7 +18,7 @@ Vu Tung Minh, an IC design student at FPT University and co-founder of Science L
 
 **Contact**
 
-[vuminh.work@gmail.com](mailto:vuminh.work@gmail.com) · [GitHub](https://github.com/minh-vt) · [LinkedIn](https://linkedin.com/in/minh-vt)
+<vuminh.work@gmail.com> · [GitHub](https://github.com/minh-vt) · [LinkedIn](https://linkedin.com/in/minh-vt)
 
 The full timeline, press and credentials, each with its source: [minhvt.id.vn](https://minhvt.id.vn/en/)
 <!-- site:end -->

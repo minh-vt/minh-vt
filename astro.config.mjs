@@ -9,19 +9,6 @@ import rehypeKatex from 'rehype-katex'
 import { visit } from 'unist-util-visit'
 import { locales, defaultLocale, localeTags } from '@/i18n/locales'
 
-// Content schemas check that each download exists in Astro's public directory
-// (src/content.config.ts). The content config cannot import astro:config, so
-// the resolved directory is handed to it here, from the config itself.
-const publicDirForContent = {
-  name: 'public-dir-for-content',
-  hooks: {
-    'astro:config:setup': ({ config, updateConfig }) =>
-      updateConfig({
-        vite: { define: { __PUBLIC_DIR__: JSON.stringify(config.publicDir.href) } },
-      }),
-  },
-}
-
 // Flags pages that contain math, so only those load the KaTeX stylesheet.
 function remarkMathFlag() {
   return (tree, file) => {
@@ -52,7 +39,6 @@ export default defineConfig({
     UnoCSS({ injectReset: false }),
     svelte(),
     mdx(),
-    publicDirForContent,
     sitemap({
       filter: (page) => !new URL(page).pathname.startsWith('/admin/'),
       i18n: { defaultLocale, locales: localeTags },

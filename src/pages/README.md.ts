@@ -1,3 +1,5 @@
+import type { Paragraph, PhrasingContent, RootContent } from 'mdast'
+import { toMarkdown } from 'mdast-util-to-markdown'
 import type { Lang } from '@/i18n/locales'
 import { formatDate } from '@/i18n/format'
 import { pathFor, useTranslations } from '@/i18n/utils'
@@ -15,17 +17,41 @@ import { sections, siteFor } from '@/lib/site'
  * The generated part of README.md, the GitHub profile page of minh-vt. It is
  * built from the same content as the homepage, in English for GitHub's
  * readers; .github/workflows/readme.yml splices it into README.md between the
- * `site:start` and `site:end` markers whenever content changes.
+ * `site:start` and `site:end` markers whenever main changes. The text is a
+ * Markdown syntax tree serialized by mdast-util-to-markdown, which escapes
+ * whatever the content contains.
  */
 const lang: Lang = 'en'
 
-/** Text from content, safe inside Markdown link text and lists. */
-const md = (text: string) => text.replace(/([\\`*_[\]<>|])/g, '\\$1')
-const link = (label: string, url: string) => `[${md(label)}](${url})`
+const text = (value: string): PhrasingContent => ({ type: 'text', value })
+const link = (label: string, url: string): PhrasingContent => ({
+  type: 'link',
+  url,
+  children: [text(label)],
+})
+/** Items joined with a middle dot, as on the site. */
+const dotted = (items: PhrasingContent[]) =>
+  items.flatMap((item, index) => (index === 0 ? [item] : [text(' · '), item]))
+const paragraph = (children: PhrasingContent[]): Paragraph => ({
+  type: 'paragraph',
+  children,
+})
+const label = (value: string) => paragraph([{ type: 'strong', children: [text(value)] }])
+const list = (items: PhrasingContent[][]): RootContent => ({
+  type: 'list',
+  ordered: false,
+  spread: false,
+  children: items.map((children) => ({
+    type: 'listItem',
+    spread: false,
+    children: [paragraph(children)],
+  })),
+})
 
 export async function GET() {
   const t = useTranslations(lang)
   const site = siteFor(lang)
+  const home = absolute(pathFor(lang))
   const about = await getAbout(lang)
   const roles = await getCurrentRoles(lang)
   // As many press items as the homepage shows, chosen the same way.
@@ -33,47 +59,45 @@ export async function GET() {
   const press = pressOf(await getReferences(lang))
   const featured = limit ? pickFeatured(press, limit, (ref) => ref.featured) : []
 
-  const lines = [
-    `# ${md(site.name)}`,
-    '',
-    md(about.entry.data.lead),
-    '',
+  const blocks: RootContent[] = [
+    { type: 'heading', depth: 1, children: [text(site.name)] },
+    paragraph([text(about.entry.data.lead)]),
     ...(roles.length > 0
       ? [
-          `**${t('hero.now')}**`,
-          '',
-          ...roles.map(
-            (role) =>
-              `- ${md(role.role)}, ${role.url ? link(role.org, role.url) : md(role.org)}`,
+          label(t('hero.now')),
+          list(
+            roles.map((role) => [
+              text(`${role.role}, `),
+              role.url ? link(role.org, role.url) : text(role.org),
+            ]),
           ),
-          '',
         ]
       : []),
     ...(featured.length > 0
       ? [
-          `**${t('area.press.title')}**`,
-          '',
-          ...featured.map((ref) =>
-            [
-              `- ${link(ref.title, ref.url)}`,
-              md(ref.outlet.name),
-              ...(ref.date ? [formatDate(ref.date, lang, 'month')] : []),
-            ].join(' · '),
+          label(t('area.press.title')),
+          list(
+            featured.map((ref) =>
+              dotted([
+                link(ref.title, ref.url),
+                text(ref.outlet.name),
+                ...(ref.date ? [text(formatDate(ref.date, lang, 'month'))] : []),
+              ]),
+            ),
           ),
-          '',
         ]
       : []),
-    `**${t('section.contact')}**`,
-    '',
-    [
-      link(site.email, `mailto:${site.email}`),
-      ...site.links.map((item) => link(item.label, item.url)),
-    ].join(' · '),
-    '',
-    `${t('readme.site')} ${link(new URL(absolute(pathFor(lang))).host, absolute(pathFor(lang)))}`,
+    label(t('section.contact')),
+    paragraph(
+      dotted([
+        link(site.email, `mailto:${site.email}`),
+        ...site.links.map((item) => link(item.label, item.url)),
+      ]),
+    ),
+    paragraph([text(`${t('readme.site')} `), link(new URL(home).host, home)]),
   ]
 
-  return new Response(`${lines.join('\n')}\n`, {
+  return new Response(toMarkdown({ type: 'root', children: blocks }, { bullet: '-' }), {
     headers: { 'Content-Type': 'text/markdown; charset=utf-8' },
   })
 }
