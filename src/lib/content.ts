@@ -3,6 +3,7 @@ import { inLocale, type Translated } from '@/content/model'
 import { defaultLocale, isLang, type Lang } from '@/i18n/locales'
 import { parsePostId } from '@/i18n/routes'
 import { pathFor } from '@/i18n/utils'
+import { downloadLink } from '@/lib/downloads'
 
 export function entryLang(id: string): Lang {
   const lang = id.split('/')[0]
@@ -82,9 +83,13 @@ export function pickFeatured<T>(
 }
 
 export async function getCredentials(lang: Lang) {
-  return inLocaleRows(await getCollection('credentials'), lang).sort(
-    (a, b) => b.year.localeCompare(a.year) || a.title.localeCompare(b.title),
-  )
+  return inLocaleRows(await getCollection('credentials'), lang)
+    .map((row) => ({
+      ...row,
+      file: downloadLink(row.file, `credentials/${row.id} file`),
+      extra: row.extra && downloadLink(row.extra, `credentials/${row.id} extra`),
+    }))
+    .sort((a, b) => b.year.localeCompare(a.year) || a.title.localeCompare(b.title))
 }
 export type CredentialRow = Awaited<ReturnType<typeof getCredentials>>[number]
 

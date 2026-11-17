@@ -1,4 +1,3 @@
-import { existsSync } from 'node:fs'
 import { defineCollection, type SchemaContext } from 'astro:content'
 import { glob } from 'astro/loaders'
 import { adminCollections } from '@/admin/collections'
@@ -15,21 +14,17 @@ const base = (path: string) => `./${contentPath(path)}`
 /**
  * A collection's downloads must sit in the folder the CMS uploads them to
  * (`files.public_folder` in src/admin/collections.json, the one place it is
- * written) and exist in Astro's public directory.
+ * written). That the file exists is checked while pages render
+ * (src/lib/downloads.ts), where the content cache cannot skip it.
  */
 function downloadsOf(name: string) {
   const folder = adminCollections[name]?.files?.public_folder
   return () =>
-    z
-      .string()
-      .refine((path) => folder !== undefined && path.startsWith(`${folder}/`), {
-        error: folder
-          ? `Expected a file in ${folder}/`
-          : `${name} has no download folder (files in src/admin/collections.json)`,
-      })
-      .refine((path) => existsSync(new URL(`.${path}`, __PUBLIC_DIR__)), {
-        error: (issue) => `Missing file: ${String(issue.input)} is not in public/`,
-      })
+    z.string().refine((path) => folder !== undefined && path.startsWith(`${folder}/`), {
+      error: folder
+        ? `Expected a file in ${folder}/`
+        : `${name} has no download folder (files in src/admin/collections.json)`,
+    })
 }
 
 /** Astro's context plus where this collection's downloads live. */

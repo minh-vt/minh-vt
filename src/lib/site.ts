@@ -3,10 +3,13 @@ import { z } from 'astro/zod'
 import home from '@/content/home.json'
 import { fields, inLocale } from '@/content/model'
 import type { Lang } from '@/i18n/locales'
+import { downloadLink } from '@/lib/downloads'
 
 const entry = await getEntry('site', 'site')
 if (!entry) throw new Error('Missing src/content/site.json')
 const record = entry.data
+// The CV is the same file in every locale; check it once per build.
+if (record.source.cv) downloadLink(record.source.cv, 'site cv')
 
 /** Site details from the CMS in one locale; Astro has resolved every image. */
 export const siteFor = (lang: Lang) => inLocale(record, lang)
