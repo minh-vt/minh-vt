@@ -19,18 +19,28 @@ type FieldMeta = {
 }
 
 /**
- * What a schema needs from its loader: Astro's `image()`, which resolves the
- * stored path (relative or `@/` alias), checks the file exists and returns its
- * metadata. The admin passes a stand-in that only marks the field.
+ * What a schema needs from its loader, which knows where files live:
+ * - `image()`: Astro's, which resolves the stored path (relative or `@/`
+ *   alias), checks the file exists and returns its metadata;
+ * - `download()`: a path to a file served from public/, checked against the
+ *   folder the CMS uploads that collection's files to and against the disk.
+ * The admin passes stand-ins that only mark the fields.
  */
-export type Context<I extends z.ZodType = z.ZodType> = { image: () => I }
+export type Context<I extends z.ZodType = z.ZodType> = {
+  image: () => I
+  download: () => z.ZodType<string, string>
+}
 
 const text = z.string().trim().min(1)
 
 const show = <T extends z.ZodType>(schema: T, meta: FieldMeta) => schema.meta(meta)
 
-/** Text a translator fills in per locale; the source locale is required. */
-const translatable = <T extends z.ZodType>(schema: T) => show(schema, { i18n: true })
+/**
+ * Text a translator fills in per locale; the source locale is required. Only
+ * strings: an empty translation is dropped one level deep (see byLocale), which
+ * an object or a list would need to handle first.
+ */
+const translatable = <T extends z.ZodString>(schema: T) => show(schema, { i18n: true })
 
 /** Calendar dates only; null, booleans and bare numbers are rejected. */
 const date = z
@@ -52,15 +62,17 @@ const relations = (collection: string) =>
 /**
  * Files to download (a PDF, an original scan, the CV). They are served from
  * public/ as they are, so the stored path is the link. The CMS offers exactly
- * these types, and anything else fails the build here.
+ * these types; the loader's `download()` checks folder and existence.
  */
 export const downloadTypes = ['pdf', 'png', 'jpeg', 'jpg', 'webp'] as const
-const download = show(
-  text.regex(new RegExp(`\\.(${downloadTypes.join('|')})$`, 'i'), {
-    error: `Expected a file of type ${downloadTypes.join(', ')}`,
-  }),
-  { media: 'file' },
-)
+const fileType = new RegExp(`\\.(${downloadTypes.join('|')})$`, 'i')
+const file = ({ download }: Context) =>
+  show(
+    download().refine((path) => fileType.test(path), {
+      error: `Expected a file of type ${downloadTypes.join(', ')}`,
+    }),
+    { media: 'file' },
+  )
 
 /**
  * A homepage section names an area and how many of its items to show. Its
@@ -145,13 +157,13 @@ export const fields = {
     credentials: relations('credentials'),
     featured,
   }),
-  credentials: <I extends z.ZodType>({ image }: Context<I>) => ({
+  credentials: <I extends z.ZodType>(context: Context<I>) => ({
     year: text,
     title: translatable(text),
     issuer: translatable(text),
-    file: download,
-    preview: image(),
-    extra: download.optional(),
+    file: file(context),
+    preview: context.image(),
+    extra: file(context).optional(),
     kind: z.enum(['course', 'award', 'role']),
     featured,
   }),
@@ -170,16 +182,16 @@ export const fields = {
     kind: z.enum(['press', 'video', 'award', 'code', 'social']),
     featured,
   }),
-  site: <I extends z.ZodType>({ image }: Context<I>) => ({
+  site: <I extends z.ZodType>(context: Context<I>) => ({
     name: translatable(text),
     email: z.email(),
     location: translatable(text),
     /** Browser tab and home-screen icon; SVG or a square image. */
-    icon: image(),
-    portrait: image().optional(),
+    icon: context.image(),
+    portrait: context.image().optional(),
     /** Shown when a page is shared; the portrait otherwise. */
-    shareImage: image().optional(),
-    cv: download.optional(),
+    shareImage: context.image().optional(),
+    cv: file(context).optional(),
     links: z
       .array(z.object({ kind: z.enum(linkKinds), label: text, url: z.url() }))
       .default([]),
@@ -211,13 +223,27 @@ const withoutEmpty = (value: unknown) =>
     ? Object.fromEntries(Object.entries(value).filter(([, item]) => item !== ''))
     : value
 
+/** The fields marked `translatable()`, read the way the admin reads them. */
+function translatableKeys(source: z.ZodObject): string[] {
+  const { properties = {} } = z.toJSONSchema(source, { io: 'input', unrepresentable: 'any' })
+  return Object.entries(properties)
+    .filter(([, property]) => (property as FieldMeta).i18n)
+    .map(([key]) => key)
+}
+
 /**
  * Sveltia's single_file i18n stores one key per locale: `{ vi: {...}, en: {...} }`.
  * The source locale holds every field; another locale holds only the
  * translatable ones it has text for, and falls back to the source otherwise.
+ * Any other field under a translation (an `en.tier` typed by hand) fails the
+ * build instead of quietly overriding the source.
  */
 export function byLocale<S extends z.ZodObject>(source: S) {
-  const translation = z.preprocess(withoutEmpty, source.partial()).optional()
+  const keys = translatableKeys(source)
+  const translatableOnly = Object.fromEntries(keys.map((key) => [key, true])) as never
+  const translation = z
+    .preprocess(withoutEmpty, source.pick(translatableOnly).partial().strict())
+    .optional()
   const shape = Object.fromEntries(
     locales.map((lang) => [lang, lang === defaultLocale ? source : translation]),
   )

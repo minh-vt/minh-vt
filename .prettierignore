@@ -5,3 +5,4 @@ bun.lock
 src/content/
 .agents/
 .taste-skill/
+README.md

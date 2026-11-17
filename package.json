@@ -8,6 +8,7 @@
     "dev": "bunx --bun astro dev",
     "build": "bunx --bun astro build",
     "preview": "bunx --bun astro preview",
+    "readme": "bun scripts/readme.ts",
     "check": "bunx --bun astro check && bunx --bun svelte-check --tsconfig ./tsconfig.json && bunx --bun eslint .",
     "lint": "bunx --bun eslint .",
     "lint:fix": "bunx --bun eslint . --fix",

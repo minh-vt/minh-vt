@@ -1,6 +1,3 @@
-import { existsSync, readdirSync, readFileSync } from 'node:fs'
-import { fileURLToPath } from 'node:url'
-import { join } from 'node:path'
 import { defineConfig, fontProviders } from 'astro/config'
 import svelte from '@astrojs/svelte'
 import mdx from '@astrojs/mdx'
@@ -11,32 +8,17 @@ import remarkMath from 'remark-math'
 import rehypeKatex from 'rehype-katex'
 import { visit } from 'unist-util-visit'
 import { locales, defaultLocale, localeTags } from '@/i18n/locales'
-import { downloadTypes } from '@/content/model'
 
-// Downloads are served from public/ as they are, so nothing resolves them
-// while pages render. After the build, every link to a downloadable file must
-// point at a file in the output; a CV or PDF removed without editing its entry
-// fails here, wherever public/ is configured to be.
-const fileLinks = {
-  name: 'file-links',
+// Content schemas check that each download exists in Astro's public directory
+// (src/content.config.ts). The content config cannot import astro:config, so
+// the resolved directory is handed to it here, from the config itself.
+const publicDirForContent = {
+  name: 'public-dir-for-content',
   hooks: {
-    'astro:build:done': ({ dir }) => {
-      const root = fileURLToPath(dir)
-      const link = new RegExp(`href="(/[^"]+\\.(?:${downloadTypes.join('|')}))"`, 'gi')
-      const missing = new Set()
-      for (const page of readdirSync(root, { recursive: true })) {
-        if (!String(page).endsWith('.html')) continue
-        for (const [, href] of readFileSync(join(root, page), 'utf8').matchAll(link)) {
-          if (!existsSync(join(root, decodeURI(href))))
-            missing.add(`${href} (in ${page})`)
-        }
-      }
-      if (missing.size > 0) {
-        throw new Error(
-          `Links to files that are not in the build:\n${[...missing].join('\n')}`,
-        )
-      }
-    },
+    'astro:config:setup': ({ config, updateConfig }) =>
+      updateConfig({
+        vite: { define: { __PUBLIC_DIR__: JSON.stringify(config.publicDir.href) } },
+      }),
   },
 }
 
@@ -70,7 +52,7 @@ export default defineConfig({
     UnoCSS({ injectReset: false }),
     svelte(),
     mdx(),
-    fileLinks,
+    publicDirForContent,
     sitemap({
       filter: (page) => !new URL(page).pathname.startsWith('/admin/'),
       i18n: { defaultLocale, locales: localeTags },

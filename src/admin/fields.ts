@@ -196,8 +196,12 @@ export function translate(field: Field): Field {
   return { ...field, i18n: true }
 }
 
-/** In the admin, an image field is a path the CMS writes; Astro checks it at build. */
-const admin: Context = { image: () => z.string().meta({ media: 'image' }) }
+/** In the admin, file fields are paths the CMS writes; the build checks them. */
+const admin: Context = {
+  image: () => z.string().meta({ media: 'image' }),
+  // The CMS writes the path itself; folders come from collections.json.
+  download: () => z.string(),
+}
 
 /** Admin fields for one collection, plus an optional prose body. */
 export function contractFields(

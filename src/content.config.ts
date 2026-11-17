@@ -1,6 +1,8 @@
-import { defineCollection } from 'astro:content'
+import { existsSync } from 'node:fs'
+import { defineCollection, type SchemaContext } from 'astro:content'
 import { glob } from 'astro/loaders'
-import { byLocale, fields } from '@/content/model'
+import { adminCollections } from '@/admin/collections'
+import { byLocale, fields, type Context } from '@/content/model'
 import { contentPath } from '@/content/paths'
 import { routeLocale } from '@/i18n/locales'
 import { parsePostId } from '@/i18n/routes'
@@ -9,6 +11,34 @@ import { z } from 'astro/zod'
 /** Loaders and file layout only; the field contract lives in model.ts. */
 
 const base = (path: string) => `./${contentPath(path)}`
+
+/**
+ * A collection's downloads must sit in the folder the CMS uploads them to
+ * (`files.public_folder` in src/admin/collections.json, the one place it is
+ * written) and exist in Astro's public directory.
+ */
+function downloadsOf(name: string) {
+  const folder = adminCollections[name]?.files?.public_folder
+  return () =>
+    z
+      .string()
+      .refine((path) => folder !== undefined && path.startsWith(`${folder}/`), {
+        error: folder
+          ? `Expected a file in ${folder}/`
+          : `${name} has no download folder (files in src/admin/collections.json)`,
+      })
+      .refine((path) => existsSync(new URL(`.${path}`, __PUBLIC_DIR__)), {
+        error: (issue) => `Missing file: ${String(issue.input)} is not in public/`,
+      })
+}
+
+/** Astro's context plus where this collection's downloads live. */
+const contextOf =
+  (name: string) =>
+  (astro: SchemaContext): Context<ReturnType<SchemaContext['image']>> => ({
+    ...astro,
+    download: downloadsOf(name),
+  })
 
 /** One YAML file per record, every locale inside it (Sveltia single_file). */
 const translated = (name: keyof typeof fields) =>
@@ -33,7 +63,7 @@ export const collections = {
         return id
       },
     }),
-    schema: (context) => z.object(fields.posts(context)),
+    schema: (astro) => z.object(fields.posts(contextOf('posts')(astro))),
   }),
   roles: defineCollection({
     loader: translated('roles'),
@@ -41,15 +71,16 @@ export const collections = {
   }),
   entries: defineCollection({
     loader: translated('entries'),
-    schema: (context) => byLocale(z.object(fields.entries(context))),
+    schema: (astro) => byLocale(z.object(fields.entries(contextOf('entries')(astro)))),
   }),
   credentials: defineCollection({
     loader: translated('credentials'),
-    schema: (context) => byLocale(z.object(fields.credentials(context))),
+    schema: (astro) =>
+      byLocale(z.object(fields.credentials(contextOf('credentials')(astro)))),
   }),
   outlets: defineCollection({
     loader: translated('outlets'),
-    schema: (context) => byLocale(z.object(fields.outlets(context))),
+    schema: (astro) => byLocale(z.object(fields.outlets(contextOf('outlets')(astro)))),
   }),
   references: defineCollection({
     loader: translated('references'),
@@ -58,6 +89,6 @@ export const collections = {
   /** One file, src/content/site.json; its id is `site`. */
   site: defineCollection({
     loader: glob({ pattern: 'site.json', base: base('') }),
-    schema: (context) => byLocale(z.object(fields.site(context))),
+    schema: (astro) => byLocale(z.object(fields.site(contextOf('site')(astro)))),
   }),
 }
