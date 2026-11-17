@@ -1,7 +1,7 @@
 <!-- site:start: generated from the site content, edit it in the CMS -->
 # Vu Tung Minh
 
-Vu Tung Minh, an IC design student at FPT University and co-founder of Science Lab. Previously wrote embedded software at FPT Software and coached high-school robotics teams.
+Systems & Embedded Software Engineer (C++/Linux) focused on hardware performance, IC Design student at FPT University, and co-founder of Science Lab.
 
 **Now**
 
