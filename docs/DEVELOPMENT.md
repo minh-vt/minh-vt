@@ -286,7 +286,9 @@ Nothing is hidden for lack of a translation. The fallback policy is explicit:
 
 - **Structured content**: the default locale holds every field and is required. Another locale
   holds the translated fields it has text for; `inLocale()` (`model.ts`) falls back to the
-  default for the rest, and a blank translation counts as missing.
+  default for the rest, and a blank translation counts as missing. A translation may hold only
+  fields marked `translatable()`: a hand-typed `en.tier` fails the build instead of overriding
+  the source. `translatable()` takes strings only, because blanks are dropped one level deep.
 - **Posts**: the slug is the translation key. `posts/vi/foo.mdx` and `posts/en/foo.mdx` are the
   same piece; if only one exists, every locale's list shows it, marked with its language, and
   links to the one page it has.
@@ -340,9 +342,13 @@ Every image and file, including the site icon, is chosen in the CMS. The two kin
   the code knows the folder names.
 - **Files to download** (a credential PDF, an original scan, the CV) live in `public/` and the CMS
   writes their URL, such as `/certs/cs50-ai-2022.pdf`: served as they are, under their own name, so
-  a shared link survives a new upload. The schema checks the type (`downloadTypes` in `model.ts`,
-  also the CMS's `accept`), and after the build the `file-links` step in `astro.config.mjs` fails
-  when any page links to a file that is not in the output.
+  a shared link survives a new upload. A field reads it with `download()`, which the loader
+  (`src/content.config.ts`) builds like `image()`: the path must start with the folder the CMS
+  uploads that collection's files to (`files.public_folder` in `src/admin/collections.json`) and
+  the file must exist in Astro's public directory, handed to the content config by the
+  `public-dir-for-content` integration in `astro.config.mjs`. The model adds the type check
+  (`downloadTypes`, also the CMS's `accept`). A wrong folder, a missing file or a wrong type fails
+  while content loads, with the record and field named.
 
 Where uploads go is Sveltia configuration, in Sveltia's own terms: the global folder in
 `src/admin/settings.json`, and per collection `media_folder`/`public_folder` (images) and `files`
@@ -367,6 +373,19 @@ Sveltia resizes uploads to at most 2000px and converts them to WebP before commi
 largest original you have: astro:assets never upscales, so the source width caps how sharp the
 lightbox can be. Every image field is optional; a row without photos and an outlet without a logo
 (a monogram stands in) keep their layout.
+
+## The profile README
+
+This repository is `minh-vt/minh-vt`, so `README.md` is the GitHub profile. The part between
+`<!-- site:start … -->` and `<!-- site:end -->` is generated from the site content, in English:
+`src/pages/README.md.ts` builds it with the homepage's own accessors (name, `about.lead`, current
+roles, the press items the homepage features, contact links), and `bun run readme` splices
+`dist/README.md` into place after a build. Everything outside the markers is written by hand.
+
+`.github/workflows/readme.yml` runs on every push to `main` that touches `src/content/`, so a CMS
+edit updates the profile within minutes. It commits only when the section changed, as
+`github-actions[bot]` with `[skip ci]`: a `GITHUB_TOKEN` push starts no workflow, and Cloudflare
+Pages skips the build. Prettier ignores `README.md` so a local format cannot fight the generator.
 
 ## Deployment: Cloudflare Pages, no API token
 

@@ -1,0 +1,41 @@
+# Keeps the profile README in step with the site. Content edited in the CMS is a
+# commit to main; this rebuilds the site, splices the generated section into
+# README.md and commits it when it changed.
+name: README
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/content/**'
+      - 'src/pages/README.md.ts'
+      - 'scripts/readme.ts'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: readme
+  cancel-in-progress: true
+
+jobs:
+  readme:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: .bun-version
+      - run: bun install --frozen-lockfile
+      - run: bun run build
+      - run: bun run readme
+      # A push made with GITHUB_TOKEN starts no workflow, and [skip ci] tells
+      # Cloudflare Pages not to rebuild the site for a README-only commit.
+      - name: Commit README.md
+        run: |
+          git diff --quiet README.md && exit 0
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'Update README from the site content [skip ci]' README.md
+          git push
