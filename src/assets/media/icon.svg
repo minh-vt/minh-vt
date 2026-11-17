@@ -1,4 +1,16 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 32 32">
-  <rect width="32" height="32" rx="4" fill="#faf7f1"/>
-  <path d="M9 24V8l7 10 7-10v16" fill="none" stroke="#8f3a20" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="-14 -34 108 108">
+  <!-- The logo (logo.svg) filled, on a tile in the site's paper and ink.
+       Browsers that read the media query switch to the dark pair; anything
+       that rasterizes the file (the home-screen PNG) gets the light one. -->
+  <style>
+    .tile { fill: #f8f7f4 }
+    .mark { fill: #1a1511 }
+    @media (prefers-color-scheme: dark) {
+      .tile { fill: #11080e }
+      .mark { fill: #f6f0f3 }
+    }
+  </style>
+  <rect class="tile" x="-14" y="-34" width="108" height="108" rx="22"/>
+  <path class="mark" d="M0 40 20 0h17.5l-20 40Z"/>
+  <path class="mark" d="M22.5 40 42.5 0H60l20 40H62.5L51.25 17.5 40 40Z"/>
 </svg>

@@ -362,6 +362,13 @@ SVGs are rasterized when needed (`image.dangerouslyProcessSVG`): they only ever 
 repository. The icon is served as it is for the tab and as a 180px PNG for home screens, so give an
 SVG icon a `width`/`height` of at least 180.
 
+`src/assets/media/icon.svg` is the logo (`logo.svg`) filled on a rounded tile. A `<style>` inside
+it switches tile and mark to the dark pair under `prefers-color-scheme: dark`, so the tab icon
+follows the browser's theme (not the site's toggle: a favicon is its own document). Rasterizers
+ignore the media query, so the home-screen PNG is always the light pair, on its own tile. Its
+four colours are the paper and ink tokens in hex, the one place they are copied: an icon is a
+CMS asset and cannot read `tokens.css`.
+
 `robots.txt` is built from `site` (`src/pages/robots.txt.ts`), so the domain is written once; do
 not add one to `public/`.
 
