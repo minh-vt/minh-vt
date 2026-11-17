@@ -1,5 +1,8 @@
 import { defineConfig, presetIcons, presetWind4, transformerDirectives } from 'unocss'
 import type { Theme } from '@unocss/preset-wind4/theme'
+// UnoCSS loads this file outside Vite, where the @/ alias does not resolve.
+// eslint-disable-next-line no-restricted-imports
+import { breakpoints } from './src/theme/breakpoints'
 
 /**
  * Every colour and breakpoint resolves to a token declared in
@@ -21,11 +24,9 @@ const theme: Theme = {
     field: 'var(--field)',
     'field-ink': 'var(--field-ink)',
   },
-  breakpoint: {
-    sm: '34em',
-    md: '52em',
-    lg: '72em',
-  },
+  breakpoint: Object.fromEntries(
+    Object.entries(breakpoints).map(([name, em]) => [name, `${em}em`]),
+  ),
 }
 
 export default defineConfig({

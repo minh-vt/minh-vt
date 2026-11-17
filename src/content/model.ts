@@ -1,5 +1,5 @@
 import { z } from 'astro/zod'
-import { defaultLocale, locales } from '@/i18n/locales'
+import { defaultLocale, locales, type Lang } from '@/i18n/locales'
 
 /**
  * The content contract: what a field means, never how an editor shows it.
@@ -8,26 +8,39 @@ import { defaultLocale, locales } from '@/i18n/locales'
  */
 
 /** Field facts the editor must know because the data model owns them. */
-export type FieldMeta = {
+type FieldMeta = {
   /** Collection this id points at. */
   relation?: string
   multiple?: boolean
-  /** Referenced public file kind. */
-  media?: 'image' | 'file'
+  /** A file to download (images come from `image()`). */
+  media?: 'file'
+  /** Filled in per locale; every other field is stored once. */
+  i18n?: true
+}
+
+/**
+ * What a schema needs from its loader, which knows where files live:
+ * - `image()`: Astro's, which resolves the stored path (relative or `@/`
+ *   alias), checks the file exists and returns its metadata;
+ * - `download()`: a path to a file served from public/, checked against the
+ *   folder the CMS uploads that collection's files to and against the disk.
+ * The admin passes stand-ins that only mark the fields.
+ */
+export type Context<I extends z.ZodType = z.ZodType> = {
+  image: () => I
+  download: () => z.ZodType<string, string>
 }
 
 const text = z.string().trim().min(1)
 
 const show = <T extends z.ZodType>(schema: T, meta: FieldMeta) => schema.meta(meta)
 
-/** Structured text: the source locale is required, others may fall back. */
-const localized = () =>
-  z
-    .partialRecord(z.enum(locales), z.string().trim())
-    .refine((value) => Boolean(value[defaultLocale]), {
-      error: `Missing ${defaultLocale} text`,
-    })
-    .meta({ required: [defaultLocale] })
+/**
+ * Text a translator fills in per locale; the source locale is required. Only
+ * strings: an empty translation is dropped one level deep (see byLocale), which
+ * an object or a list would need to handle first.
+ */
+const translatable = <T extends z.ZodString>(schema: T) => show(schema, { i18n: true })
 
 /** Calendar dates only; null, booleans and bare numbers are rejected. */
 const date = z
@@ -46,7 +59,20 @@ const relations = (collection: string) =>
     { relation: collection, multiple: true },
   )
 
-const media = (kind: 'image' | 'file') => show(text, { media: kind })
+/**
+ * Files to download (a PDF, an original scan, the CV). They are served from
+ * public/ as they are, so the stored path is the link. The CMS offers exactly
+ * these types; the loader's `download()` checks folder and existence.
+ */
+export const downloadTypes = ['pdf', 'png', 'jpeg', 'jpg', 'webp'] as const
+const fileType = new RegExp(`\\.(${downloadTypes.join('|')})$`, 'i')
+const file = ({ download }: Context) =>
+  show(
+    download().refine((path) => fileType.test(path), {
+      error: `Expected a file of type ${downloadTypes.join(', ')}`,
+    }),
+    { media: 'file' },
+  )
 
 /**
  * A homepage section names an area and how many of its items to show. Its
@@ -72,86 +98,100 @@ export const linkKinds = [
 
 /**
  * The area pages, named by their URL slug in every locale (/timeline, /en/timeline).
- * A key here must match a route folder in src/pages/[...lang]/.
+ * src/pages/[...lang]/[area]/ builds one per key and must give each a body (a
+ * type error otherwise). Item pages below an area (blog/, certs/) live in a
+ * folder of the same name.
  */
 export const areas = ['timeline', 'press', 'blog', 'certs'] as const
 export type Area = (typeof areas)[number]
 
 export const entryTags = ['tech', 'education', 'competition', 'teaching'] as const
 
-export const schemas = {
-  about: z.object({
-    title: text,
+/**
+ * Every collection's fields. Collections with translatable fields are stored
+ * the way Sveltia's single_file i18n writes them; see `byLocale`.
+ */
+export const fields = {
+  /** `lead` is the homepage description; `updated` is when the profile last changed. */
+  about: () => ({
     lead: text,
     updated: date.optional(),
   }),
-  posts: z.object({
+  posts: <I extends z.ZodType>({ image }: Context<I>) => ({
     title: text,
     description: text,
     date,
+    /** Set when a published post is revised. */
+    updated: date.optional(),
     draft: z.boolean().default(false),
     tags: z.array(text).default([]),
     origin: z.object({ label: text, url: z.httpUrl() }).optional(),
     /** Posts sharing a series id are linked to each other in part order. */
     series: z.object({ id: text, part: z.int().min(1) }).optional(),
+    /** Shown when the post is shared; the site's share image otherwise. */
+    image: image().optional(),
     featured,
   }),
   /** What Minh does now and did before; the homepage lists the open ones. */
-  roles: z.object({
+  roles: () => ({
     order: z.int(),
-    role: localized(),
-    org: localized(),
+    role: translatable(text),
+    org: translatable(text),
     url: z.httpUrl().optional(),
     start: text,
     /** Empty while the role is current. */
     end: text.optional(),
   }),
   /** One timeline for everything: work, teaching, competitions, projects. */
-  entries: z.object({
+  entries: <I extends z.ZodType>({ image }: Context<I>) => ({
     order: z.int(),
     year: text,
-    title: localized(),
-    summary: localized(),
-    detail: localized().optional(),
+    title: translatable(text),
+    summary: translatable(text),
+    detail: translatable(text).optional(),
     tags: z.array(z.enum(entryTags)).default([]),
     tech: text.optional(),
     url: z.httpUrl().optional(),
-    photos: z.array(media('image')).default([]),
+    photos: z.array(image()).default([]),
     refs: relations('references'),
     credentials: relations('credentials'),
     featured,
   }),
-  credentials: z.object({
+  credentials: <I extends z.ZodType>(context: Context<I>) => ({
     year: text,
-    title: localized(),
-    issuer: localized(),
-    file: media('file'),
-    preview: media('image'),
-    extra: media('file').optional(),
+    title: translatable(text),
+    issuer: translatable(text),
+    file: file(context),
+    preview: context.image(),
+    extra: file(context).optional(),
     kind: z.enum(['course', 'award', 'role']),
     featured,
   }),
-  outlets: z.object({
-    name: localized(),
+  outlets: <I extends z.ZodType>({ image }: Context<I>) => ({
+    name: translatable(text),
     tier: z.int().min(1).max(3),
-    logo: media('image').optional(),
+    logo: image().optional(),
   }),
-  references: z.object({
+  references: () => ({
     url: z.httpUrl(),
     outlet: show(text, { relation: 'outlets' }),
     title: text,
     /** A short name under an entry, when the outlet alone would be ambiguous. */
-    label: localized().optional(),
+    label: translatable(text).optional(),
     date: date.optional(),
     kind: z.enum(['press', 'video', 'award', 'code', 'social']),
     featured,
   }),
-  site: z.object({
-    name: localized(),
+  site: <I extends z.ZodType>(context: Context<I>) => ({
+    name: translatable(text),
     email: z.email(),
-    location: localized(),
-    portrait: media('image').optional(),
-    cv: media('file').optional(),
+    location: translatable(text),
+    /** Browser tab and home-screen icon; SVG or a square image. */
+    icon: context.image(),
+    portrait: context.image().optional(),
+    /** Shown when a page is shared; the portrait otherwise. */
+    shareImage: context.image().optional(),
+    cv: file(context).optional(),
     links: z
       .array(z.object({ kind: z.enum(linkKinds), label: text, url: z.url() }))
       .default([]),
@@ -159,7 +199,7 @@ export const schemas = {
     menu: z.array(z.enum(areas)).default([...areas]),
   }),
   /** The homepage, top to bottom. Editors add, remove and reorder sections. */
-  home: z.object({
+  home: () => ({
     sections: z
       .array(
         z.discriminatedUnion('type', [
@@ -172,4 +212,54 @@ export const schemas = {
       )
       .default([]),
   }),
+} satisfies Record<string, (context: Context) => z.ZodRawShape>
+
+/** The fields of a translated record, merged for one locale. */
+export type Translated<T> = { source: T; translations: Partial<Record<Lang, Partial<T>>> }
+
+/** Sveltia writes a translation it was given no text for as an empty string. */
+const withoutEmpty = (value: unknown) =>
+  value && typeof value === 'object'
+    ? Object.fromEntries(Object.entries(value).filter(([, item]) => item !== ''))
+    : value
+
+/** The fields marked `translatable()`, read the way the admin reads them. */
+function translatableKeys(source: z.ZodObject): string[] {
+  const { properties = {} } = z.toJSONSchema(source, { io: 'input', unrepresentable: 'any' })
+  return Object.entries(properties)
+    .filter(([, property]) => (property as FieldMeta).i18n)
+    .map(([key]) => key)
+}
+
+/**
+ * Sveltia's single_file i18n stores one key per locale: `{ vi: {...}, en: {...} }`.
+ * The source locale holds every field; another locale holds only the
+ * translatable ones it has text for, and falls back to the source otherwise.
+ * Any other field under a translation (an `en.tier` typed by hand) fails the
+ * build instead of quietly overriding the source.
+ */
+export function byLocale<S extends z.ZodObject>(source: S) {
+  const keys = translatableKeys(source)
+  const translatableOnly = Object.fromEntries(keys.map((key) => [key, true])) as never
+  const translation = z
+    .preprocess(withoutEmpty, source.pick(translatableOnly).partial().strict())
+    .optional()
+  const shape = Object.fromEntries(
+    locales.map((lang) => [lang, lang === defaultLocale ? source : translation]),
+  )
+  return z.object(shape).transform(
+    (stored): Translated<z.output<S>> => ({
+      source: stored[defaultLocale] as z.output<S>,
+      // Without the source locale: Astro resolves each image path once, where
+      // it first finds it, so the source must be the only copy.
+      translations: Object.fromEntries(
+        Object.entries(stored).filter(([lang]) => lang !== defaultLocale),
+      ) as Partial<Record<Lang, Partial<z.output<S>>>>,
+    }),
+  )
+}
+
+/** One locale's view of a translated record. */
+export function inLocale<T>(record: Translated<T>, lang: Lang): T {
+  return { ...record.source, ...record.translations[lang] }
 }

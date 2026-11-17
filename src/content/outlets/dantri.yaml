@@ -1,5 +1,6 @@
-name:
-  vi: 'Dân Trí'
-  en: 'Dan Tri'
-tier: 1
-logo: /logos/dantri.png
+vi:
+  name: Dân Trí
+  tier: 1
+  logo: '@/assets/logos/dantri.webp'
+en:
+  name: Dan Tri

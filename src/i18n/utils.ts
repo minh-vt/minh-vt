@@ -2,16 +2,20 @@ import { getRelativeLocaleUrl } from 'astro:i18n'
 import { defaultLocale, isLang, type Lang } from '@/i18n/locales'
 import { strings, type UIKey } from '@/i18n/ui'
 
-/** Missing translations fall back to the required source locale. */
-export function local(value: Partial<Record<Lang, string>>, lang: Lang): string {
-  const text = value[lang] || value[defaultLocale]
-  if (!text) throw new Error(`Missing source translation: ${defaultLocale}`)
-  return text
-}
-
 export function useTranslations(lang: Lang) {
   return function t(key: UIKey): string {
     return strings[lang][key] ?? strings[defaultLocale][key]
+  }
+}
+
+/** The lightbox's control names, the same wherever photos open. */
+export function lightboxLabels(lang: Lang) {
+  const t = useTranslations(lang)
+  return {
+    zoom: t('photo.zoom'),
+    close: t('nav.close'),
+    previous: t('photo.previous'),
+    next: t('photo.next'),
   }
 }
 

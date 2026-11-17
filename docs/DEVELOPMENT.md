@@ -36,7 +36,8 @@ src/content/about/        prose, one file per locale
 src/content/posts/        prose, one file per locale
 src/content/entries/      structured, one file holds every locale
 src/content/home.json     homepage sections, edited in the CMS
-src/assets/media/         images uploaded through the CMS, resized at build
+src/assets/               uploaded images (photos in media/, logos/, certs/)
+public/                   uploaded files to download (PDF, CV), served as they are
 src/content/references/   structured, one file per link
 src/lib/content.ts        the only place that reads the collections
 src/i18n/                 UI strings, paths and date formatting
@@ -48,7 +49,7 @@ src/content/model.ts      the content contract: types, rules, relationships
 src/content.config.ts     loaders and file layout only
 src/admin/                everything the editor needs; nothing else imports it
 src/admin/labels.json     Vietnamese editor labels, hints and messages
-src/admin/settings.json   backend, media, output and slug settings
+src/admin/settings.json   backend, output, slug and upload settings
 src/admin/collections.json  collection shapes and which collection is a relation target
 src/admin/fields.ts       contract -> Sveltia fields, typed by @sveltia/cms
 src/admin/config.ts       assembles the CmsConfig
@@ -61,17 +62,22 @@ Two questions decide where something goes.
 
 1. **Is there a long body of prose?** Then it is an entry (`about`, `posts`) and each language
    gets its own file, because translating prose is real editing work.
-2. **Is it structured?** Then it is one file with every locale inside it: an `entries` file holds
-   `title: { vi, en }`. Adding a third language adds a key to the same map, never a schema field.
+2. **Is it structured?** Then it is one file with every locale inside it, in the shape Sveltia's
+   `single_file` i18n writes: `vi:` holds every field, `en:` only the translated ones. A field is
+   translated when `model.ts` wraps it in `translatable()`; adding a third language adds a top-level
+   key to each file, never a schema field.
 
-Two files are single documents rather than collections: `src/content/site.json` (name, email,
-portrait, CV and a free list of links) and `src/content/home.json` (the homepage). Both are edited in
+Two files are single documents: `src/content/site.json` (name, email, icon, portrait, CV and a free
+list of links) and `src/content/home.json` (the homepage). `site` is a one-file collection so its
+images go through `image()`; read it with `siteFor(lang)` from `src/lib/site.ts`. Both are edited in
 the CMS like everything else.
 
 The site has four areas, each with one page whose key is its English slug in every locale:
 `timeline`, `press`, `blog` and `certs` (`/timeline`, `/en/timeline` and so on). The list is the
-`areas` enum in `src/content/model.ts`, next to the other enums, and each key matches a route
-folder. The header menu is `site.menu` in the CMS: editors reorder areas or leave one out, and a
+`areas` enum in `src/content/model.ts`, next to the other enums. One route,
+`src/pages/[...lang]/[area]/index.astro`, builds every area page from a `Record<Area, …>` of
+bodies (`src/components/areas/`), so an area without a body, or a body without an area, is a type
+error. Item pages below an area (`blog/`, `certs/`) live in a folder named after it. The header menu is `site.menu` in the CMS: editors reorder areas or leave one out, and a
 menu item always leads to one page. An area's name and lead live in the UI strings
 (`area.<key>.title`, `area.<key>.lead`), shared by the menu, the homepage section and the page.
 
@@ -122,7 +128,8 @@ the CMS. Add a locale there, its UI strings in `src/content/strings/<locale>.jso
 in `src/i18n/ui.ts`; no route file is duplicated.
 
 The same optional rest parameter works one level down:
-`src/pages/[...lang]/blog/[...slug].astro` produces `/blog/<slug>/` and `/en/blog/<slug>/`.
+`src/pages/[...lang]/blog/[...slug].astro` produces `/blog/<slug>/` and `/en/blog/<slug>/`, each
+only for posts written in that locale.
 
 `Astro.params.lang` is undefined for the default locale, so every route starts with
 `const lang = routeLocale(Astro.params.lang)`. Unknown locales fail rather than being cast.
@@ -135,28 +142,34 @@ pattern with the loader.
 
 Formulas are LaTeX in MDX. `remark-math` and `rehype-katex` are attached once in `astro.config.mjs`
 through `markdown.processor`, so MDX inherits them; KaTeX renders at build time and the page ships
-no maths JavaScript. Inline `$...$`, block `$$...$$`. `Post.astro` loads KaTeX's stylesheet and
-the overflow handler, so pages without an article do not carry either.
+no maths JavaScript. Inline `$...$`, block `$$...$$`. A small remark plugin in the same config
+sets `math: true` on posts that contain a formula, and only those posts link KaTeX's stylesheet
+(imported with `?url`, so it is its own file). `Post.astro` also owns the overflow handler.
 
 ## Dates and assets
 
 Calendar dates are formatted by `src/i18n/format.ts` in UTC. A portfolio date is a day, not an
 instant; formatting in the build machine's timezone shifted some dates by one day.
 
-Every referenced public file — credential `file`/`preview`/`extra`, outlet `logo`, work `cover` —
-is checked for existence while the page renders. That runs on every build, unlike a schema check,
-which a warm content cache can skip. Paths escaping `public/` are refused.
+Every referenced file (credential `file`/`preview`/`extra`, outlet `logo`, entry `photos`, site
+`icon`/`portrait`/`cv`) is checked twice: the schema checks it points into its field's asset
+folder, and `src/lib/assets.ts` checks the file exists while the page renders. The second check
+runs on every build, unlike a schema check, which a warm content cache can skip.
 
 ## Motion
 
-Only the hero name has a GSAP entrance, and `Hero.astro` owns that script. It plays once per
-browser session, so returning to the homepage never makes the reader wait. Reading content never
-waits for a scroll animation; reduced motion skips the entrance and every transform.
+Only the hero name has an entrance: a CSS animation, one letter after another (`--duration-hero`,
+`--stagger`). An inline script in `Hero.astro` sets `data-intro` before first paint, once per
+browser session, so returning to the homepage never makes the reader wait. Reduced motion skips
+the entrance and every transform.
 
-Scroll behaviour comes from GSAP's `ScrollTrigger`, not hand-written listeners: the header hides
-while reading down and returns on the way up, the menu marks the homepage section in view, and the
-post contents mark the heading being read. The reading progress bar is a CSS scroll timeline, with
-`ScrollTrigger` as the fallback where `animation-timeline` is unsupported.
+Every scroll-linked behaviour is a toggle, so none of them loads an animation library. They use
+`onScroll()` from `src/lib/scroll.ts` (one `requestAnimationFrame` per frame) or an
+`IntersectionObserver`: the header hides while reading down and returns on the way up, the small
+name appears once the hero name has left, the dock appears a screen down, and the post contents
+mark the heading being read. The reading progress bar is a CSS scroll timeline, with `onScroll()`
+as the fallback where `animation-timeline` is unsupported (Firefox). Its CSS is written as
+longhands: the minifier folds `animation` plus `animation-timeline` into an invalid shorthand.
 
 The mobile menu and the mobile contents are melt `Dialog`s styled as bottom sheets: melt owns
 focus, Escape, outside clicks and the scroll lock. The sheet uses `--ease-drawer`.
@@ -187,12 +200,46 @@ Sheets (the mobile menu and the mobile contents) are one component, `Sheet.svelt
 `CredentialGrid`) render the same items on the homepage and on their area page, and every area page
 opens with `PageHeader.astro`. The back-to-top dock lives in `Base.astro` on every page; the post
 layout adds its contents button to it through the `dock` slot. Page
-titles get the site name appended once, in `Base.astro`. Scroll scripts import GSAP and
-`ScrollTrigger` from `src/lib/scroll.ts`, which registers the plugin once.
+titles get the site name appended once, in `Base.astro`. Lightbox control names come from
+`lightboxLabels()` in `src/i18n/utils.ts`.
 
-Islands hydrate only where they are used: the mobile menu with `client:media` below the desktop
-breakpoint, the contents sheet below `lg`, the copy button on idle. The theme toggle is a single
-island shared by both layouts.
+Svelte islands hydrate only where a component needs one: the mobile menu with `client:media`
+below the desktop breakpoint, the contents sheet below `lg`, the lightbox when visible. The theme
+toggle and the copy-email button are plain `<button>`s with a few lines of script
+(`ThemeToggle.astro`, `CopyEmail.astro`), so a page without a sheet or a lightbox loads no Svelte
+runtime. Both render disabled and enable themselves once their script runs.
+
+Links prefetch on hover or focus (`prefetch.prefetchAll` in `astro.config.mjs`).
+
+## Fonts
+
+Space Grotesk and IBM Plex Sans come from the Fonts API (`fonts` in `astro.config.mjs`, provider
+Fontsource): downloaded at build time, served from `/_astro/fonts/`, split by subset (latin,
+latin-ext, vietnamese) with `unicode-range`. `<Font>` in `Base.astro` inlines the `@font-face`
+rules and preloads the latin files. Each family gets a fallback whose metrics are adjusted to
+match, so swapping to the web font does not move the layout (CLS 0). `--font-display` and
+`--font-body` in `tokens.css` point at the variables the API defines (`--font-grotesk`,
+`--font-plex`).
+
+## Search and sharing
+
+`Base.astro` writes the canonical URL, `hreflang` alternates with `x-default`, Open Graph and the
+Twitter card for every page. Helpers live in `src/lib/seo.ts`.
+
+- Share image: a page's own `image`, else `site.shareImage`, else the portrait. It is re-encoded
+  to JPEG at most 1200px wide and never cropped; a wide image (about 1200×630) gets the large
+  card, a square one the small card. Posts take `image`, credential pages use their preview.
+- One URL per piece of writing: a post has a page only in the locale it is written in, and every
+  list, feed and neighbour link goes there (`postPath(id)`). A page declares `hreflang` only for
+  locales it exists in, the language switch sends the other locale to its homepage, and the
+  sitemap is right without a filter.
+- Structured data: `ProfilePage` with a `Person` on the homepage (`about.lead` is its description
+  and the meta description, `about.updated` its `dateModified`, `site.location` its
+  `homeLocation`, current roles its `affiliation`); `BlogPosting` on posts, with the same
+  `Person` as author; `EducationalOccupationalCredential` on credential pages; a
+  `BreadcrumbList` from `BackLink.astro` on every page below the homepage.
+- Feeds: `/rss.xml` and `/en/rss.xml` (`@astrojs/rss`), linked from every page's head.
+- The home-screen icon is the CMS icon (`site.icon`) rendered as a 180px PNG.
 
 Typography belongs to `src/styles/global.css`, not UnoCSS's typography preset. This prevents a
 second `.prose` rule from overriding the theme, font size and measure. Shiki's `css-variables`
@@ -215,8 +262,19 @@ instead of sitting in review:
 The alias is `@/*` to `src/*`, declared in `tsconfig.json`; Astro resolves it natively
 (https://docs.astro.build/en/guides/typescript/#import-aliases).
 
-`src/theme/browser-chrome.ts` is the single exemption from the colour rule: the `theme-color` meta
-tags are read before any CSS exists, so those two literals cannot be tokens.
+There is no `theme-color` meta tag. Most browsers ignore it (Firefox never supported it, Safari
+26 dropped it), and the ones that read it would need a colour copied out of `tokens.css`. The page's
+`color-scheme`, set by the theme, is what browsers draw their own controls from.
+
+Breakpoints live in `src/theme/breakpoints.ts`. UnoCSS builds `sm:`/`md:`/`lg:` from it,
+`global.css` uses them through `@screen`, and markup uses `from()`/`below()` for `client:media`
+and image `sizes`. No component writes an `em` media query by hand.
+
+The hero and footer name is `Monument.astro`: SVG text whose `textLength` makes each line exactly
+as wide as its box, and the SVG scales to the column. A name of any length fills the width and
+cannot overflow; `--text-monument-max` caps how large it gets. One line on wide screens, a line
+per word on phones. The entrance animation fades the letters (SVG `tspan`s take opacity, not
+transforms).
 
 Warnings, not errors, cover code that is getting hard to read: `max-depth`, `max-params`,
 `complexity`, `no-console`, and `max-lines` for scripts and components. `.astro` templates are
@@ -226,12 +284,14 @@ exempt from line count, because length there says little about comprehension.
 
 Nothing is hidden for lack of a translation. The fallback policy is explicit:
 
-- **Structured content**: the configured default locale is required and must contain nonblank
-  text. Other supported locales may be omitted or left blank; `local()` falls back to the default.
-  Empty maps and unknown locale keys fail validation. YAML key order has no effect.
+- **Structured content**: the default locale holds every field and is required. Another locale
+  holds the translated fields it has text for; `inLocale()` (`model.ts`) falls back to the
+  default for the rest, and a blank translation counts as missing. A translation may hold only
+  fields marked `translatable()`: a hand-typed `en.tier` fails the build instead of overriding
+  the source. `translatable()` takes strings only, because blanks are dropped one level deep.
 - **Posts**: the slug is the translation key. `posts/vi/foo.mdx` and `posts/en/foo.mdx` are the
-  same piece; if only one exists, every locale serves it, marked with its language, with `lang`
-  set on the article body and on its title.
+  same piece; if only one exists, every locale's list shows it, marked with its language, and
+  links to the one page it has.
 
 ## Adding content
 
@@ -260,29 +320,54 @@ Nothing is hidden for lack of a translation. The fallback policy is explicit:
 | `outlets`        | publishers       | every locale, plus `tier`, `logo` |
 | `references`     | outbound links   | one link                          |
 
-Post images go through `Figure.astro`, which uses `astro:assets` and `sharp` so local images are
-optimised at build time. Plain `<img>` is only for files that are already sized correctly, such as
-the committed WebP thumbnails.
+Post images: Markdown image syntax is optimised by Astro as it is. For a caption, `Figure.astro` is
+available in posts without an import and takes an imported image:
+`import photo from '@/assets/media/photo.webp'`, then `<Figure src={photo} alt="…" caption="…" />`.
 
-Credential originals live in `public/certs/`. Each entry's `preview` points at a static WebP;
-PDFs are linked, never embedded or prefetched. Thumbnails are committed assets, not a build
-step; upload or prepare a real preview image when adding a credential. Cloudflare needs no PDF
-renderer or thumbnail-generation script.
+Credential originals live in `public/certs/` and are served at the path content stores
+(`/certs/cs50-ai-2022.pdf`), under their own name, so a shared link survives a new upload. Their
+previews live in `src/assets/certs/`. PDFs are linked, never embedded, and their links opt out of
+prefetch. Previews are uploaded images, not a build step, so Cloudflare needs no PDF renderer.
 
-`CredentialCard.svelte` renders the credential index. On the homepage an entry with
+`CredentialCard.astro` renders the credential index. On the homepage an entry with
 `credentials: [nand2tetris-2022]` links straight to the file; an unknown id fails the build.
 
 ### Images and files
 
-Every image and file is chosen in the CMS. Images upload to `src/assets/media/` and content stores a
-site path such as `/media/photo.webp`; `siteImage()` in `src/lib/images.ts` maps that path to the
-file under `src/assets/` and fails the build when it is missing. Living in `src/` is what lets
-astro:assets resize and re-encode every image at build time. PDFs and other files stay in `public/`
-and are checked by `publicFile()`.
+Every image and file, including the site icon, is chosen in the CMS. The two kinds live apart:
 
-`Photo.astro` is the one image component: it renders astro:assets `<Image>` with `widths` and
-`sizes`, so the browser downloads the width the layout needs. `Figure.astro` adds a caption for
-articles. Timeline photos and credential previews go through `Lightbox.svelte`, a melt `Dialog`:
+- **Images** live in `src/assets/` and the CMS writes an alias path such as
+  `@/assets/logos/first.webp`. The schema reads it with Astro's `image()`, which resolves the
+  path, fails the build when the file is missing and hands components `ImageMetadata`. Nothing in
+  the code knows the folder names.
+- **Files to download** (a credential PDF, an original scan, the CV) live in `public/` and the CMS
+  writes their URL, such as `/certs/cs50-ai-2022.pdf`: served as they are, under their own name, so
+  a shared link survives a new upload. A field reads it with `download()`, which the loader
+  (`src/content.config.ts`) builds like `image()`: the path must start with the folder the CMS
+  uploads that collection's files to (`files.public_folder` in `src/admin/collections.json`). The
+  model adds the type check (`downloadTypes`, also the CMS's `accept`). A wrong folder or type
+  fails while content loads, with the record and field named.
+
+  That the file exists is checked while pages render, by `downloadLink()` in
+  `src/lib/downloads.ts` against `publicDir` from `astro:config/server`. It cannot live in the
+  schema: the content cache re-parses an entry only when its own file changes, so a PDF deleted
+  without editing its entry would pass. (The content config also cannot import `astro:config`.)
+
+Where uploads go is Sveltia configuration, in Sveltia's own terms: the global folder in
+`src/admin/settings.json`, and per collection `media_folder`/`public_folder` (images) and `files`
+(downloads) in `src/admin/collections.json`. Each of those folders is also an asset collection in
+the media picker. Moving a folder means editing that JSON and the stored paths, no code.
+
+SVGs are rasterized when needed (`image.dangerouslyProcessSVG`): they only ever come from this
+repository. The icon is served as it is for the tab and as a 180px PNG for home screens, so give an
+SVG icon a `width`/`height` of at least 180.
+
+`robots.txt` is built from `site` (`src/pages/robots.txt.ts`), so the domain is written once; do
+not add one to `public/`.
+
+Images are responsive by Astro's own rules (`image.layout: 'constrained'`): a component gives
+`<Image>` the widest it is laid out (`width`) and, in a grid, its `sizes`; Astro writes the 1x and
+2x renditions, capped at the source. Logos use `layout="fixed"`. Timeline photos and credential previews go through `Lightbox.svelte`, a melt `Dialog`:
 the thumbnail is a link to the large image (it still works without JavaScript), and opening it
 shows the photo at screen size with previous, next, arrow keys and Escape. The large rendition loads
 only when the lightbox opens.
@@ -291,6 +376,23 @@ Sveltia resizes uploads to at most 2000px and converts them to WebP before commi
 largest original you have: astro:assets never upscales, so the source width caps how sharp the
 lightbox can be. Every image field is optional; a row without photos and an outlet without a logo
 (a monogram stands in) keep their layout.
+
+## The profile README
+
+This repository is `minh-vt/minh-vt`, so `README.md` is the GitHub profile. The part between
+`<!-- site:start … -->` and `<!-- site:end -->` is generated from the site content, in English:
+`src/pages/README.md.ts` builds it with the homepage's own accessors (name, `about.lead`, current
+roles, the press items the homepage features, contact links) as a Markdown syntax tree,
+serialized by `mdast-util-to-markdown` so content is escaped correctly, and `bun run readme` splices
+`dist/README.md` into place after a build. Everything outside the markers is written by hand.
+
+`.github/workflows/readme.yml` runs on every push to `main`, so a CMS edit, or a code change that
+shapes the README, updates the profile within minutes. There is no path filter: the README depends
+on code as well as content, and with `cancel-in-progress` the newest run is the one that commits,
+so a run whose push lost the race to a newer commit is simply replaced. It commits only when the
+section changed, as
+`github-actions[bot]` with `[skip ci]`: a `GITHUB_TOKEN` push starts no workflow, and Cloudflare
+Pages skips the build. Prettier ignores `README.md` so a local format cannot fight the generator.
 
 ## Deployment: Cloudflare Pages, no API token
 
@@ -315,6 +417,12 @@ https://developers.cloudflare.com/pages/configuration/build-image/
 Because `check` runs inside the build command, a type error or a lint error fails the deploy
 instead of shipping.
 
+### CMS sign-in
+
+Sveltia's GitHub sign-in needs an OAuth server, and its default is Netlify's, which knows nothing
+about a Cloudflare site ("Not Found"). `backend.base_url` in `src/admin/settings.json` points at
+our own Sveltia CMS Authenticator worker instead, backed by a GitHub App installed on the repo.
+
 ### Custom domain
 
 The zone for `minhvt.id.vn` is already on Cloudflare, which is the one requirement for an apex
@@ -325,25 +433,28 @@ https://developers.cloudflare.com/pages/configuration/custom-domains/
 
 ## Before going live
 
-1. `site` in `astro.config.mjs`, and the `Sitemap:` line in `public/robots.txt`.
-2. `settings.backend.repo` in `src/content/cms.json` if the repository name changes.
+1. `site` in `astro.config.mjs`; canonical URLs, the sitemap and `robots.txt` follow it.
+2. `backend.repo` and `backend.base_url` (the OAuth worker) in `src/admin/settings.json` if the
+   repository or the auth worker changes.
 3. Run `bun run check` and `bun run build`, then inspect production output in a browser:
    both themes/locales, mobile menu, the copy-email button, previews and article math.
 
 ## CMS contract
 
 `src/content/model.ts` is the single source: field types, requiredness, defaults, enums,
-relationships and asset kinds. Each field carries the label key it uses, so editor text stays in
-`src/content/cms.json` and a missing label is a build error rather than a guessed name.
+relationships and asset kinds. Editor text (labels, hints) stays in `src/admin/labels.json`,
+keyed by field name, and a missing label is a build error rather than a guessed name.
 
 `src/content/model.ts` imports nothing from `src/admin/`: the contract describes data, never
 editor vocabulary. `src/admin/` reads the JSON Schema exported by Zod and adds Vietnamese labels,
 so the dependency only ever points from admin to contract.
 
 `src/admin/fields.ts` emits fields typed by the `@sveltia/cms` package rather than a hand-written
-field shape, and `src/admin/config.ts` assembles a `CmsConfig`. The CMS version is pinned once, in
-`package.json`; `astro.config.mjs` injects it into the `/admin/` script tag so the browser build and
-the types cannot drift. Unsupported shapes throw during the build instead of degrading to `any`.
+field shape, and `src/admin/config.ts` assembles a `CmsConfig`. `/admin/` bundles the editor from
+the installed `@sveltia/cms` package (`CMS.init()`), so the editor and its types are one version
+and nothing loads from a CDN. Unsupported shapes throw during the build instead of degrading to
+`any`. A collection with translatable fields gets Sveltia's `single_file` i18n, and those fields
+`i18n: true`; summaries refer to fields by name (`{{fields.title}}`).
 
 Relationships (`refs`, `credentials`, `outlet`, `credential`) become Sveltia Relation pickers, so
 editors choose an entry instead of typing its id. `output.omit_empty_optional_fields` keeps saved

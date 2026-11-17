@@ -1,5 +1,6 @@
-name:
-  vi: 'FIRST'
-  en: 'FIRST'
-tier: 1
-logo: /logos/first.webp
+vi:
+  name: FIRST
+  tier: 1
+  logo: '@/assets/logos/first.webp'
+en:
+  name: FIRST

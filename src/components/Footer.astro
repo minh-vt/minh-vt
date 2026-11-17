@@ -1,8 +1,9 @@
 ---
-import CopyEmail from '@/components/CopyEmail.svelte'
+import CopyEmail from '@/components/CopyEmail.astro'
 import LinkIcon from '@/components/LinkIcon.svelte'
-import { site } from '@/lib/site'
-import { local, useTranslations, pathFor } from '@/i18n/utils'
+import Monument from '@/components/Monument.astro'
+import { siteFor } from '@/lib/site'
+import { useTranslations, pathFor } from '@/i18n/utils'
 import type { Lang } from '@/i18n/locales'
 
 interface Props {
@@ -10,9 +11,10 @@ interface Props {
 }
 
 const { lang } = Astro.props
+const site = siteFor(lang)
 const t = useTranslations(lang)
 const year = new Date().getFullYear()
-const name = local(site.name, lang)
+const name = site.name
 ---
 
 <!-- Contact closes every page, so a finished post ends where the homepage does. -->
@@ -26,7 +28,6 @@ const name = local(site.name, lang)
 
     <div class="mt-6 flex flex-wrap items-center gap-x-6 gap-y-3">
       <CopyEmail
-        client:idle
         email={site.email}
         label={t('contact.copy')}
         copiedLabel={t('contact.copied')}
@@ -45,7 +46,7 @@ const name = local(site.name, lang)
         {
           site.cv && (
             <li>
-              <a href={site.cv} class="link text-sm">
+              <a href={site.cv} class="link text-sm" data-astro-prefetch="false">
                 <span class="i-ph-file-arrow-down" aria-hidden="true" />
                 {t('hero.cv')}
               </a>
@@ -61,7 +62,7 @@ const name = local(site.name, lang)
     </div>
   </div>
 
-  <p class="t-monument mt-14 select-none md:mt-20" aria-hidden="true">{name}</p>
+  <Monument name={name} {lang} class="mt-14 select-none md:mt-20" />
   <p class="u-wrap t-meta pt-4 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))]">
     {name} · {year}
   </p>

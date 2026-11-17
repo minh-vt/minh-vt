@@ -1,5 +1,6 @@
-name:
-  vi: 'Tỉnh đoàn'
-  en: 'Provincial Youth Union'
-tier: 2
-logo: '/logos/tinhdoan.png'
+vi:
+  name: Tỉnh đoàn
+  tier: 2
+  logo: '@/assets/logos/tinhdoan.webp'
+en:
+  name: Provincial Youth Union

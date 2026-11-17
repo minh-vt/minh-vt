@@ -1,8 +1,8 @@
-order: 30
-role:
-  vi: 'Trợ giảng'
-  en: 'Teaching assistant'
-org:
-  vi: 'STEAM for Vietnam'
-  en: 'STEAM for Vietnam'
-start: '2026'
+vi:
+  order: 30
+  role: Trợ giảng
+  org: STEAM for Vietnam
+  start: '2026'
+en:
+  role: Teaching assistant
+  org: STEAM for Vietnam

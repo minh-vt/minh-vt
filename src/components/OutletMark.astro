@@ -1,37 +1,33 @@
 ---
-import Photo from '@/components/Photo.astro'
-import type { Lang } from '@/i18n/locales'
-import { local } from '@/i18n/utils'
+import { Image } from 'astro:assets'
 import type { Reference } from '@/lib/content'
-import { siteImage } from '@/lib/images'
 
 interface Props {
   outlet: Reference['outlet']
-  lang: Lang
   size?: 'md' | 'lg'
 }
 
 /** An outlet's logo, or its initials when it has none. Decorative: the name sits beside it. */
-const { outlet, lang, size = 'md' } = Astro.props
+const { outlet, size = 'md' } = Astro.props
 const box = { md: 'size-4', lg: 'size-10' }[size]
 const pixels = { md: 16, lg: 40 }[size]
-const name = local(outlet.data.name, lang)
+const name = outlet.name
 const monogram = name
   .split(/\s+/)
   .filter((word) => word.length > 1)
   .slice(0, 2)
   .map((word) => word[0])
   .join('')
-const logo = outlet.data.logo && siteImage(outlet.data.logo, `outlets/${outlet.id} logo`)
+const logo = outlet.logo
 ---
 
 {
   logo ? (
-    <Photo
+    <Image
       src={logo}
       alt=""
-      widths={[pixels, pixels * 2]}
-      sizes={`${pixels}px`}
+      layout="fixed"
+      width={pixels}
       class={`${box} shrink-0 object-contain`}
     />
   ) : (

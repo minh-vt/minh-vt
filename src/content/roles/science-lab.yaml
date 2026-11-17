@@ -1,9 +1,9 @@
-order: 20
-role:
-  vi: 'Đồng sáng lập'
-  en: 'Co-founder'
-org:
-  vi: 'Science Lab'
-  en: 'Science Lab'
-url: 'https://sciencelab.io.vn'
-start: '2022'
+vi:
+  order: 20
+  role: Đồng sáng lập
+  org: Science Lab
+  url: https://sciencelab.io.vn
+  start: '2022'
+en:
+  role: Co-founder
+  org: Science Lab

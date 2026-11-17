@@ -1,8 +1,8 @@
-order: 10
-role:
-  vi: 'Sinh viên Thiết kế vi mạch'
-  en: 'IC design student'
-org:
-  vi: 'Đại học FPT'
-  en: 'FPT University'
-start: '2023'
+vi:
+  order: 10
+  role: Sinh viên Thiết kế vi mạch
+  org: Đại học FPT
+  start: '2023'
+en:
+  role: IC design student
+  org: FPT University

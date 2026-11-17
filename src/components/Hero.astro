@@ -1,10 +1,12 @@
 ---
+import { Image } from 'astro:assets'
 import LinkIcon from '@/components/LinkIcon.svelte'
-import Photo from '@/components/Photo.astro'
+import Monument from '@/components/Monument.astro'
 import type { Lang } from '@/i18n/locales'
-import { local, useTranslations } from '@/i18n/utils'
+import { useTranslations } from '@/i18n/utils'
 import type { RoleRow } from '@/lib/content'
-import { site } from '@/lib/site'
+import { siteFor } from '@/lib/site'
+import { from } from '@/theme/breakpoints'
 
 interface Props {
   lang: Lang
@@ -12,10 +14,9 @@ interface Props {
 }
 
 const { lang, roles } = Astro.props
+const site = siteFor(lang)
 const t = useTranslations(lang)
-const name = local(site.name, lang)
-// Animate letters, but keep each word intact when the name wraps on phones.
-const words = name.split(' ')
+const name = site.name
 const contacts = [
   { kind: 'email' as const, label: site.email, url: `mailto:${site.email}` },
   ...site.links,
@@ -28,21 +29,25 @@ const contacts = [
 -->
 <section class="pt-6 md:pt-10">
   <div class="overflow-x-clip" data-hero-name>
-    <h1 class="t-monument px-[var(--layout-gutter)]">
-      {
-        words.map((word) => (
-          <>
-            <span class="inline-block whitespace-nowrap" aria-hidden="true">
-              {[...word].map((char) => (
-                <span class="char">{char}</span>
-              ))}
-            </span>{' '}
-          </>
-        ))
-      }
-      <span class="sr-only">{name}</span>
-    </h1>
+    <Monument name={name} {lang} as="h1" class="px-[var(--layout-gutter)]" />
   </div>
+  <script is:inline>
+    // The name is the only entrance animation on the site, and it plays once
+    // per visit: returning to the homepage should never make the reader wait.
+    // Inline so the attribute lands before first paint; the motion itself is
+    // CSS, which also honours reduced motion.
+    {
+      let seen = false
+      try {
+        seen = sessionStorage.getItem('hero-seen') === '1'
+        sessionStorage.setItem('hero-seen', '1')
+      } catch {
+        // Storage blocked: play it, nothing else depends on the flag.
+      }
+      if (!seen)
+        document.querySelector('[data-hero-name]')?.setAttribute('data-intro', '')
+    }
+  </script>
 
   <div
     class:list={[
@@ -54,11 +59,11 @@ const contacts = [
   >
     {
       site.portrait && (
-        <Photo
+        <Image
           src={site.portrait}
           alt={name}
-          widths={[104, 208, 416, 624]}
-          sizes="(min-width: 52em) 13rem, (min-width: 34em) 9rem, 6.5rem"
+          width={208}
+          sizes={`${from('md')} 13rem, ${from('sm')} 9rem, 6.5rem`}
           class="aspect-square w-full border border-line bg-paper-raised object-cover"
           priority
         />
@@ -111,7 +116,7 @@ const contacts = [
       {
         site.cv && (
           <li>
-            <a href={site.cv} class="link text-sm">
+            <a href={site.cv} class="link text-sm" data-astro-prefetch="false">
               <span class="i-ph-file-arrow-down" aria-hidden="true" />
               {t('hero.cv')}
             </a>
@@ -121,28 +126,3 @@ const contacts = [
     </ul>
   </div>
 </section>
-
-<script>
-  import { gsap } from '@/lib/scroll'
-
-  // The name is the only entrance animation on the site, and it plays once per
-  // visit: returning to the homepage should never make the reader wait.
-  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-  let seen = false
-  try {
-    seen = sessionStorage.getItem('hero-seen') === '1'
-    sessionStorage.setItem('hero-seen', '1')
-  } catch {
-    // Storage blocked: play it, nothing else depends on the flag.
-  }
-  if (!reduced && !seen) {
-    const motion = getComputedStyle(document.documentElement)
-    gsap.from('.char', {
-      opacity: 0,
-      yPercent: 12,
-      duration: parseFloat(motion.getPropertyValue('--duration-hero')) / 1000,
-      ease: 'power3.out',
-      stagger: parseFloat(motion.getPropertyValue('--stagger')) / 1000,
-    })
-  }
-</script>

@@ -1,0 +1,39 @@
+---
+interface Props {
+  email: string
+  label: string
+  copiedLabel: string
+}
+
+const { email, label, copiedLabel } = Astro.props
+---
+
+<!-- Disabled until the script runs; the mailto link beside it works without JS. -->
+<button type="button" class="btn" data-copy={email} data-copied={copiedLabel} disabled>
+  <span class="i-ph-copy" aria-hidden="true"></span>
+  <span aria-live="polite">{label}</span>
+</button>
+
+<script>
+  for (const button of document.querySelectorAll<HTMLButtonElement>('[data-copy]')) {
+    const [icon, text] = button.children
+    const label = text.textContent
+    let timer: ReturnType<typeof setTimeout> | undefined
+    const show = (copied: boolean) => {
+      icon.className = copied ? 'i-ph-check' : 'i-ph-copy'
+      text.textContent = copied ? (button.dataset.copied ?? label) : label
+    }
+    button.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(button.dataset.copy ?? '')
+      } catch {
+        // Clipboard refused: the mailto link beside this button still works.
+        return
+      }
+      show(true)
+      clearTimeout(timer)
+      timer = setTimeout(() => show(false), 1800)
+    })
+    button.disabled = false
+  }
+</script>

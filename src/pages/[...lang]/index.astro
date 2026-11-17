@@ -8,7 +8,6 @@ import EntryList from '@/components/EntryList.astro'
 import PostList from '@/components/PostList.astro'
 import PressList from '@/components/PressList.astro'
 import { routeLocale } from '@/i18n/locales'
-import { local, pathFor, useTranslations } from '@/i18n/utils'
 import { localeParams } from '@/i18n/routes'
 import {
   getAbout,
@@ -20,17 +19,18 @@ import {
   pickFeatured,
   pressOf,
 } from '@/lib/content'
-import { sections, site } from '@/lib/site'
+import { sections, siteFor } from '@/lib/site'
+import { absolute, person } from '@/lib/seo'
 
 export function getStaticPaths() {
   return localeParams()
 }
 
 const lang = routeLocale(Astro.params.lang)
-const t = useTranslations(lang)
+const site = siteFor(lang)
 
 // Loaded once and shared, so every section resolves the same objects.
-const references = await getReferences()
+const references = await getReferences(lang)
 const credentials = await getCredentials(lang)
 const entries = await getEntries(lang, references, credentials)
 const press = pressOf(references)
@@ -39,21 +39,29 @@ const roles = await getCurrentRoles(lang)
 const about = await getAbout(lang)
 const { Content: AboutText } = await render(about.entry)
 
+const { lead, updated } = about.entry.data
 const jsonLd = {
-  '@context': 'https://schema.org',
-  '@type': 'Person',
-  name: local(site.name, lang),
-  url: Astro.site ? new URL(pathFor(lang), Astro.site).href : undefined,
-  email: `mailto:${site.email}`,
-  ...(site.portrait &&
-    Astro.site && { image: new URL(site.portrait.src, Astro.site).href }),
-  jobTitle: roles.map((role) => `${role.role}, ${role.org}`),
-  sameAs: site.links.map((link) => link.url),
+  '@type': 'ProfilePage',
+  ...(updated && { dateModified: updated.toISOString() }),
+  mainEntity: {
+    ...person(lang),
+    description: lead,
+    email: `mailto:${site.email}`,
+    ...(site.portrait && { image: absolute(site.portrait.src) }),
+    homeLocation: { '@type': 'Place', name: site.location },
+    jobTitle: roles.map((role) => role.role),
+    affiliation: roles.map((role) => ({
+      '@type': 'Organization',
+      name: role.org,
+      ...(role.url && { url: role.url }),
+    })),
+    sameAs: site.links.map((link) => link.url),
+  },
 }
 ---
 
 <!-- The homepage is a hub: a few featured items per area, each area its own page. -->
-<Base lang={lang} description={t('meta.description')} jsonLd={jsonLd}>
+<Base lang={lang} description={lead} jsonLd={jsonLd}>
   <Hero {lang} {roles} />
   {
     sections.map((section) => {
@@ -67,7 +75,7 @@ const jsonLd = {
             </HomeSection>
           )
         case 'press': {
-          const items = pickFeatured(press, section.limit, (ref) => ref.data.featured)
+          const items = pickFeatured(press, section.limit, (ref) => ref.featured)
           return (
             <HomeSection
               {lang}

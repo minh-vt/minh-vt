@@ -1,12 +1,15 @@
-order: 130
-year: '2022'
-title:
-  vi: 'Một máy tính dựng từ cổng NAND'
-  en: 'A computer built from NAND gates'
-summary:
-  vi: 'Từ một cổng NAND, mình dựng CPU bằng HDL, rồi viết assembler, máy ảo, compiler và thư viện hệ điều hành cho chính chiếc máy đó. Khoá Nand2Tetris phần I và II.'
-  en: 'Starting from one NAND gate, I built the CPU in HDL, then wrote the assembler, virtual machine, compiler and operating system library for that machine. The Nand2Tetris course, parts I and II.'
-tags: [tech]
-tech: 'HDL · Assembly · Python'
-refs: [github-nand2tetris]
-credentials: [nand2tetris-2022]
+vi:
+  order: 130
+  year: '2022'
+  title: Một máy tính dựng từ cổng NAND
+  summary: Từ một cổng NAND, mình dựng CPU bằng HDL, rồi viết assembler, máy ảo, compiler và thư viện hệ điều hành cho chính chiếc máy đó. Khoá Nand2Tetris phần I và II.
+  tags:
+  - tech
+  tech: HDL · Assembly · Python
+  refs:
+  - github-nand2tetris
+  credentials:
+  - nand2tetris-2022
+en:
+  title: A computer built from NAND gates
+  summary: Starting from one NAND gate, I built the CPU in HDL, then wrote the assembler, virtual machine, compiler and operating system library for that machine. The Nand2Tetris course, parts I and II.

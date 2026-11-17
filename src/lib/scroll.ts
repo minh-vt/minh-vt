@@ -1,10 +1,22 @@
-import { gsap } from 'gsap'
-import { ScrollTrigger } from 'gsap/ScrollTrigger'
-
-// Registered once; every page script imports from here.
-gsap.registerPlugin(ScrollTrigger)
-
-export { gsap, ScrollTrigger }
+/**
+ * Runs `update` now and then at most once per frame while the page scrolls or
+ * resizes. Every scroll-linked behaviour on the site is a simple toggle, so the
+ * browser's own events are enough; no animation library is loaded for them.
+ */
+export function onScroll(update: () => void) {
+  let queued = false
+  const schedule = () => {
+    if (queued) return
+    queued = true
+    requestAnimationFrame(() => {
+      queued = false
+      update()
+    })
+  }
+  window.addEventListener('scroll', schedule, { passive: true })
+  window.addEventListener('resize', schedule, { passive: true })
+  update()
+}
 
 /** Marks one link as the current location and clears the rest. */
 export function markCurrent(

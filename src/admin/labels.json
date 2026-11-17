@@ -2,6 +2,8 @@
   "labels": {
     "title": "Tiêu đề",
     "lead": "Một câu giới thiệu",
+    "shareImage": "Ảnh khi chia sẻ link",
+    "image": "Ảnh khi chia sẻ",
     "updated": "Cập nhật",
     "credential": "Chứng chỉ nổi bật",
     "body": "Nội dung",
@@ -38,6 +40,7 @@
     "org": "Tổ chức",
     "start": "Bắt đầu",
     "end": "Kết thúc",
+    "icon": "Icon",
     "portrait": "Ảnh chân dung",
     "cv": "CV (PDF)",
     "links": "Liên kết",
@@ -63,7 +66,12 @@
     "series": "Các bài cùng mã series được nối với nhau theo số phần.",
     "featured": "Hiện trên trang chủ. Nếu không mục nào được đánh dấu, trang chủ lấy các mục đầu tiên.",
     "limit": "Số mục trang chủ hiện. Nút \"Xem tất cả\" chỉ xuất hiện khi còn mục chưa hiện.",
-    "menu": "Thứ tự các mục trên menu. Bỏ một mục chỉ ẩn nó khỏi menu, trang vẫn tồn tại."
+    "lead": "Hiện dưới link trên Google và khi chia sẻ trang chủ.",
+    "shareImage": "Ảnh ngang khoảng 1200×630 hiện khi chia sẻ link lên Facebook, LinkedIn, Zalo. Để trống thì dùng ảnh chân dung.",
+    "image": "Ảnh ngang khoảng 1200×630 khi chia sẻ bài này. Để trống thì dùng ảnh chia sẻ chung của site.",
+    "updated": "Ngày sửa nội dung gần nhất.",
+    "menu": "Thứ tự các mục trên menu. Bỏ một mục chỉ ẩn nó khỏi menu, trang vẫn tồn tại.",
+    "icon": "Icon trên tab trình duyệt và màn hình chính điện thoại. Nên dùng SVG hoặc ảnh vuông từ 180px."
   },
   "widgets": {
     "description": "text",
@@ -101,5 +109,10 @@
     "timeline": "Dòng thời gian",
     "blog": "Bài viết",
     "certs": "Chứng chỉ"
-  }
+  },
+  "page": {
+    "title": "Nội dung",
+    "noscript": "Bật JavaScript để dùng trình soạn thảo."
+  },
+  "files": "file tải về"
 }

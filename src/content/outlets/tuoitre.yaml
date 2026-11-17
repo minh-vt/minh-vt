@@ -1,5 +1,6 @@
-name:
-  vi: 'Tuổi Trẻ'
-  en: 'Tuoi Tre'
-tier: 1
-logo: /logos/tuoitre.png
+vi:
+  name: Tuổi Trẻ
+  tier: 1
+  logo: '@/assets/logos/tuoitre.webp'
+en:
+  name: Tuoi Tre

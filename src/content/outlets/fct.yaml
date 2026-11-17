@@ -1,5 +1,6 @@
-name:
-  vi: 'FCT Club'
-  en: 'FCT Club'
-tier: 3
-logo: /logos/fct.png
+vi:
+  name: FCT Club
+  tier: 3
+  logo: '@/assets/logos/fct.webp'
+en:
+  name: FCT Club

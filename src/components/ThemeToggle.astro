@@ -1,0 +1,49 @@
+---
+interface Props {
+  label: string
+  lightLabel: string
+  darkLabel: string
+}
+
+const { label, lightLabel, darkLabel } = Astro.props
+---
+
+<!--
+  A plain toggle button: the theme is one attribute on <html>, set before paint
+  by Base.astro. Disabled until the script below runs.
+-->
+<button
+  type="button"
+  class="theme-toggle btn btn-ghost btn-square"
+  aria-label={label}
+  aria-pressed="false"
+  data-light={lightLabel}
+  data-dark={darkLabel}
+  disabled
+>
+  <span class="theme-icon-light i-ph-moon" aria-hidden="true"></span>
+  <span class="theme-icon-dark i-ph-sun" aria-hidden="true"></span>
+</button>
+
+<script>
+  const root = document.documentElement
+  for (const button of document.querySelectorAll<HTMLButtonElement>('.theme-toggle')) {
+    const sync = () => {
+      const dark = root.dataset.theme === 'dark'
+      button.setAttribute('aria-pressed', String(dark))
+      button.title = (dark ? button.dataset.light : button.dataset.dark) ?? ''
+    }
+    button.addEventListener('click', () => {
+      const next = root.dataset.theme === 'dark' ? 'light' : 'dark'
+      root.dataset.theme = next
+      try {
+        localStorage.setItem('theme', next)
+      } catch {
+        // Private mode: the choice simply does not persist.
+      }
+      sync()
+    })
+    sync()
+    button.disabled = false
+  }
+</script>

@@ -1,5 +1,4 @@
 {
-  "meta.description": "Vu Tung Minh, an IC design student at FPT University and co-founder of Science Lab. Previously wrote embedded software at FPT Software and coached high-school robotics teams.",
   "nav.menu": "Menu",
   "nav.close": "Close",
   "nav.skip": "Skip to content",
@@ -52,5 +51,6 @@
   "lang.name": "English",
   "photo.zoom": "Enlarge photo",
   "photo.previous": "Previous photo",
-  "photo.next": "Next photo"
+  "photo.next": "Next photo",
+  "readme.site": "The full timeline, press and credentials, each with its source:"
 }

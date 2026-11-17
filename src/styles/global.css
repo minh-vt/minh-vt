@@ -75,30 +75,44 @@ img {
 }
 
 /* Type roles. Each maps to a token, never to a literal value. */
-.t-monument {
-  font-family: var(--font-display);
-  font-size: var(--text-monument);
-  font-weight: 700;
-  line-height: var(--leading-monument);
-  letter-spacing: var(--tracking-monument);
-  font-kerning: normal;
-  text-transform: uppercase;
+/* The name, drawn by Monument.astro. Font size is in SVG units (the font is
+   100 units tall); the token caps how large it gets. */
+.monument {
   text-align: center;
-  white-space: nowrap;
 }
 
-@media (min-width: 52em) {
+.monument svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin-inline: auto;
+  overflow: visible;
+  fill: currentColor;
+  font-family: var(--font-display);
+  font-size: 100px;
+  font-weight: 700;
+  letter-spacing: var(--tracking-monument);
+  font-kerning: normal;
+}
+
+@screen md {
   .t-hero-role {
     font-size: var(--text-lg);
   }
 }
 
-@media (max-width: 33.99em) {
-  .t-monument {
-    font-size: clamp(3rem, 23vw, 8rem);
-    line-height: 0.86;
-    white-space: normal;
-    text-wrap: balance;
+/* One line on wide screens, a line per word on phones. */
+.monument .monument-narrow {
+  display: none;
+}
+
+@screen lt-sm {
+  .monument .monument-wide {
+    display: none;
+  }
+
+  .monument .monument-narrow {
+    display: block;
   }
 }
 
@@ -406,23 +420,26 @@ section[id],
   border-bottom: 1px solid var(--line);
 }
 
-/* Inline characters need a transformable box for the hero entrance. */
-.char {
-  display: inline-block;
+/* Hero entrance: letters fade in one after another. Hero.astro sets
+   data-intro once per visit, before first paint. Letters are SVG tspans, which
+   take opacity but not transforms. */
+@media (prefers-reduced-motion: no-preference) {
+  [data-intro] .char {
+    animation: char-in var(--duration-hero) var(--ease-out) both;
+    animation-delay: calc(var(--i) * var(--stagger));
+  }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  html {
-    scroll-behavior: auto;
+@keyframes char-in {
+  from {
+    opacity: 0;
   }
+}
 
-  .btn {
-    transition: none;
-  }
-
-  .btn:active:not(:focus-visible) {
-    transform: none;
-  }
+/* The theme button shows the theme it switches to. */
+[data-theme='dark'] .theme-icon-light,
+:root:not([data-theme='dark']) .theme-icon-dark {
+  display: none;
 }
 
 /* Translucent chrome: content stays visible underneath the header. */
@@ -467,16 +484,23 @@ section[id],
   color: var(--ink);
 }
 
-/* Bottom sheet built on the native dialog that melt opens with showModal(). */
-.sheet {
+/* Dialogs: melt opens the native <dialog> with showModal(), sets data-open a
+   tick later and removes it before close(), waiting for transitionend. So each
+   dialog styles its closed state under :not([data-open]) and animates both ways. */
+.sheet,
+.lightbox {
   position: fixed;
-  inset: auto 0 0;
   width: 100%;
   max-width: 100%;
-  max-height: 85dvh;
   margin: 0;
-  overflow-y: auto;
   border: 0;
+}
+
+/* Bottom sheet: the menu and the contents on phones. */
+.sheet {
+  inset: auto 0 0;
+  max-height: 85dvh;
+  overflow-y: auto;
   border-top: 1px solid var(--line);
   padding: 0.75rem var(--layout-gutter) calc(1.25rem + env(safe-area-inset-bottom, 0px));
   background-color: var(--paper);
@@ -484,8 +508,6 @@ section[id],
   transition: transform var(--duration-sheet) var(--ease-drawer);
 }
 
-/* melt sets data-open a tick after showModal() and removes it before close(),
-   waiting for transitionend, so the sheet slides both ways. */
 .sheet:not([data-open]) {
   transform: translateY(100%);
 }
@@ -501,14 +523,6 @@ section[id],
   background-color: color-mix(in oklch, var(--ink) 40%, transparent);
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .site-header,
-  .site-header .site-name,
-  .sheet {
-    transition: none;
-  }
-}
-
 /* Reading: progress bar, contents and the thumb-zone dock. */
 .read-progress {
   position: fixed;
@@ -521,8 +535,12 @@ section[id],
 }
 
 @supports (animation-timeline: scroll()) {
+  /* Longhands on purpose: the minifier folds a shorthand plus
+     animation-timeline into one invalid shorthand. */
   .read-progress {
-    animation: read-progress linear both;
+    animation-name: read-progress;
+    animation-timing-function: linear;
+    animation-fill-mode: both;
     animation-timeline: scroll(root);
   }
 
@@ -575,25 +593,13 @@ section[id],
   pointer-events: auto;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .dock {
-    transition: opacity var(--duration-ui) ease;
-    transform: none;
-  }
-}
-
 /* Lightbox: the photo at full size over a dark field. It is a modal, so it
    grows from the centre; it fades and settles in, and leaves faster. */
 .lightbox {
-  position: fixed;
   inset: 0;
-  width: 100%;
   height: 100dvh;
-  max-width: 100%;
   max-height: 100dvh;
-  margin: 0;
   padding: 0 0 env(safe-area-inset-bottom, 0px);
-  border: 0;
   background-color: var(--field);
   color: var(--field-ink);
   transition: opacity var(--duration-ui) var(--ease-out);
@@ -630,12 +636,27 @@ section[id],
   cursor: zoom-in;
 }
 
+/* Reduced motion: state changes still happen, they just do not travel. */
 @media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .btn,
+  .site-header,
+  .site-header .site-name,
+  .sheet,
   .lightbox-image {
     transition: none;
   }
 
+  .btn:active:not(:focus-visible),
   .lightbox:not([data-open]) .lightbox-image {
+    transform: none;
+  }
+
+  .dock {
+    transition: opacity var(--duration-ui) ease;
     transform: none;
   }
 }

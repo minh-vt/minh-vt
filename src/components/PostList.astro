@@ -21,7 +21,8 @@ const t = useTranslations(lang)
       {posts.map(({ entry, lang: postLang }) => (
         <li class="border-b border-line">
           <a
-            href={postPath(lang, entry.id)}
+            href={postPath(entry.id)}
+            hreflang={postLang === lang ? undefined : postLang}
             class="group grid gap-x-8 gap-y-1 py-5 md:grid-cols-[8rem_1fr]"
           >
             <time class="t-year pt-1" datetime={entry.data.date.toISOString()}>

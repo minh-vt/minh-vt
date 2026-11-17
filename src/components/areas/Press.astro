@@ -1,0 +1,15 @@
+---
+import PressList from '@/components/PressList.astro'
+import type { Lang } from '@/i18n/locales'
+import { getCredentials, getEntries, getReferences, pressOf } from '@/lib/content'
+
+interface Props {
+  lang: Lang
+}
+
+const { lang } = Astro.props
+const references = await getReferences(lang)
+const entries = await getEntries(lang, references, await getCredentials(lang))
+---
+
+<PressList {lang} items={pressOf(references)} {entries} />

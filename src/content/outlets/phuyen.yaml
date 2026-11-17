@@ -1,4 +1,5 @@
-name:
-  vi: 'Đảng bộ tỉnh Phú Yên'
-  en: 'Phu Yen Provincial Party Committee'
-tier: 1
+vi:
+  name: Đảng bộ tỉnh Phú Yên
+  tier: 1
+en:
+  name: Phu Yen Provincial Party Committee

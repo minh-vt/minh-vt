@@ -34,9 +34,10 @@
   --astro-code-token-link: var(--accent);
 
   /* Space Grotesk for display, labels and numerals; IBM Plex Sans for prose.
-     Code falls back to the system mono stack, so no third file is downloaded. */
-  --font-display: 'Space Grotesk Variable', ui-sans-serif, system-ui, sans-serif;
-  --font-body: 'IBM Plex Sans Variable', ui-sans-serif, system-ui, sans-serif;
+     Both come from the fonts config (astro.config.mjs) with metric-matched
+     fallbacks. Code uses the system mono stack, so no third file is downloaded. */
+  --font-display: var(--font-grotesk);
+  --font-body: var(--font-plex);
   --font-code: ui-monospace, 'SFMono-Regular', 'Menlo', monospace;
 
   --text-xs: 0.8125rem;
@@ -44,15 +45,13 @@
   --text-base: 1.0625rem;
   --text-lg: 1.25rem;
   --text-xl: clamp(1.375rem, 1.2rem + 0.7vw, 1.625rem);
-  --text-2xl: clamp(1.75rem, 1.4rem + 1.5vw, 2.5rem);
-  /* The monument: edge to edge without wrapping. Tuned against the 12
-     characters of the name; a longer name needs a smaller vw. */
-  --text-monument: clamp(2.25rem, 14vw, 16rem);
+  /* The monument (Monument.astro) fits the name to its column at any length;
+     these cap its letter height on wide screens and on phones. */
+  --text-monument-max: 16rem;
+  --text-monument-max-narrow: 8rem;
   /* Monograms inside a 14px outlet mark; decorative, never the only label. */
   --text-mark: 0.5625rem;
 
-  --leading-monument: 0.8;
-  --leading-tight: 0.94;
   --leading-snug: 1.1;
   --leading-body: 1.6;
 
@@ -64,7 +63,8 @@
   --layout-wrap: 68rem;
   --layout-gutter: clamp(1.25rem, 4vw, 3.5rem);
 
-  /* Motion: strong curves, short feedback; only the hero gets an entrance. */
+  /* Motion: strong curves, short feedback; only the hero name gets an
+     entrance, one letter after another. */
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   /* iOS-like sheet curve, for the menu and the contents sheet. */
   --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);

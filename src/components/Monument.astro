@@ -1,0 +1,80 @@
+---
+import type { Lang } from '@/i18n/locales'
+
+interface Props {
+  name: string
+  lang: Lang
+  /** `h1` in the hero; a decorative `p`, hidden from assistive tech, elsewhere. */
+  as?: 'h1' | 'p'
+  class?: string
+}
+
+const { name, lang, as: Tag = 'p', class: className } = Astro.props
+
+/*
+ * The name edge to edge, at any length, without measuring it. Each line is SVG
+ * text in a box as wide as the line is estimated to be, and `textLength` makes
+ * the text exactly that wide, so it can never overflow; the SVG then scales to
+ * its column. The estimate only nudges letter shapes (a long name stays
+ * proportional), it never decides whether the name fits.
+ *
+ * Units are SVG user units: the font is 100 units tall.
+ */
+const em = 100
+const advance = (char: string) => (char === ' ' ? 0.25 : 0.62) * em
+const cap = 0.72 * em
+const leading = 0.86 * em
+
+let index = 0
+const lineOf = (text: string) => ({
+  chars: [...text].map((char) => ({ char, i: index++ })),
+  width: [...text].reduce((sum, char) => sum + advance(char), 0),
+})
+const layout = (texts: string[]) => {
+  index = 0
+  const lines = texts.map(lineOf)
+  const width = Math.max(...lines.map((line) => line.width))
+  return { lines, width, height: cap + leading * (lines.length - 1) }
+}
+
+const upper = name.toLocaleUpperCase(lang)
+// Wide screens: one line. Phones: a line per word, sized by the longest.
+const variants = [
+  { layout: layout([upper]), class: 'monument-wide', max: '--text-monument-max' },
+  {
+    layout: layout(upper.split(/\s+/)),
+    class: 'monument-narrow',
+    max: '--text-monument-max-narrow',
+  },
+]
+---
+
+<Tag class:list={['monument', className]} aria-hidden={Tag === 'p' ? 'true' : undefined}>
+  {
+    variants.map(({ layout: { lines, width, height }, class: variant, max }) => (
+      <svg
+        class={variant}
+        viewBox={`0 ${-cap} ${width} ${height}`}
+        style={`max-width: calc(var(${max}) * ${width / em})`}
+        aria-hidden="true"
+      >
+        {lines.map((line, row) => (
+          <text
+            x={width / 2}
+            y={row * leading}
+            text-anchor="middle"
+            textLength={line.width === width ? width : undefined}
+            lengthAdjust="spacingAndGlyphs"
+          >
+            {line.chars.map(({ char, i }) => (
+              <tspan class="char" style={`--i: ${i}`}>
+                {char}
+              </tspan>
+            ))}
+          </text>
+        ))}
+      </svg>
+    ))
+  }
+  {Tag === 'h1' && <span class="sr-only">{name}</span>}
+</Tag>
