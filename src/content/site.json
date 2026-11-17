@@ -5,6 +5,7 @@
     "location": "TP. Hồ Chí Minh · Phú Yên",
     "icon": "@/assets/media/icon.svg",
     "portrait": "@/assets/media/portrait.webp",
+    "shareImage": "@/assets/media/compass-award-2025.webp",
     "cv": "/media/minhvt_embeddedsoftware.pdf",
     "links": [
       {
