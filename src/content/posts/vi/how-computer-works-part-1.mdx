@@ -1,17 +1,22 @@
 ---
-title: 'Máy tính hoạt động như thế nào, phần 1'
+title: Máy tính hoạt động như thế nào, phần 1
 description: 'Từ cổng logic AND và NOT, tới hệ nhị phân: những gì nằm dưới một chiếc máy tính.'
 date: 2023-01-07
-tags: ['máy tính', 'logic', 'nhị phân']
-series:
-  id: 'how-computer-works'
-  part: 1
+draft: false
+tags:
+  - máy tính
+  - logic
+  - nhị phân
 origin:
-  label: 'FCT Club'
-  url: 'https://fct-club.com/2023/01/07/how-computer-works-part-1/'
+  label: FCT Club
+  url: https://fct-club.com/2023/01/07/how-computer-works-part-1/
+series:
+  id: how-computer-works
+  part: 1
+featured: false
 ---
 
-Một sáng thức dậy, tôi quyết định sẽ viết cho mình một bài sharing thật "quỷ khốc thần sầu" nhưng hoá ra chỉ có mình tôi phải khóc vì chẳng biết bắt đầu từ đâu. Ngồi loay hoay bên bàn phím, tôi tự hỏi những câu vớ vẩn như "Tại sao gõ vào bàn phím mà chữ lại hiện trên màn hình?", "Tại sao máy tính lại biết tính toán?", "Tại sao lại không thể ngừng yêu em?" …
+Một sáng thức dậy, tôi quyết định sẽ viết cho mình một bài sharing thật "quỷ khốc thần sầu" nhưng hoá ra chỉ có mình tôi phải khóc vì chẳng biết bắt đầu từ đâu. Ngồi loay hoay bên bàn phím, tôi tự hỏi những câu vớ vẩn như "Tại sao gõ vào bàn phím mà chữ lại hiện trên màn hình?", "Tại sao máy tính lại biết tính toán?", "Khi nào mới có người yêu?" …
 
 À thì có lẽ chỉ có câu hỏi cuối là tôi chưa tìm ra được câu trả lời mà thôi. Còn để giải thích cho hai câu hỏi đầu tiên, mình cùng tìm hiểu về "Cách một chiếc máy tính hoạt động" qua bài viết này.
 
@@ -35,7 +40,7 @@ Vậy thì, chúng ta đã tạo ra được một cổng Logic hoạt động v
 - Đầu vào: Gồm hai đầu vào (A và B), công tắc A được đóng hoặc mở, công tắc B được đóng hoặc mở.
 - Đầu ra: Đèn sáng hoặc Đèn không sáng.
 
-Trong khoa học máy tính, ta xem các trạng thái *có hoặc không* bên trên là một trạng thái boolean, hay nếu ta biểu diễn trạng thái đóng của công tắc là **1**, và trạng thái mở của công tắc là **0**, ta sẽ có bảng chân lý:
+Trong khoa học máy tính, ta xem các trạng thái _có hoặc không_ bên trên là một trạng thái boolean, hay nếu ta biểu diễn trạng thái đóng của công tắc là **1**, và trạng thái mở của công tắc là **0**, ta sẽ có bảng chân lý:
 
 - **0**: Có nghĩa là đèn không sáng
 - **1**: Có nghĩa là đèn sáng
