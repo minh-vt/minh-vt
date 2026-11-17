@@ -8,7 +8,6 @@ import { pathFor, switchLocalePath, useTranslations } from '@/i18n/utils'
 import { siteFor } from '@/lib/site'
 import { absolute, jsonLd as serialise, ogLocale, shareImage } from '@/lib/seo'
 import { defaultLocale, locales, type Lang } from '@/i18n/locales'
-import { chromeColor } from '@/theme/browser-chrome'
 
 interface Props {
   lang: Lang
@@ -80,16 +79,6 @@ const touchIcon = await getImage({
       title={`${siteName} · ${t('area.blog.title')}`}
       href={`${pathFor(lang)}rss.xml`}
     />
-    {
-      (['light', 'dark'] as const).map((theme) => (
-        <meta
-          name="theme-color"
-          content={chromeColor[theme]}
-          media={`(prefers-color-scheme: ${theme})`}
-          data-theme-color={theme}
-        />
-      ))
-    }
     <meta
       property="og:type"
       content={jsonLd?.['@type'] === 'BlogPosting' ? 'article' : 'website'}
@@ -131,7 +120,8 @@ const touchIcon = await getImage({
     <slot name="head" />
 
     <script is:inline>
-      // Runs before first paint so the stored theme never flashes.
+      // Runs before first paint so the stored theme never flashes. The browser
+      // draws its own UI from color-scheme, which the theme sets in tokens.css.
       try {
         const stored = localStorage.getItem('theme')
         const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches

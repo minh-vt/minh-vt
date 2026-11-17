@@ -27,14 +27,9 @@ const { label, lightLabel, darkLabel } = Astro.props
 
 <script>
   const root = document.documentElement
-  // The browser bar follows the chosen theme, not only the system one.
-  const chrome = document.querySelectorAll<HTMLMetaElement>('meta[data-theme-color]')
   for (const button of document.querySelectorAll<HTMLButtonElement>('.theme-toggle')) {
     const sync = () => {
       const dark = root.dataset.theme === 'dark'
-      for (const meta of chrome) {
-        meta.media = meta.dataset.themeColor === root.dataset.theme ? 'all' : 'not all'
-      }
       button.setAttribute('aria-pressed', String(dark))
       button.title = (dark ? button.dataset.light : button.dataset.dark) ?? ''
     }
