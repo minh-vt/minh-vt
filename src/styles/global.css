@@ -75,16 +75,24 @@ img {
 }
 
 /* Type roles. Each maps to a token, never to a literal value. */
-.t-monument {
+/* The name, drawn by Monument.astro. Font size is in SVG units (the font is
+   100 units tall); the token caps how large it gets. */
+.monument {
+  text-align: center;
+}
+
+.monument svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin-inline: auto;
+  overflow: visible;
+  fill: currentColor;
   font-family: var(--font-display);
-  font-size: var(--text-monument);
+  font-size: 100px;
   font-weight: 700;
-  line-height: var(--leading-monument);
   letter-spacing: var(--tracking-monument);
   font-kerning: normal;
-  text-transform: uppercase;
-  text-align: center;
-  white-space: nowrap;
 }
 
 @screen md {
@@ -93,13 +101,18 @@ img {
   }
 }
 
+/* One line on wide screens, a line per word on phones. */
+.monument .monument-narrow {
+  display: none;
+}
+
 @screen lt-sm {
-  .t-monument {
-    /* On phones each word gets its own line, sized by the longest word. */
-    font-size: clamp(2rem, calc(92vw / var(--word-chars, 4)), 8rem);
-    line-height: 0.86;
-    white-space: normal;
-    text-wrap: balance;
+  .monument .monument-wide {
+    display: none;
+  }
+
+  .monument .monument-narrow {
+    display: block;
   }
 }
 
@@ -407,12 +420,9 @@ section[id],
   border-bottom: 1px solid var(--line);
 }
 
-/* Hero entrance: letters rise in one after another. Hero.astro sets
-   data-intro once per visit, before first paint. */
-.char {
-  display: inline-block;
-}
-
+/* Hero entrance: letters fade in one after another. Hero.astro sets
+   data-intro once per visit, before first paint. Letters are SVG tspans, which
+   take opacity but not transforms. */
 @media (prefers-reduced-motion: no-preference) {
   [data-intro] .char {
     animation: char-in var(--duration-hero) var(--ease-out) both;
@@ -423,7 +433,6 @@ section[id],
 @keyframes char-in {
   from {
     opacity: 0;
-    transform: translateY(12%);
   }
 }
 
