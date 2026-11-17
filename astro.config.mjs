@@ -11,20 +11,7 @@ import remarkMath from 'remark-math'
 import rehypeKatex from 'rehype-katex'
 import { visit } from 'unist-util-visit'
 import { locales, defaultLocale, localeTags } from '@/i18n/locales'
-import { areas, downloadTypes } from '@/content/model'
-
-// Each area in the content model is a page folder; the menu, the homepage
-// sections and "see all" links are built from that list, so a missing folder
-// would only show up as a 404 in production. Fail at startup instead.
-for (const area of areas) {
-  if (
-    !existsSync(new URL(`./src/pages/[...lang]/${area}/index.astro`, import.meta.url))
-  ) {
-    throw new Error(
-      `Area "${area}" has no page: add src/pages/[...lang]/${area}/index.astro`,
-    )
-  }
-}
+import { downloadTypes } from '@/content/model'
 
 // Downloads are served from public/ as they are, so nothing resolves them
 // while pages render. After the build, every link to a downloadable file must

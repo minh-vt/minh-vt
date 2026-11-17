@@ -1,0 +1,13 @@
+---
+import PostList from '@/components/PostList.astro'
+import type { Lang } from '@/i18n/locales'
+import { getPosts } from '@/lib/content'
+
+interface Props {
+  lang: Lang
+}
+
+const { lang } = Astro.props
+---
+
+<PostList {lang} posts={await getPosts(lang)} />

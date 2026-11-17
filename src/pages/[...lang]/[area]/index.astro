@@ -1,0 +1,44 @@
+---
+import Base from '@/layouts/Base.astro'
+import PageHeader from '@/components/PageHeader.astro'
+import Blog from '@/components/areas/Blog.astro'
+import Certs from '@/components/areas/Certs.astro'
+import Press from '@/components/areas/Press.astro'
+import Timeline from '@/components/areas/Timeline.astro'
+import { areas, type Area } from '@/content/model'
+import { routeLocale, type Lang } from '@/i18n/locales'
+import { localeParams } from '@/i18n/routes'
+import { pathFor, useTranslations } from '@/i18n/utils'
+
+/**
+ * One page per area and locale (/timeline, /en/press). Every area in the
+ * content model needs a body here and nothing else may have one: a missing or
+ * extra key is a type error, so the menu cannot link to a page that is not built.
+ */
+const bodies = {
+  timeline: Timeline,
+  press: Press,
+  blog: Blog,
+  certs: Certs,
+} satisfies Record<Area, (props: { lang: Lang }) => unknown>
+
+export function getStaticPaths() {
+  return localeParams().flatMap(({ params }) =>
+    areas.map((area) => ({ params: { ...params, area } })),
+  )
+}
+
+const lang = routeLocale(Astro.params.lang)
+const area = Astro.params.area as Area
+const Body = bodies[area]
+const t = useTranslations(lang)
+const title = t(`area.${area}.title`)
+const lead = t(`area.${area}.lead`)
+---
+
+<Base {lang} {title} description={lead}>
+  <div class="u-wrap pb-16">
+    <PageHeader {title} {lead} back={{ href: pathFor(lang), label: t('nav.home') }} />
+    <Body {lang} />
+  </div>
+</Base>

@@ -1,0 +1,18 @@
+---
+import EntryList from '@/components/EntryList.astro'
+import type { Lang } from '@/i18n/locales'
+import { getCredentials, getEntries, getReferences } from '@/lib/content'
+
+interface Props {
+  lang: Lang
+}
+
+const { lang } = Astro.props
+const entries = await getEntries(
+  lang,
+  await getReferences(lang),
+  await getCredentials(lang),
+)
+---
+
+<EntryList {lang} {entries} filters />

@@ -1,0 +1,13 @@
+---
+import CredentialGrid from '@/components/CredentialGrid.astro'
+import type { Lang } from '@/i18n/locales'
+import { getCredentials } from '@/lib/content'
+
+interface Props {
+  lang: Lang
+}
+
+const { lang } = Astro.props
+---
+
+<CredentialGrid {lang} items={await getCredentials(lang)} byYear />
