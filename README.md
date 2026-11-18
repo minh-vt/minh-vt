@@ -5,7 +5,7 @@ Systems & Embedded Software Engineer (C++/Linux) focused on hardware performance
 
 **Now**
 
-- Moral support, Viettel Semiconductor
+- Moral supporter, Viettel Semiconductor
 - IC design student, FPT University
 - Co-founder, [Science Lab](https://sciencelab.io.vn)
 - Teaching assistant, STEAM for Vietnam
