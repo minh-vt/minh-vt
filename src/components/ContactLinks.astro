@@ -1,0 +1,48 @@
+---
+import LinkIcon from '@/components/LinkIcon.svelte'
+import type { Lang } from '@/i18n/locales'
+import { useTranslations } from '@/i18n/utils'
+import { siteFor } from '@/lib/site'
+
+interface Props {
+  lang: Lang
+  /** The hero lists the address too; the footer shows it large instead. */
+  email?: boolean
+}
+
+/** The site's links as list items: email, social profiles, the CV. */
+const { lang, email = false } = Astro.props
+const site = siteFor(lang)
+const t = useTranslations(lang)
+const links = [
+  ...(email
+    ? [{ kind: 'email' as const, label: site.email, url: `mailto:${site.email}` }]
+    : []),
+  ...site.links,
+]
+---
+
+{
+  links.map((item) => (
+    <li>
+      <a
+        href={item.url}
+        rel={item.kind === 'email' ? undefined : 'me'}
+        class="link text-sm"
+      >
+        <LinkIcon kind={item.kind} />
+        {item.label}
+      </a>
+    </li>
+  ))
+}
+{
+  site.cv && (
+    <li>
+      <a href={site.cv} class="link text-sm" data-astro-prefetch="false">
+        <span class="i-ph-file-arrow-down" aria-hidden="true" />
+        {t('hero.cv')}
+      </a>
+    </li>
+  )
+}

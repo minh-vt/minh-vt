@@ -1,6 +1,6 @@
 ---
 import CopyEmail from '@/components/CopyEmail.astro'
-import LinkIcon from '@/components/LinkIcon.svelte'
+import ContactLinks from '@/components/ContactLinks.astro'
 import Monument from '@/components/Monument.astro'
 import { siteFor } from '@/lib/site'
 import { useTranslations, pathFor } from '@/i18n/utils'
@@ -33,26 +33,7 @@ const name = site.name
         copiedLabel={t('contact.copied')}
       />
       <ul class="flex flex-wrap gap-x-5">
-        {
-          site.links.map((link) => (
-            <li>
-              <a href={link.url} class="link text-sm" rel="me">
-                <LinkIcon kind={link.kind} />
-                {link.label}
-              </a>
-            </li>
-          ))
-        }
-        {
-          site.cv && (
-            <li>
-              <a href={site.cv} class="link text-sm" data-astro-prefetch="false">
-                <span class="i-ph-file-arrow-down" aria-hidden="true" />
-                {t('hero.cv')}
-              </a>
-            </li>
-          )
-        }
+        <ContactLinks {lang} />
         <li>
           <a href={pathFor(lang, 'certs')} class="link text-sm">
             {t('area.certs.title')}
