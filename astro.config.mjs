@@ -9,6 +9,7 @@ import remarkMath from 'remark-math'
 import rehypeKatex from 'rehype-katex'
 import { visit } from 'unist-util-visit'
 import { locales, defaultLocale, localeTags } from '@/i18n/locales'
+import { agentMarkdown } from '@/integrations/agent-markdown'
 
 // Flags pages that contain math, so only those load the KaTeX stylesheet.
 function remarkMathFlag() {
@@ -59,6 +60,7 @@ export default defineConfig({
     svelte(),
     mdx(),
     localeNotFound,
+    agentMarkdown(),
     sitemap({
       filter: (page) => !new URL(page).pathname.startsWith('/admin/'),
       i18n: { defaultLocale, locales: localeTags },

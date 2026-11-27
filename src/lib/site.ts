@@ -13,7 +13,6 @@ if (record.source.cv) downloadLink(record.source.cv, 'site cv')
 
 /** Site details from the CMS in one locale; Astro has resolved every image. */
 export const siteFor = (lang: Lang) => inLocale(record, lang)
-export type Site = ReturnType<typeof siteFor>
 
 /** Homepage sections in editor order. */
 export const sections = z.object(fields.home()).parse(home).sections

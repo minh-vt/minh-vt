@@ -1,6 +1,6 @@
 ---
 import { Image } from 'astro:assets'
-import LinkIcon from '@/components/LinkIcon.svelte'
+import ContactLinks from '@/components/ContactLinks.astro'
 import Monument from '@/components/Monument.astro'
 import type { Lang } from '@/i18n/locales'
 import { useTranslations } from '@/i18n/utils'
@@ -17,10 +17,6 @@ const { lang, roles } = Astro.props
 const site = siteFor(lang)
 const t = useTranslations(lang)
 const name = site.name
-const contacts = [
-  { kind: 'email' as const, label: site.email, url: `mailto:${site.email}` },
-  ...site.links,
-]
 ---
 
 <!--
@@ -99,30 +95,7 @@ const contacts = [
         site.portrait && 'col-span-2 md:col-span-1',
       ]}
     >
-      {
-        contacts.map((item) => (
-          <li>
-            <a
-              href={item.url}
-              rel={item.kind === 'email' ? undefined : 'me'}
-              class="link text-sm"
-            >
-              <LinkIcon kind={item.kind} />
-              {item.label}
-            </a>
-          </li>
-        ))
-      }
-      {
-        site.cv && (
-          <li>
-            <a href={site.cv} class="link text-sm" data-astro-prefetch="false">
-              <span class="i-ph-file-arrow-down" aria-hidden="true" />
-              {t('hero.cv')}
-            </a>
-          </li>
-        )
-      }
+      <ContactLinks {lang} email />
     </ul>
   </div>
 </section>

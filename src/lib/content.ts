@@ -5,7 +5,7 @@ import { parsePostId } from '@/i18n/routes'
 import { pathFor } from '@/i18n/utils'
 import { downloadLink } from '@/lib/downloads'
 
-export function entryLang(id: string): Lang {
+function entryLang(id: string): Lang {
   const lang = id.split('/')[0]
   if (!isLang(lang)) throw new Error(`Unsupported locale in content id: ${id}`)
   return lang
@@ -31,14 +31,6 @@ function requireEntry<T extends { id: string }>(rows: T[], id: string, owner: st
       `${owner}: unknown id "${id}". Known ids: ${rows.map((item) => item.id).join(', ')}`,
     )
   return row
-}
-
-function resolveAll<T extends { id: string }>(
-  rows: T[],
-  ids: string[],
-  owner: string,
-): T[] {
-  return ids.map((id) => requireEntry(rows, id, owner))
 }
 
 /** A translated collection in one locale, each row with its id. */
@@ -103,11 +95,9 @@ export async function getEntries(
     .sort((a, b) => a.order - b.order)
     .map((row) => ({
       ...row,
-      refs: resolveAll(references, row.refs, `entries/${row.id} refs`),
-      credentials: resolveAll(
-        credentials,
-        row.credentials,
-        `entries/${row.id} credentials`,
+      refs: row.refs.map((id) => requireEntry(references, id, `entries/${row.id} refs`)),
+      credentials: row.credentials.map((id) =>
+        requireEntry(credentials, id, `entries/${row.id} credentials`),
       ),
     }))
 }

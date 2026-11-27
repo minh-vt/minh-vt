@@ -415,6 +415,19 @@ Pages skips the build. Prettier ignores `README.md` so a local format cannot fig
   `NotFound.astro`.
 - CSS is inlined into every page (`build.inlineStylesheets: 'always'`): about 10 kB gzipped, and
   no render-blocking request before first paint.
+- Markdown for agents: a request for a page with `Accept: text/markdown` gets a Markdown copy
+  instead of HTML. The `agent-markdown` build step (`src/integrations/agent-markdown.ts`) writes
+  `index.md` next to every `index.html`: front matter from the page's title, description,
+  canonical URL and language, then `<main>` converted with rehype-remark, minus what is only drawn
+  (`aria-hidden`), decorative images, controls, scripts and comments, with links made absolute.
+  The Pages Function `functions/_middleware.js` serves it with `Content-Type: text/markdown;
+charset=utf-8`, `Vary: Accept` and an `x-markdown-tokens` estimate; every other request passes
+  through, with `Vary: Accept` added to pages. `public/_routes.json` keeps `/_astro/`, `/admin/`
+  and `/media/` out of the function. `tests/markdown-middleware.test.ts` covers the negotiation;
+  `bun run check` (and so the Pages build command) runs it. Cloudflare's own Markdown for Agents needs a Pro plan.
+- `robots.txt` carries `Content-Signal: search=yes, ai-input=yes, ai-train=yes`
+  (contentsignals.org) in the `User-agent: *` group; the values are a constant in
+  `src/pages/robots.txt.ts`.
 - `robots.txt` is built from `site`, but Cloudflare's managed robots.txt (AI Crawl Control) may
   prepend its own rules for AI crawlers; that is a dashboard setting, not code.
 

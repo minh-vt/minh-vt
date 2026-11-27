@@ -42,8 +42,7 @@ const alternate = (target: Lang) => absolute(switchLocalePath(Astro.url.pathname
 const canonical = alternate(lang)
 const xDefault = translations.includes(defaultLocale) ? defaultLocale : lang
 
-const share = image ?? site.shareImage ?? site.portrait
-const og = share && (await shareImage(share))
+const og = await shareImage(lang, image)
 const structured = jsonLd && serialise(jsonLd)
 
 // One icon from the CMS: as it is for the tab, as a 180px PNG for home screens.

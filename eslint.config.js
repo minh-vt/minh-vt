@@ -49,8 +49,7 @@ export default [
 
   {
     languageOptions: {
-      // Injected by astro.config.mjs from package.json.
-      globals: { ...globals.browser, ...globals.node, __CMS_VERSION__: 'readonly' },
+      globals: { ...globals.browser, ...globals.node },
     },
     rules: {
       // Errors: structural conventions.
@@ -90,13 +89,6 @@ export default [
     rules: {
       'max-lines': ['warn', { max: 220, skipBlankLines: true, skipComments: true }],
     },
-  },
-
-  {
-    // The one place a literal colour is unavoidable: the browser reads these
-    // before any CSS exists.
-    files: ['src/theme/browser-chrome.ts'],
-    rules: { 'no-restricted-syntax': 'off' },
   },
 
   prettier,

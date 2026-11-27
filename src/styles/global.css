@@ -391,12 +391,6 @@ section[id],
   padding: 0.1em 0.34em;
 }
 
-/* The typography preset wraps inline code in literal backticks. Off. */
-.prose code::before,
-.prose code::after {
-  content: none;
-}
-
 .prose pre {
   background: var(--paper-raised);
   border: 1px solid var(--line);

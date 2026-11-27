@@ -2,7 +2,10 @@ import { z } from 'astro/zod'
 import type { Field } from '@sveltia/cms'
 import { adminCollections } from '@/admin/collections'
 import labels from '@/admin/labels.json'
-import { downloadTypes, fields, type Context } from '@/content/model'
+import { areas, downloadTypes, entryTags, fields, type Context } from '@/content/model'
+import { defaultLocale } from '@/i18n/locales'
+import type { UIKey } from '@/i18n/ui'
+import { useTranslations } from '@/i18n/utils'
 
 /**
  * Admin-only projection: the contract says what a field means, this file says
@@ -85,9 +88,25 @@ function fieldFor(name: string, schema: Json, required: boolean): Field {
 const types = (labels as { types?: Record<string, string> }).types ?? {}
 const optionLabels = (labels as { options?: Record<string, string> }).options ?? {}
 
+/**
+ * Timeline tags and menu areas already have names on the site (`tag.*`,
+ * `area.*.title` in the UI strings); the editor sees the same words.
+ * labels.json `options` names every other value.
+ */
+const t = useTranslations(defaultLocale)
+function siteName(value: string) {
+  if ((entryTags as readonly string[]).includes(value)) return t(`tag.${value}` as UIKey)
+  if ((areas as readonly string[]).includes(value))
+    return t(`area.${value}.title` as UIKey)
+  return undefined
+}
+
 /** Select options keep their stored value and show the editor's word for it. */
 const selectOptions = (values: unknown[]) =>
-  (values as string[]).map((value) => ({ label: optionLabels[value] ?? value, value }))
+  (values as string[]).map((value) => ({
+    label: siteName(value) ?? optionLabels[value] ?? value,
+    value,
+  }))
 
 /** A discriminated union becomes Sveltia's variable types, keyed by `type`. */
 function variableTypes(options: Json[]) {
