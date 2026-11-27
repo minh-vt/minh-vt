@@ -1,3 +1,4 @@
+import { existsSync, renameSync, rmdirSync } from 'node:fs'
 import { defineConfig, fontProviders } from 'astro/config'
 import svelte from '@astrojs/svelte'
 import mdx from '@astrojs/mdx'
@@ -31,6 +32,24 @@ const fontFamily = (name, cssVariable, weights) => ({
   fallbacks: ['sans-serif'],
 })
 
+// Cloudflare Pages answers a missing URL with the nearest 404.html up its path.
+// Astro writes the default locale's 404 page there already, but another
+// locale's as <lang>/404/index.html; move it to <lang>/404.html so /en/missing
+// gets the English page.
+const localeNotFound = {
+  name: 'locale-not-found',
+  hooks: {
+    'astro:build:done': ({ dir }) => {
+      for (const lang of locales.filter((locale) => locale !== defaultLocale)) {
+        const folder = new URL(`${lang}/404/`, dir)
+        if (!existsSync(new URL('index.html', folder))) continue
+        renameSync(new URL('index.html', folder), new URL(`${lang}/404.html`, dir))
+        rmdirSync(folder)
+      }
+    },
+  },
+}
+
 // https://docs.astro.build/en/reference/configuration-reference/
 export default defineConfig({
   // Replace with the deployed origin; used for canonical URLs and og tags.
@@ -39,6 +58,7 @@ export default defineConfig({
     UnoCSS({ injectReset: false }),
     svelte(),
     mdx(),
+    localeNotFound,
     sitemap({
       filter: (page) => !new URL(page).pathname.startsWith('/admin/'),
       i18n: { defaultLocale, locales: localeTags },

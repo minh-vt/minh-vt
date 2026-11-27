@@ -401,6 +401,15 @@ section changed, as
 `github-actions[bot]` with `[skip ci]`: a `GITHUB_TOKEN` push starts no workflow, and Cloudflare
 Pages skips the build. Prettier ignores `README.md` so a local format cannot fight the generator.
 
+## Cloudflare Pages behaviour the site relies on
+
+- 404s: Pages answers a missing URL with the nearest `404.html` up its path. `src/pages/404.astro`
+  is the default locale's page; Astro treats only that file as the 404 page, so it is also what
+  `astro dev` and `astro preview` show. `src/pages/[...lang]/404.astro` builds the other locales,
+  and the `locale-not-found` step in `astro.config.mjs` moves each from `<lang>/404/index.html` to
+  `<lang>/404.html`, so on Pages `/en/missing` gets the English page. Both render
+  `NotFound.astro`.
+
 ## Deployment: Cloudflare Pages, no API token
 
 Pages builds this repository itself. There is no deploy workflow and no `CLOUDFLARE_API_TOKEN` to

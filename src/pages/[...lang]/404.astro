@@ -1,0 +1,19 @@
+---
+import NotFound from '@/components/NotFound.astro'
+import { defaultLocale, routeLocale } from '@/i18n/locales'
+import { localeParams } from '@/i18n/routes'
+
+/**
+ * The 404 page for every locale but the default (src/pages/404.astro). Cloudflare
+ * Pages serves the nearest 404.html up the path, so astro.config.mjs moves this
+ * page from <lang>/404/index.html to <lang>/404.html and /en/missing gets the
+ * English page. Dev and preview only know the default one.
+ */
+export function getStaticPaths() {
+  return localeParams().filter(({ params }) => routeLocale(params.lang) !== defaultLocale)
+}
+
+const lang = routeLocale(Astro.params.lang)
+---
+
+<NotFound {lang} />
