@@ -267,7 +267,7 @@ There is no `theme-color` meta tag. Most browsers ignore it (Firefox never suppo
 `color-scheme`, set by the theme, is what browsers draw their own controls from.
 
 Breakpoints live in `src/theme/breakpoints.ts`. UnoCSS builds `sm:`/`md:`/`lg:` from it,
-`global.css` uses them through `@screen`, and markup uses `from()`/`below()` for `client:media`
+`global.css` uses them through `theme("breakpoint.md")` in plain `@media` rules (standard CSS, so the editor's CSS server does not flag it; UnoCSS replaces it at build), and markup uses `from()`/`below()` for `client:media`
 and image `sizes`. No component writes an `em` media query by hand.
 
 The hero and footer name is `Monument.astro`: SVG text whose `textLength` makes each line exactly
@@ -400,6 +400,23 @@ so a run whose push lost the race to a newer commit is simply replaced. It commi
 section changed, as
 `github-actions[bot]` with `[skip ci]`: a `GITHUB_TOKEN` push starts no workflow, and Cloudflare
 Pages skips the build. Prettier ignores `README.md` so a local format cannot fight the generator.
+
+## Cloudflare Pages behaviour the site relies on
+
+- `public/_headers`: hashed build files under `/_astro/` are cached for a year (`immutable`);
+  `/README.md` is served with `X-Robots-Tag: noindex`.
+- `public/_redirects`: `/sitemap.xml` redirects to `/sitemap-index.xml`, for tools that look
+  for the conventional name.
+- 404s: Pages answers a missing URL with the nearest `404.html` up its path. `src/pages/404.astro`
+  is the default locale's page; Astro treats only that file as the 404 page, so it is also what
+  `astro dev` and `astro preview` show. `src/pages/[...lang]/404.astro` builds the other locales,
+  and the `locale-not-found` step in `astro.config.mjs` moves each from `<lang>/404/index.html` to
+  `<lang>/404.html`, so on Pages `/en/missing` gets the English page. Both render
+  `NotFound.astro`.
+- CSS is inlined into every page (`build.inlineStylesheets: 'always'`): about 10 kB gzipped, and
+  no render-blocking request before first paint.
+- `robots.txt` is built from `site`, but Cloudflare's managed robots.txt (AI Crawl Control) may
+  prepend its own rules for AI crawlers; that is a dashboard setting, not code.
 
 ## Deployment: Cloudflare Pages, no API token
 

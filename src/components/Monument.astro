@@ -4,12 +4,12 @@ import type { Lang } from '@/i18n/locales'
 interface Props {
   name: string
   lang: Lang
-  /** `h1` in the hero; a decorative `p`, hidden from assistive tech, elsewhere. */
-  as?: 'h1' | 'p'
+  /** The page's h1 (the hero); otherwise decorative and hidden from assistive tech. */
+  heading?: boolean
   class?: string
 }
 
-const { name, lang, as: Tag = 'p', class: className } = Astro.props
+const { name, lang, heading = false, class: className } = Astro.props
 
 /*
  * The name edge to edge, at any length, without measuring it. Each line is SVG
@@ -49,7 +49,11 @@ const variants = [
 ]
 ---
 
-<Tag class:list={['monument', className]} aria-hidden={Tag === 'p' ? 'true' : undefined}>
+<!--
+  The drawn name is decoration; the heading, when there is one, is plain text
+  beside it, so search engines and screen readers read the name once.
+-->
+<div class:list={['monument', className]} aria-hidden={heading ? undefined : 'true'}>
   {
     variants.map(({ layout: { lines, width, height }, class: variant, max }) => (
       <svg
@@ -76,5 +80,5 @@ const variants = [
       </svg>
     ))
   }
-  {Tag === 'h1' && <span class="sr-only">{name}</span>}
-</Tag>
+  {heading && <h1 class="sr-only">{name}</h1>}
+</div>

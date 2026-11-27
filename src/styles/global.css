@@ -95,7 +95,7 @@ img {
   font-kerning: normal;
 }
 
-@screen md {
+@media (min-width: theme('breakpoint.md')) {
   .t-hero-role {
     font-size: var(--text-lg);
   }
@@ -106,7 +106,7 @@ img {
   display: none;
 }
 
-@screen lt-sm {
+@media (width < theme('breakpoint.sm')) {
   .monument .monument-wide {
     display: none;
   }
@@ -179,6 +179,13 @@ img {
   font-weight: 500;
   letter-spacing: var(--tracking-wide);
   color: var(--ink-muted);
+}
+
+/* Monogram inside the small outlet mark, when an outlet has no logo. A type
+   role, not a utility: UnoCSS has no form of an arbitrary font size that the
+   Tailwind language server accepts without a rewrite UnoCSS cannot read. */
+.t-mark {
+  font-size: var(--text-mark);
 }
 
 .t-meta {

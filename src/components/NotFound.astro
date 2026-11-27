@@ -1,0 +1,31 @@
+---
+import Base from '@/layouts/Base.astro'
+import BackLink from '@/components/BackLink.astro'
+import type { Lang } from '@/i18n/locales'
+import { pathFor, useTranslations } from '@/i18n/utils'
+
+interface Props {
+  lang: Lang
+}
+
+/** The 404 page in one locale; src/pages/404.astro and the per-locale route use it. */
+const { lang } = Astro.props
+const t = useTranslations(lang)
+---
+
+<Base
+  {lang}
+  title={t('notfound.title')}
+  description={t('notfound.body')}
+  translations={[lang]}
+  noindex
+>
+  <div class="u-wrap py-24 md:py-32">
+    <p class="t-label">404</p>
+    <h1 class="t-post mt-4">{t('notfound.title')}</h1>
+    <p class="t-lead mt-4">{t('notfound.body')}</p>
+    <p class="mt-6">
+      <BackLink href={pathFor(lang)} label={t('notfound.action')} />
+    </p>
+  </div>
+</Base>

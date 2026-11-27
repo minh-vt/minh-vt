@@ -1,34 +1,12 @@
 ---
-import Base from '@/layouts/Base.astro'
-import BackLink from '@/components/BackLink.astro'
-import { defaultLocale, locales } from '@/i18n/locales'
-import { pathFor, useTranslations } from '@/i18n/utils'
+import NotFound from '@/components/NotFound.astro'
+import { defaultLocale } from '@/i18n/locales'
 
-// One static 404 serves every locale, so it speaks all of them.
-const t = useTranslations(defaultLocale)
+/*
+ * Astro treats only this file as the 404 page: it answers missing URLs in
+ * `astro dev` and `astro preview`, and builds dist/404.html, which Cloudflare
+ * Pages serves for any missing URL. Other locales: [...lang]/404.astro.
+ */
 ---
 
-<Base
-  lang={defaultLocale}
-  title={t('notfound.title')}
-  description={t('notfound.body')}
-  noindex
->
-  <div class="u-wrap flex flex-col gap-12 py-24 md:py-32">
-    <p class="t-label">404</p>
-    {
-      locales.map((lang) => {
-        const local = useTranslations(lang)
-        return (
-          <section {lang}>
-            <h1 class="t-post">{local('notfound.title')}</h1>
-            <p class="t-lead mt-4">{local('notfound.body')}</p>
-            <p class="mt-6">
-              <BackLink href={pathFor(lang)} label={local('notfound.action')} />
-            </p>
-          </section>
-        )
-      })
-    }
-  </div>
-</Base>
+<NotFound lang={defaultLocale} />

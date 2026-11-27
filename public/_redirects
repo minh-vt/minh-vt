@@ -1,0 +1,3 @@
+# Cloudflare Pages redirects (https://developers.cloudflare.com/pages/configuration/redirects/).
+# Tools that look for the conventional name find the sitemap index.
+/sitemap.xml /sitemap-index.xml 301
