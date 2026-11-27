@@ -95,7 +95,7 @@ img {
   font-kerning: normal;
 }
 
-@screen md {
+@media (min-width: theme('breakpoint.md')) {
   .t-hero-role {
     font-size: var(--text-lg);
   }
@@ -106,7 +106,7 @@ img {
   display: none;
 }
 
-@screen lt-sm {
+@media (width < theme('breakpoint.sm')) {
   .monument .monument-wide {
     display: none;
   }

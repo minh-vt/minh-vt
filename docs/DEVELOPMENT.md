@@ -267,7 +267,7 @@ There is no `theme-color` meta tag. Most browsers ignore it (Firefox never suppo
 `color-scheme`, set by the theme, is what browsers draw their own controls from.
 
 Breakpoints live in `src/theme/breakpoints.ts`. UnoCSS builds `sm:`/`md:`/`lg:` from it,
-`global.css` uses them through `@screen`, and markup uses `from()`/`below()` for `client:media`
+`global.css` uses them through `theme("breakpoint.md")` in plain `@media` rules (standard CSS, so the editor's CSS server does not flag it; UnoCSS replaces it at build), and markup uses `from()`/`below()` for `client:media`
 and image `sizes`. No component writes an `em` media query by hand.
 
 The hero and footer name is `Monument.astro`: SVG text whose `textLength` makes each line exactly
