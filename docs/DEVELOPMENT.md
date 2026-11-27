@@ -413,6 +413,8 @@ Pages skips the build. Prettier ignores `README.md` so a local format cannot fig
   and the `locale-not-found` step in `astro.config.mjs` moves each from `<lang>/404/index.html` to
   `<lang>/404.html`, so on Pages `/en/missing` gets the English page. Both render
   `NotFound.astro`.
+- CSS is inlined into every page (`build.inlineStylesheets: 'always'`): about 10 kB gzipped, and
+  no render-blocking request before first paint.
 - `robots.txt` is built from `site`, but Cloudflare's managed robots.txt (AI Crawl Control) may
   prepend its own rules for AI crawlers; that is a dashboard setting, not code.
 

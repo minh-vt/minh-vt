@@ -97,6 +97,9 @@ export default defineConfig({
   },
   // The CMS editor at /admin/ is one ~2.7MB bundle and the only chunk past the
   // default 500kB; the limit sits just above it so any other large chunk still warns.
+  // The site's CSS is small (about 10 kB gzipped); inlined, it costs no
+  // render-blocking request before first paint.
+  build: { inlineStylesheets: 'always' },
   vite: { build: { chunkSizeWarningLimit: 3000 } },
   devToolbar: { enabled: false },
 })
