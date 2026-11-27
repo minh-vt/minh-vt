@@ -181,6 +181,13 @@ img {
   color: var(--ink-muted);
 }
 
+/* Monogram inside the small outlet mark, when an outlet has no logo. A type
+   role, not a utility: UnoCSS has no form of an arbitrary font size that the
+   Tailwind language server accepts without a rewrite UnoCSS cannot read. */
+.t-mark {
+  font-size: var(--text-mark);
+}
+
 .t-meta {
   font-family: var(--font-body);
   font-size: var(--text-xs);

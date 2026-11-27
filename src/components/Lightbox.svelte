@@ -60,7 +60,7 @@
           alt={photo.alt}
           loading="lazy"
           decoding="async"
-          class="aspect-[4/3] w-full border border-line bg-paper-raised object-cover"
+          class="aspect-4/3 w-full border border-line bg-paper-raised object-cover"
         />
         <span class="btn btn-square u-glass absolute right-2 bottom-2" aria-hidden="true">
           <span class="i-ph-magnifying-glass-plus"></span>
