@@ -423,7 +423,8 @@ Pages skips the build. Prettier ignores `README.md` so a local format cannot fig
   The Pages Function `functions/_middleware.js` serves it with `Content-Type: text/markdown;
 charset=utf-8`, `Vary: Accept` and an `x-markdown-tokens` estimate; every other request passes
   through, with `Vary: Accept` added to pages. `public/_routes.json` keeps `/_astro/`, `/admin/`
-  and `/media/` out of the function. Cloudflare's own Markdown for Agents needs a Pro plan.
+  and `/media/` out of the function. `tests/markdown-middleware.test.ts` covers the negotiation;
+  `bun run check` (and so the Pages build command) runs it. Cloudflare's own Markdown for Agents needs a Pro plan.
 - `robots.txt` carries `Content-Signal: search=yes, ai-input=yes, ai-train=yes`
   (contentsignals.org) in the `User-agent: *` group; the values are a constant in
   `src/pages/robots.txt.ts`.
