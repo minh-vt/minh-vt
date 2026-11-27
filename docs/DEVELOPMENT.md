@@ -415,6 +415,9 @@ Pages skips the build. Prettier ignores `README.md` so a local format cannot fig
   `NotFound.astro`.
 - CSS is inlined into every page (`build.inlineStylesheets: 'always'`): about 10 kB gzipped, and
   no render-blocking request before first paint.
+- `robots.txt` carries `Content-Signal: search=yes, ai-input=yes, ai-train=yes`
+  (contentsignals.org) in the `User-agent: *` group; the values are a constant in
+  `src/pages/robots.txt.ts`.
 - `robots.txt` is built from `site`, but Cloudflare's managed robots.txt (AI Crawl Control) may
   prepend its own rules for AI crawlers; that is a dashboard setting, not code.
 
