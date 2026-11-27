@@ -5,7 +5,6 @@
     "shareImage": "Ảnh khi chia sẻ link",
     "image": "Ảnh khi chia sẻ",
     "updated": "Cập nhật",
-    "credential": "Chứng chỉ nổi bật",
     "body": "Nội dung",
     "description": "Mô tả",
     "date": "Ngày",
@@ -30,8 +29,6 @@
     "logo": "Logo",
     "outlet": "Đơn vị đăng",
     "email": "Email",
-    "github": "GitHub",
-    "linkedin": "LinkedIn",
     "location": "Nơi ở",
     "value": "Giá trị",
     "detail": "Chi tiết",
@@ -46,7 +43,6 @@
     "links": "Liên kết",
     "sections": "Các section",
     "limit": "Số mục tối đa",
-    "filters": "Hiện bộ lọc",
     "series": "Series",
     "id": "Mã series",
     "part": "Phần số",
@@ -88,10 +84,6 @@
     "certs": "Chứng chỉ"
   },
   "options": {
-    "tech": "Kỹ thuật",
-    "education": "Giáo dục",
-    "competition": "Thi đấu",
-    "teaching": "Huấn luyện",
     "email": "Email",
     "github": "GitHub",
     "linkedin": "LinkedIn",
@@ -105,10 +97,7 @@
     "press": "Báo chí",
     "video": "Video",
     "code": "Mã nguồn",
-    "social": "Mạng xã hội",
-    "timeline": "Dòng thời gian",
-    "blog": "Bài viết",
-    "certs": "Chứng chỉ"
+    "social": "Mạng xã hội"
   },
   "page": {
     "title": "Nội dung",
