@@ -13,11 +13,15 @@ export function absolute(path: string): string {
 export const ogLocale = (lang: Lang) => localeTags[lang].replace('-', '_')
 
 /**
- * The picture a link shows when shared. Platforms want JPEG or PNG, so it is
- * re-encoded here; it is never cropped, so a wide image (about 1200×630) gets
- * the large card and a square one, such as the portrait, the small card.
+ * The picture a link shows when shared: the page's own image, else the site's
+ * share image, else the portrait; none if the CMS has none of them. Platforms
+ * want JPEG or PNG, so it is re-encoded here; it is never cropped, so a wide
+ * image (about 1200×630) gets the large card and a square one the small card.
  */
-export async function shareImage(image: ImageMetadata) {
+export async function shareImage(lang: Lang, own?: ImageMetadata) {
+  const site = siteFor(lang)
+  const image = own ?? site.shareImage ?? site.portrait
+  if (!image) return undefined
   const result = await getImage({
     src: image,
     width: Math.min(1200, image.width),

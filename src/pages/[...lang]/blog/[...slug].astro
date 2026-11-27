@@ -12,7 +12,6 @@ import {
   readingMinutes,
   type LocalizedPost,
 } from '@/lib/content'
-import { siteFor } from '@/lib/site'
 import { absolute, person, shareImage } from '@/lib/seo'
 
 export async function getStaticPaths() {
@@ -44,8 +43,7 @@ const { Content, headings, remarkPluginFrontmatter } = await render(post.entry)
 const { title, description, date, updated } = post.entry.data
 
 const image = post.entry.data.image
-const site = siteFor(lang)
-const share = image ?? site.shareImage ?? site.portrait
+const share = await shareImage(lang, image)
 // Described in the language it is written in, at the URL it is written for.
 const jsonLd = {
   '@type': 'BlogPosting',
@@ -56,7 +54,7 @@ const jsonLd = {
   inLanguage: lang,
   author: person(lang),
   publisher: person(lang),
-  ...(share && { image: (await shareImage(share)).url }),
+  ...(share && { image: share.url }),
   mainEntityOfPage: absolute(postPath(post.entry.id)),
 }
 ---
